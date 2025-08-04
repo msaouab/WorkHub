@@ -1,13 +1,13 @@
-package com.workhub.backend;
+package com.workhub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class WorkHubBackendApplication {
+public class WorkhubApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WorkHubBackendApplication.class, args);
+		SpringApplication.run(WorkhubApplication.class, args);
 	}
 
 }

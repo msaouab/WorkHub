@@ -1,0 +1,19 @@
+# Local secrets — never bake into images (production uses real env vars).
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+node_modules
+**/node_modules
+dist
+**/dist
+.tmp
+.nx/cache
+.git
+.claude
+coverage
+**/.next
+**/out
+*.log
+.DS_Store

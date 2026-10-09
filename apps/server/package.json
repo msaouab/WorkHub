@@ -70,6 +70,24 @@
             "buildTarget": "server:build:production"
           }
         }
+      },
+      "openapi": {
+        "dependsOn": [
+          "build"
+        ],
+        "cache": true,
+        "inputs": [
+          "production",
+          "^production"
+        ],
+        "outputs": [
+          "{projectRoot}/openapi.json"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "apps/server",
+          "command": "node dist/generate-openapi.js"
+        }
       }
     },
     "tags": [
@@ -83,11 +101,21 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.4.7",
+    "@nestjs/terminus": "^12.1.0",
+    "@nestjs/throttler": "^6.7.1",
+    "@work-hub/constants": "workspace:^",
+    "@work-hub/contracts": "workspace:^",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.15.1",
+    "helmet": "^8.3.0",
+    "nestjs-pino": "^5.3.1",
+    "nestjs-zod": "^5.5.0",
+    "pino-http": "^11.0.0",
+    "pino-pretty": "^13.2.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "tslib": "^2.3.0"
+    "swagger-ui-dist": "^5.33.1",
+    "tslib": "^2.3.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",

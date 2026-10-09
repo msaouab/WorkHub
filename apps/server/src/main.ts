@@ -2,62 +2,73 @@
  * WorkHub API bootstrap.
  */
 
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
+import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
+import type { AppConfig } from './config/configuration';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const config = app.get(ConfigService);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+  app.useLogger(app.get(PinoLogger));
 
-  const globalPrefix = 'api/v1';
-  app.setGlobalPrefix(globalPrefix);
+  const config = app.get(ConfigService<AppConfig, true>);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    })
-  );
+  const host = config.get('host', { infer: true });
+  const port = config.get('port', { infer: true });
+  const appUrl = config.get('appUrl', { infer: true });
+  const apiPrefix = config.get('apiPrefix', { infer: true });
+  const swaggerPath = config.get('swaggerPath', { infer: true });
+  const swaggerEnabled = config.get('swaggerEnabled', { infer: true });
+  const corsOrigins = config.get('corsOrigins', { infer: true });
+  const nodeEnv = config.get('nodeEnv', { infer: true });
 
-  const corsOrigin = config.get<string>(
-    'CORS_ORIGIN',
-    'http://localhost:3000'
-  );
+  // Correct client IPs behind Railway / Fly / reverse proxies (throttling + logs).
+  app.set('trust proxy', 1);
+  app.use(helmet());
+  app.enableShutdownHooks();
+
+  // JSON / urlencoded body cap (file uploads will use a dedicated multipart limit later).
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { limit: '1mb', extended: true });
+
+  // Probes stay outside /api/v1 for load balancers.
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: [
+      { path: 'health/live', method: RequestMethod.GET },
+      { path: 'health/ready', method: RequestMethod.GET },
+    ],
+  });
+
   app.enableCors({
-    origin: corsOrigin.split(',').map((origin) => origin.trim()),
+    origin: corsOrigins,
     credentials: true,
   });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('WorkHub API')
-    .setDescription(
-      'REST API for leave, holidays, and HR document requests. Space-scoped routes live under /spaces/{spaceId}.'
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('health')
-    .addTag('auth')
-    .addTag('spaces')
-    .addTag('leaves')
-    .addTag('holidays')
-    .addTag('documents')
-    .addTag('approvals')
-    .addTag('notifications')
-    .build();
+  if (swaggerEnabled) {
+    // Swagger UI assets resolve from node_modules (webpack externalDependencies: 'none' + pnpm-safe externals).
+    const documentFactory = () => buildOpenApiDocument(app, { appUrl });
+    SwaggerModule.setup(swaggerPath, app, documentFactory);
+  }
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  await app.listen(port, host);
 
-  const port = config.get<number>('PORT', 3333);
-  await app.listen(port);
-
-  Logger.log(`WorkHub API: http://localhost:${port}/${globalPrefix}`);
-  Logger.log(`Swagger UI:  http://localhost:${port}/api/docs`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`Environment: ${nodeEnv}`);
+  logger.log(`Listening on ${host}:${port}`);
+  logger.log(`API base: ${appUrl}/${apiPrefix}`);
+  logger.log(`Health live: ${appUrl}/health/live`);
+  logger.log(`Health ready: ${appUrl}/health/ready`);
+  if (swaggerEnabled) {
+    logger.log(`Swagger UI: ${appUrl}/${swaggerPath}`);
+  }
 }
 
 bootstrap();

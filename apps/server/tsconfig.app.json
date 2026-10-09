@@ -39,5 +39,13 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../libs/shared/contracts"
+    },
+    {
+      "path": "../../libs/shared/constants"
+    }
   ]
 }

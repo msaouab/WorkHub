@@ -1,0 +1,6 @@
+packages:
+  - 'apps/*'
+  - 'libs/*'
+  - 'libs/shared/*'
+  - 'libs/api/*'
+  - 'libs/web/*'

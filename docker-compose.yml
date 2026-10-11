@@ -13,7 +13,7 @@ services:
   adminer:                       # view the database at http://localhost:8083
     image: adminer
     ports: ["8083:8080"]  # 8080 taken by hypertube-nginx locally
-    environment: { ADMINER_DEFAULT_SERVER: postgres, ADMINER_PASSWORD: workhub, ADMINER_USER: workhub }
+    environment: { ADMINER_DEFAULT_SERVER: postgres }
     depends_on: [postgres]
 
 volumes: { pgdata: {} }

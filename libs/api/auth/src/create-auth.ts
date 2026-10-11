@@ -1,4 +1,4 @@
-import type { PrismaService } from '@work-hub/database';
+import type { PrismaClient } from '@work-hub/database';
 import type { MailService } from '@work-hub/mail';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
@@ -7,6 +7,8 @@ import { passwordHasher } from './password';
 
 /** Where Better Auth's routes are mounted. Also used to prefix them in Swagger. */
 export const AUTH_BASE_PATH = '/api/auth';
+
+export type AuthMailer = Pick<MailService, 'sendVerifyEmail' | 'sendPasswordReset'>;
 
 export type AuthConfig = {
   /** Public URL of this API, e.g. http://localhost:3333 */
@@ -45,8 +47,8 @@ export function createAuth({
   mail,
   config,
 }: {
-  prisma: PrismaService;
-  mail: MailService;
+  prisma: PrismaClient;
+  mail: AuthMailer;
   config: AuthConfig;
 }) {
   return betterAuth({

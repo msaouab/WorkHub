@@ -4,3 +4,4 @@ packages:
   - 'libs/shared/*'
   - 'libs/api/*'
   - 'libs/web/*'
+  - 'tools/*'

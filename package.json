@@ -8,7 +8,8 @@
     "dev:server": "nx serve server",
     "build": "nx run-many -t build --projects=@work-hub/client,server",
     "lint": "nx run-many -t lint --projects=@work-hub/client,server",
-    "test": "nx run-many -t test --projects=@work-hub/client,server"
+    "test": "nx run-many -t test --projects=@work-hub/client,server",
+    "db:seed": "nx run @work-hub/seed:seed"
   },
   "private": true,
   "nx": {

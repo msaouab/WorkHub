@@ -1,12 +1,11 @@
-import type { PrismaService } from '@work-hub/database';
-import type { MailService } from '@work-hub/mail';
+import type { PrismaClient } from '@work-hub/database';
 import { describe, expect, it } from 'vitest';
 import { AUTH_BASE_PATH, createAuth } from './create-auth';
 
 // Disabled paths are rejected before any database or mail call, so empty stubs are enough.
 const auth = createAuth({
-  prisma: {} as PrismaService,
-  mail: {} as MailService,
+  prisma: {} as PrismaClient,
+  mail: { sendVerifyEmail: async () => true, sendPasswordReset: async () => true },
   config: {
     baseUrl: 'http://localhost:3333',
     secret: 'x'.repeat(32),

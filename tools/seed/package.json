@@ -1,0 +1,33 @@
+{
+  "name": "@work-hub/seed",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "nx": {
+    "tags": [
+      "scope:api",
+      "type:tool"
+    ],
+    "targets": {
+      "seed": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "tools/seed",
+          "command": "tsx --tsconfig tsconfig.json src/main.ts"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@work-hub/auth": "workspace:^",
+    "@work-hub/constants": "workspace:^",
+    "@work-hub/database": "workspace:^",
+    "dotenv": "^18.0.7",
+    "reflect-metadata": "^0.2.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "vitest": "~5.0.1"
+  }
+}

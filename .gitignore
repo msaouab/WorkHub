@@ -60,3 +60,6 @@ out
 test-output
 vitest.config.*.timestamp*
 .vitest
+
+# Prisma generated client
+libs/api/database/src/generated/

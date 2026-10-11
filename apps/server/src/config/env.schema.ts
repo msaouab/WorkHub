@@ -10,9 +10,16 @@ export const ENV_DEFAULTS = {
 } as const;
 
 /** Strict env flags only — typos like "flase" fail startup. */
-const swaggerEnabledSchema = z
+const booleanFlagSchema = z
   .enum(['true', 'false', '1', '0'])
   .transform((value) => value === 'true' || value === '1');
+
+/** Optional string where an empty value (`SMTP_USER=`) means "not set". */
+const optionalStringSchema = z
+  .string()
+  .trim()
+  .transform((value) => value || undefined)
+  .optional();
 
 const corsOriginsSchema = z
   .string()
@@ -34,9 +41,22 @@ export const envSchema = z.object({
   APP_URL: z.string().url(),
   API_PREFIX: z.string().default(ENV_DEFAULTS.API_PREFIX),
   SWAGGER_PATH: z.string().default(ENV_DEFAULTS.SWAGGER_PATH),
-  SWAGGER_ENABLED: swaggerEnabledSchema.optional(),
+  SWAGGER_ENABLED: booleanFlagSchema.optional(),
   /** Comma-separated browser origins allowed to call the API */
   CORS_ORIGINS: corsOriginsSchema,
+  DATABASE_URL: z.string().url().startsWith('postgresql://'),
+  /** SMTP server (Mailpit locally: localhost:1025, inbox at http://localhost:8025) */
+  SMTP_HOST: z.string().trim().min(1),
+  SMTP_PORT: z.coerce.number().int().positive(),
+  /** true = TLS from the first byte (port 465); false = plain or STARTTLS (1025, 587) */
+  SMTP_SECURE: booleanFlagSchema.default(false),
+  SMTP_USER: optionalStringSchema,
+  SMTP_PASS: optionalStringSchema,
+  /** Sender shown to users, e.g. "WorkHub <no-reply@workhub.app>" */
+  MAIL_FROM: z.string().trim().min(1),
+}).refine((env) => Boolean(env.SMTP_USER) === Boolean(env.SMTP_PASS), {
+  message: 'SMTP_USER and SMTP_PASS must be set together (or both left empty)',
+  path: ['SMTP_PASS'],
 });
 
 export type ParsedEnv = z.infer<typeof envSchema>;

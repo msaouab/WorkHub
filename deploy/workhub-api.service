@@ -1,0 +1,16 @@
+[Unit]
+Description=WorkHub API (NestJS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/workhub/apps/server
+EnvironmentFile=/etc/workhub/api.env
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

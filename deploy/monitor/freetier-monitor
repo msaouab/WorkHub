@@ -1,0 +1,428 @@
+#!/usr/bin/env bash
+# freetier-monitor — keep an Oracle Cloud Always Free instance inside the free limits.
+#
+#   freetier-monitor status   full report (default)
+#   freetier-monitor watch    live report, refreshed every 10 minutes
+#   freetier-monitor report   check + save report to /var/log/freetier-monitor/ (run by cron)
+#   freetier-monitor check    record a sample, log warnings, send alerts
+#   freetier-monitor motd     short summary shown at SSH login
+#   freetier-monitor resume   restart public services after an egress auto-stop
+#
+# Config: /etc/freetier-monitor.conf (thresholds + optional ntfy.sh alert topic)
+
+set -euo pipefail
+
+CONF=${FREETIER_CONF:-/etc/freetier-monitor.conf}
+STATE_DIR=/var/lib/freetier-monitor
+HISTORY="$STATE_DIR/samples.log"     # epoch cpu% mem% net_kbps
+LOG=/var/log/freetier-monitor.log
+
+# ---- Always Free limits (per tenancy) ----
+FREE_A1_OCPUS=4
+FREE_A1_MEM_GB=24
+FREE_BLOCK_GB=200
+FREE_EGRESS_TB=10
+
+# ---- Defaults, overridable in $CONF ----
+DISK_WARN_PCT=80
+MEM_WARN_PCT=90
+EGRESS_WARN_TB=8
+IDLE_WARN_PCT=20        # Oracle reclaims if 7-day p95 CPU, network AND memory are all < 20%
+NTFY_TOPIC=""           # e.g. "my-oracle-alerts-x7k2" → subscribe in the ntfy app
+ALERT_EVERY_MIN=60      # repeat an ongoing alert every N minutes
+AUTO_STOP=true          # stop public services when monthly egress reaches EGRESS_STOP_GB
+EGRESS_STOP_GB=9500     # 9.5TB of the free 10TB
+STOP_SERVICES="nginx workhub-web workhub-api"
+[[ -r $CONF ]] && source "$CONF"
+
+STOPPED_FLAG=/var/lib/freetier-monitor/stopped_egress
+
+IFACE=$(ip -o route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="dev") print $(i+1)}')
+
+REPORT_DIR=/var/log/freetier-monitor
+LATEST="$REPORT_DIR/latest.txt"
+REPORT_LOG="$REPORT_DIR/reports.log"
+INTERVAL=600
+
+# colors only on a terminal, plain text in report files
+if [[ -t 1 ]]; then
+  red()    { printf '\033[31m%s\033[0m' "$*"; }
+  green()  { printf '\033[32m%s\033[0m' "$*"; }
+  yellow() { printf '\033[33m%s\033[0m' "$*"; }
+else
+  red()    { printf '%s' "$*"; }
+  green()  { printf '%s' "$*"; }
+  yellow() { printf '%s' "$*"; }
+fi
+
+metadata() {
+  curl -s -m 3 -H "Authorization: Bearer Oracle" http://169.254.169.254/opc/v2/instance/
+}
+
+cpu_pct() {  # average CPU busy % over 3 seconds
+  local a b
+  read -r _ a1 a2 a3 a4 a5 a6 a7 _ < /proc/stat
+  sleep 3
+  read -r _ b1 b2 b3 b4 b5 b6 b7 _ < /proc/stat
+  local busy=$(( (b1+b2+b3+b6+b7) - (a1+a2+a3+a6+a7) ))
+  local total=$(( busy + (b4+b5) - (a4+a5) ))
+  (( total > 0 )) && echo $(( 100 * busy / total )) || echo 0
+}
+
+mem_pct() {
+  awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf "%d", 100*(t-a)/t}' /proc/meminfo
+}
+
+disk_pct() { df --output=pcent / | tail -1 | tr -dc '0-9'; }
+
+net_kbps() {  # current rx+tx throughput over 3 seconds
+  local p=/sys/class/net/$IFACE/statistics a b
+  a=$(( $(<"$p/rx_bytes") + $(<"$p/tx_bytes") ))
+  sleep 3
+  b=$(( $(<"$p/rx_bytes") + $(<"$p/tx_bytes") ))
+  echo $(( (b - a) * 8 / 3 / 1000 ))
+}
+
+egress_month_bytes() {  # outbound bytes this calendar month (vnstat)
+  command -v vnstat >/dev/null || { echo 0; return; }
+  vnstat --oneline b -i "$IFACE" 2>/dev/null | awk -F';' '{print ($10+0)}' || echo 0
+}
+
+human() { numfmt --to=iec --suffix=B "${1:-0}"; }
+
+p95() {  # p95 of column $1 in history over last 7 days
+  local since=$(( $(date +%s) - 7*86400 ))
+  awk -v c="$1" -v s="$since" '$1>=s{print $c}' "$HISTORY" 2>/dev/null | sort -n |
+    awk '{v[NR]=$1} END{if(NR==0){print "-"; exit} i=int(NR*0.95); if(i<1)i=1; print v[i]}'
+}
+
+history_days() {
+  [[ -s $HISTORY ]] || { echo 0; return; }
+  echo $(( ( $(date +%s) - $(head -1 "$HISTORY" | cut -d' ' -f1) ) / 86400 ))
+}
+
+notify() {  # notify <title> <body> [priority] [tags]
+  [[ -n $NTFY_TOPIC ]] || return 0
+  curl -s -m 10 -H "Title: $1" -H "Priority: ${3:-high}" -H "Tags: ${4:-warning}" \
+    -d "$2" "https://ntfy.sh/$NTFY_TOPIC" >/dev/null || true
+}
+
+snapshot() {  # current server numbers, appended to every notification
+  local cpu=${1:-$(cpu_pct)} mem=${2:-$(mem_pct)} disk=${3:-$(disk_pct)} egress=${4:-$(egress_month_bytes)}
+  local memtxt disktxt
+  memtxt=$(free -h | awk '/^Mem:/{print $3" / "$2}')
+  disktxt=$(df -h --output=used,size,avail / | tail -1 | awk '{print $1" / "$2", "$3" free"}')
+  printf 'Server now:\n• CPU: %s%%\n• RAM: %s%% (%s)\n• Disk: %s%% (%s)\n• Egress this month: %s / %dTB' \
+    "$cpu" "$mem" "$memtxt" "$disk" "$disktxt" "$(human "$egress")" "$FREE_EGRESS_TB"
+}
+
+declare -A ACTIVE=()   # issues that are still happening in this run
+
+alert() {  # alert <key> <title> <what happened> <what to do>
+  local key=$1 title=$2 detail=$3 tip=$4
+  ACTIVE[$key]=1
+  echo "$(date '+%F %T') WARN $title — $detail" >> "$LOG"
+  # repeat each issue at most every ALERT_EVERY_MIN minutes while it lasts
+  local stamp="$STATE_DIR/alert_${key}"
+  if [[ -e $stamp ]] && (( $(date +%s) - $(stat -c %Y "$stamp") < ALERT_EVERY_MIN * 60 )); then
+    return 0
+  fi
+  touch "$stamp"
+  notify "$title - $(hostname)" \
+    "$(printf '%s\n\n%s\n\nWhat to do:\n%s\n\n%s · %s' "$detail" "$SNAPSHOT" "$tip" "$(date '+%F %H:%M')" "$PUBLIC_IP")"
+}
+
+resolve_cleared() {  # send ✅ for issues that were alerting but are fine now
+  local stamp key
+  for stamp in "$STATE_DIR"/alert_*; do
+    [[ -e $stamp ]] || continue
+    key=${stamp##*/alert_}
+    [[ -n ${ACTIVE[$key]:-} ]] && continue
+    rm -f "$stamp"
+    echo "$(date '+%F %T') OK   $key back to normal" >> "$LOG"
+    notify "${key^} back to normal - $(hostname)" \
+      "$(printf '%s\n\n%s · %s' "$SNAPSHOT" "$(date '+%F %H:%M')" "$PUBLIC_IP")" default white_check_mark
+  done
+}
+
+services_stop() {
+  local svc
+  for svc in $STOP_SERVICES; do
+    systemctl is-active -q "$svc" && systemctl stop "$svc"
+  done
+  return 0
+}
+
+services_start() {
+  local svc
+  for svc in $STOP_SERVICES; do
+    systemctl is-enabled -q "$svc" 2>/dev/null && systemctl start "$svc"
+  done
+  return 0
+}
+
+services_line() {
+  if [[ -e $STOPPED_FLAG ]]; then
+    echo "Public services: STOPPED since $(<"$STOPPED_FLAG") (egress limit)"
+  else
+    echo "Public services: running"
+  fi
+}
+
+cmd_check() {
+  mkdir -p "$STATE_DIR"
+  local cpu mem disk net egress
+  cpu=$(cpu_pct); mem=$(mem_pct); disk=$(disk_pct); net=$(net_kbps); egress=$(egress_month_bytes)
+  echo "$(date +%s) $cpu $mem $net" >> "$HISTORY"
+  # keep 8 days of samples
+  local cutoff=$(( $(date +%s) - 8*86400 ))
+  awk -v c="$cutoff" '$1>=c' "$HISTORY" > "$HISTORY.tmp" && mv "$HISTORY.tmp" "$HISTORY"
+
+  SNAPSHOT=$(snapshot "$cpu" "$mem" "$disk" "$egress")
+  PUBLIC_IP=$(curl -s -m 3 ifconfig.me || echo "?")
+
+  if (( disk >= DISK_WARN_PCT )); then
+    alert disk "Disk ${disk}% full" \
+      "The disk passed your ${DISK_WARN_PCT}% warning level ($(df -h --output=avail / | tail -1 | tr -d ' ') left). Free tier allows ${FREE_BLOCK_GB}GB of storage in total; growing the disk beyond that is paid." \
+      "• Find big folders: sudo du -xh / --max-depth=2 | sort -h | tail
+• Clean packages: sudo apt clean && sudo apt autoremove
+• Docker: docker system prune -a
+• Old logs: sudo journalctl --vacuum-size=200M"
+  fi
+
+  if (( mem >= MEM_WARN_PCT )); then
+    alert memory "RAM ${mem}% used" \
+      "Memory passed your ${MEM_WARN_PCT}% warning level. When it is full, apps get killed (out of memory)." \
+      "• Biggest processes: ps aux --sort=-%mem | head
+• Restart the app that is leaking memory
+• Do NOT resize above ${FREE_A1_MEM_GB}GB total — that is paid"
+  fi
+
+  local warn_bytes=$(( EGRESS_WARN_TB * 1000**4 ))
+  if (( egress >= warn_bytes )); then
+    alert egress "Egress $(human "$egress") this month" \
+      "Outbound traffic passed ${EGRESS_WARN_TB}TB. Free tier includes ${FREE_EGRESS_TB}TB/month; beyond that is charged on Pay As You Go accounts." \
+      "• Daily traffic: vnstat -d
+• Live traffic per app: sudo apt install nethogs && sudo nethogs
+• Put a CDN (e.g. Cloudflare) in front of heavy downloads"
+  fi
+
+  # Hard stop: cut public traffic before egress becomes billable; resumes next month
+  local stop_bytes=$(( EGRESS_STOP_GB * 1000**3 ))
+  if [[ $AUTO_STOP == true ]] && (( egress >= stop_bytes )); then
+    if [[ ! -e $STOPPED_FLAG ]]; then
+      date '+%F %T' > "$STOPPED_FLAG"
+      echo "$(date '+%F %T') STOP public services (egress $(human "$egress"))" >> "$LOG"
+      notify "Public services STOPPED - $(hostname)" \
+        "$(printf 'Outbound traffic reached %s this month (stop limit %sGB, free %dTB).\n\nStopped: %s\nSSH, monitoring and phone commands still work.\nEverything restarts automatically on the 1st of next month.\n\n%s\n\nTo restart now (may cost money on Pay As You Go):\nset AUTO_STOP=false in %s, then: sudo freetier-monitor resume' \
+          "$(human "$egress")" "$EGRESS_STOP_GB" "$FREE_EGRESS_TB" "$STOP_SERVICES" "$SNAPSHOT" "$CONF")" \
+        urgent rotating_light
+    fi
+    services_stop   # also re-applies after a reboot
+  elif [[ -e $STOPPED_FLAG ]]; then
+    services_start
+    rm -f "$STOPPED_FLAG"
+    echo "$(date '+%F %T') START public services (egress $(human "$egress"))" >> "$LOG"
+    notify "Public services back online - $(hostname)" \
+      "$(printf 'Outbound traffic is under the stop limit again (%s this month).\nRestarted: %s\n\n%s' "$(human "$egress")" "$STOP_SERVICES" "$SNAPSHOT")" \
+      high white_check_mark
+  fi
+
+  # Idle reclaim risk (needs ~7 days of data to be meaningful)
+  if (( $(history_days) >= 6 )); then
+    local pc pm
+    pc=$(p95 2); pm=$(p95 3)
+    if (( pc < IDLE_WARN_PCT && pm < IDLE_WARN_PCT )); then
+      alert idle "Server idle — may be reclaimed" \
+        "Over the last 7 days CPU p95 was ${pc}% and RAM p95 ${pm}% (Oracle reclaims idle Always Free instances below ${IDLE_WARN_PCT}%)." \
+        "• Run your app/workload on this server
+• Or upgrade the account to Pay As You Go (Always Free resources stay free and are not reclaimed)"
+    fi
+  fi
+
+  # Shape drift (someone resized beyond free tier)
+  local md ocpus memgb
+  md=$(metadata)
+  if [[ -n $md ]]; then
+    ocpus=$(python3 -c 'import json,sys;print(int(json.load(sys.stdin)["shapeConfig"]["ocpus"]))' <<<"$md" 2>/dev/null || echo 0)
+    memgb=$(python3 -c 'import json,sys;print(int(json.load(sys.stdin)["shapeConfig"]["memoryInGBs"]))' <<<"$md" 2>/dev/null || echo 0)
+    if (( ocpus > FREE_A1_OCPUS || memgb > FREE_A1_MEM_GB )); then
+      alert shape "Instance outside free tier" \
+        "This instance is ${ocpus} OCPU / ${memgb}GB. Always Free allows ${FREE_A1_OCPUS} OCPU / ${FREE_A1_MEM_GB}GB in total." \
+        "• Console → Instance → Edit → Shape: set ≤ ${FREE_A1_OCPUS} OCPU / ${FREE_A1_MEM_GB}GB"
+    fi
+  fi
+
+  resolve_cleared
+  return 0
+}
+
+bar() {  # bar <pct> <warn>
+  local pct=$1 warn=$2 n=$(( $1 / 5 )) s
+  s=$(printf '%*s' "$n" '' | tr ' ' '#')$(printf '%*s' $(( 20 - n )) '' | tr ' ' '.')
+  if (( pct >= warn )); then red "[$s]"; elif (( pct >= warn - 15 )); then yellow "[$s]"; else green "[$s]"; fi
+}
+
+cmd_status() {
+  local md shape ocpus memgb region
+  md=$(metadata)
+  shape=$(python3 -c 'import json,sys;print(json.load(sys.stdin)["shape"])' <<<"$md" 2>/dev/null || echo "?")
+  ocpus=$(python3 -c 'import json,sys;print(json.load(sys.stdin)["shapeConfig"]["ocpus"])' <<<"$md" 2>/dev/null || echo "?")
+  memgb=$(python3 -c 'import json,sys;print(json.load(sys.stdin)["shapeConfig"]["memoryInGBs"])' <<<"$md" 2>/dev/null || echo "?")
+  region=$(python3 -c 'import json,sys;print(json.load(sys.stdin)["region"])' <<<"$md" 2>/dev/null || echo "?")
+  local disk_gb; disk_gb=$(lsblk -bdno SIZE /dev/sda 2>/dev/null | awk '{printf "%d", $1/1024^3}')
+
+  local cpu mem disk egress
+  cpu=$(cpu_pct); mem=$(mem_pct); disk=$(disk_pct); egress=$(egress_month_bytes)
+  local egress_pct=$(( egress * 100 / (FREE_EGRESS_TB * 1000**4) ))
+
+  echo
+  echo "  Oracle Always Free - $(hostname) ($region)"
+  echo "  ─────────────────────────────────────────────"
+  printf "  Shape      %s  %s OCPU / %s GB   (free: %d / %d)\n" "$shape" "$ocpus" "$memgb" $FREE_A1_OCPUS $FREE_A1_MEM_GB
+  printf "  Boot disk  %s GB                      (free: %d GB total)\n" "$disk_gb" $FREE_BLOCK_GB
+  echo
+  printf "  CPU now    %s %3d%%\n" "$(bar "$cpu" 90)" "$cpu"
+  printf "  Memory     %s %3d%%\n" "$(bar "$mem" "$MEM_WARN_PCT")" "$mem"
+  printf "  Disk /     %s %3d%%  (%s free)\n" "$(bar "$disk" "$DISK_WARN_PCT")" "$disk" "$(df -h --output=avail / | tail -1 | tr -d ' ')"
+  printf "  Egress mo  %s %3d%%  (%s of %d TB)\n" "$(bar "$egress_pct" $(( EGRESS_WARN_TB * 10 )))" "$egress_pct" "$(human "$egress")" $FREE_EGRESS_TB
+  echo
+  local days; days=$(history_days)
+  if (( days >= 6 )); then
+    local pc pm; pc=$(p95 2); pm=$(p95 3)
+    if (( pc < IDLE_WARN_PCT && pm < IDLE_WARN_PCT )); then
+      echo "  Idle check $(red "AT RISK") — 7-day p95 CPU ${pc}% / RAM ${pm}% (Oracle reclaims below ${IDLE_WARN_PCT}%)"
+    else
+      echo "  Idle check $(green OK) — 7-day p95 CPU ${pc}% / RAM ${pm}%"
+    fi
+  else
+    echo "  Idle check collecting data (${days}/7 days)"
+  fi
+  if [[ -e $STOPPED_FLAG ]]; then echo "  $(red "$(services_line)")"; else echo "  $(services_line)"; fi
+  local recent; recent=$(tail -n 5 "$LOG" 2>/dev/null || true)
+  if [[ -n $recent ]]; then echo; echo "  Recent warnings:"; sed 's/^/    /' <<<"$recent"; fi
+  echo
+}
+
+cmd_motd() {
+  local disk mem egress
+  disk=$(disk_pct); mem=$(mem_pct); egress=$(egress_month_bytes)
+  printf "\n  Free tier: disk %s%%  ram %s%%  egress %s/%dTB   (freetier-monitor for details)\n\n" \
+    "$disk" "$mem" "$(human "$egress")" $FREE_EGRESS_TB
+}
+
+cmd_report() {  # cron: record sample + save the full report
+  cmd_check
+  mkdir -p "$REPORT_DIR"
+  { echo "=== $(date '+%F %T') ==="; cmd_status; } > "$LATEST.tmp"
+  mv "$LATEST.tmp" "$LATEST"
+  chmod 644 "$LATEST"
+  cat "$LATEST" >> "$REPORT_LOG"
+  # keep roughly the last 7 days of reports (~144 per day)
+  tail -n 25000 "$REPORT_LOG" > "$REPORT_LOG.tmp" && mv "$REPORT_LOG.tmp" "$REPORT_LOG"
+  chmod 644 "$REPORT_LOG"
+}
+
+cmd_watch() {  # live view, refreshed every 10 minutes (Ctrl+C to quit)
+  while true; do
+    clear
+    echo "  $(date '+%F %T') — refreshes every $(( INTERVAL / 60 )) min, Ctrl+C to quit"
+    cmd_status
+    sleep "$INTERVAL"
+  done
+}
+
+idle_line() {
+  local days; days=$(history_days)
+  if (( days < 6 )); then echo "Idle check: collecting data (${days}/7 days)"; return; fi
+  local pc pm; pc=$(p95 2); pm=$(p95 3)
+  if (( pc < IDLE_WARN_PCT && pm < IDLE_WARN_PCT )); then
+    echo "Idle check: AT RISK (7-day p95 CPU ${pc}% / RAM ${pm}%)"
+  else
+    echo "Idle check: OK (7-day p95 CPU ${pc}% / RAM ${pm}%)"
+  fi
+}
+
+reply() {  # answer one command received from the phone (read-only, fixed list)
+  local cmd host; cmd=$(tr '[:upper:]' '[:lower:]' <<<"$1" | tr -d '[:space:]/'); host=$(hostname)
+  case "$cmd" in
+    status|s|"?")
+      local active="none"
+      compgen -G "$STATE_DIR/alert_*" >/dev/null && active=$(ls "$STATE_DIR" | sed -n 's/^alert_//p' | paste -sd, -)
+      notify "Status - $host" "$(printf '%s\n\nUptime: %s\nLoad: %s\n%s\n%s\nActive alerts: %s\n\n%s' \
+        "$(snapshot)" "$(uptime -p | sed 's/^up //')" "$(cut -d' ' -f1-3 /proc/loadavg)" \
+        "$(idle_line)" "$(services_line)" "$active" "$(date '+%F %H:%M')")" default bar_chart ;;
+    top)
+      notify "Top processes - $host" "$(printf 'By CPU:\n%s\n\nBy RAM:\n%s' \
+        "$(ps -eo pcpu,pmem,comm --sort=-pcpu --no-headers | head -5 | awk '{printf "• %s  cpu %s%%  ram %s%%\n",$3,$1,$2}')" \
+        "$(ps -eo pmem,rss,comm --sort=-pmem --no-headers | head -5 | awk '{printf "• %s  %s%%  (%dMB)\n",$3,$1,$2/1024}')")" default gear ;;
+    traffic|net)
+      notify "Traffic - $host" "$(printf 'Last 7 days (received / sent):\n%s\n\nThis month sent: %s / %dTB' \
+        "$(vnstat -i "$IFACE" --json d 7 2>/dev/null | python3 -c '
+import json,sys
+def h(b):
+  for u in ["B","KB","MB","GB","TB"]:
+    if b<1024: return f"{b:.1f}{u}"
+    b/=1024
+  return f"{b:.1f}PB"
+d=json.load(sys.stdin)["interfaces"][0]["traffic"]["day"]
+for x in d[-7:]:
+  t=x["date"]; ds="%d-%02d-%02d" % (t["year"], t["month"], t["day"])
+  print("• " + ds + "  " + h(x["rx"]) + " / " + h(x["tx"]))' 2>/dev/null || echo 'no data yet')" \
+        "$(human "$(egress_month_bytes)")" "$FREE_EGRESS_TB")" default globe_with_meridians ;;
+    *)
+      notify "Commands - $host" "Send one of these words:
+
+status   → CPU, RAM, disk, traffic, idle check
+top      → biggest processes
+traffic  → traffic of the last 7 days
+help     → this list" default information_source ;;
+  esac
+}
+
+cmd_listen() {  # follow the ntfy topic and answer commands sent from the phone
+  [[ -n $NTFY_TOPIC ]] || { echo "NTFY_TOPIC is empty in $CONF"; exit 1; }
+  set +e
+  local since_file="$STATE_DIR/listen_since" host; host=$(hostname)
+  mkdir -p "$STATE_DIR"
+  [[ -s $since_file && $(<"$since_file") != now ]] || date +%s > "$since_file"
+  while true; do
+    curl -sN --max-time 3600 "https://ntfy.sh/$NTFY_TOPIC/json?since=$(<"$since_file")" |
+      python3 -u -c '
+import json,sys
+for line in sys.stdin:
+  try: d=json.loads(line)
+  except Exception: continue
+  if d.get("event")!="message": continue
+  print(d["id"], d.get("title",""), d.get("message","").replace("\n"," "), sep="\x1f")' |
+      while IFS=$'\x1f' read -r id title msg; do
+        echo "$id" > "$since_file"
+        [[ $title == *" - $host" ]] && continue      # our own notifications
+        echo "$(date '+%F %T') CMD  $msg" >> "$LOG"
+        reply "$msg"
+      done
+    sleep 5   # reconnect
+  done
+}
+
+case "${1:-status}" in
+  status) cmd_status ;;
+  check)  cmd_check ;;
+  report) cmd_report ;;
+  watch)  cmd_watch ;;
+  listen) cmd_listen ;;
+  motd)   cmd_motd ;;
+  resume)   # manual restart after an auto-stop
+    [[ $EUID -eq 0 ]] || { echo "run with sudo"; exit 1; }
+    rm -f "$STOPPED_FLAG"; services_start
+    echo "$(date '+%F %T') START public services (manual resume)" >> "$LOG"
+    [[ $AUTO_STOP == true ]] && echo "note: AUTO_STOP=true — if egress is still over ${EGRESS_STOP_GB}GB the next check (≤10 min) stops them again"
+    echo "services started: $STOP_SERVICES" ;;
+  test-alert)
+    [[ -n $NTFY_TOPIC ]] || { echo "NTFY_TOPIC is empty in $CONF"; exit 1; }
+    notify "Test alert - $(hostname)" \
+      "$(printf 'Phone notifications are working. Real alerts look like this:\n\n%s\n\n%s · %s' \
+        "$(snapshot)" "$(date '+%F %H:%M')" "$(curl -s -m 3 ifconfig.me)")" default
+    echo "sent to ntfy.sh/$NTFY_TOPIC" ;;
+  *) echo "usage: $0 [status|watch|report|check|listen|motd|resume|test-alert]"; exit 1 ;;
+esac

@@ -5,6 +5,10 @@ import { toAppConfig } from './configuration';
 const base = {
   APP_URL: 'http://localhost:3333',
   CORS_ORIGINS: 'http://localhost:3000',
+  DATABASE_URL: 'postgresql://workhub_app:workhub_app@localhost:5434/workhub',
+  SMTP_HOST: 'localhost',
+  SMTP_PORT: '1025',
+  MAIL_FROM: 'WorkHub <no-reply@workhub.local>',
 };
 
 describe('validateEnv', () => {
@@ -24,7 +28,41 @@ describe('validateEnv', () => {
       swaggerPath: 'docs',
       swaggerEnabled: true,
       corsOrigins: ['http://localhost:3000'],
+      databaseUrl: 'postgresql://workhub_app:workhub_app@localhost:5434/workhub',
+      mail: {
+        host: 'localhost',
+        port: 1025,
+        secure: false,
+        user: undefined,
+        pass: undefined,
+        from: 'WorkHub <no-reply@workhub.local>',
+      },
     });
+  });
+
+  it('treats empty SMTP credentials as not set', () => {
+    const env = validateEnv({ ...base, SMTP_USER: '', SMTP_PASS: '  ' });
+    expect(env.SMTP_USER).toBeUndefined();
+    expect(env.SMTP_PASS).toBeUndefined();
+  });
+
+  it('rejects SMTP_USER without SMTP_PASS', () => {
+    expect(() => validateEnv({ ...base, SMTP_USER: 'mailer' })).toThrow(
+      /SMTP_PASS/
+    );
+  });
+
+  it('requires MAIL_FROM', () => {
+    const { MAIL_FROM: _omitted, ...withoutFrom } = base;
+    expect(() => validateEnv(withoutFrom)).toThrow(/MAIL_FROM/);
+  });
+
+  it('parses strict SMTP_SECURE flags and defaults to false', () => {
+    expect(validateEnv(base).SMTP_SECURE).toBe(false);
+    expect(validateEnv({ ...base, SMTP_SECURE: 'true' }).SMTP_SECURE).toBe(true);
+    expect(() => validateEnv({ ...base, SMTP_SECURE: 'yes' })).toThrow(
+      /SMTP_SECURE/
+    );
   });
 
   it('defaults swaggerEnabled from NODE_ENV when SWAGGER_ENABLED is omitted', () => {

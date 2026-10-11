@@ -36,7 +36,17 @@
     "eslint.config.mjs"
   ],
   "references": [
-    { "path": "../../libs/shared/contracts" },
-    { "path": "../../libs/shared/constants" }
+    {
+      "path": "../../libs/api/mail"
+    },
+    {
+      "path": "../../libs/api/database"
+    },
+    {
+      "path": "../../libs/shared/contracts"
+    },
+    {
+      "path": "../../libs/shared/constants"
+    }
   ]
 }

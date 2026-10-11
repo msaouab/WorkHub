@@ -42,6 +42,12 @@
   ],
   "references": [
     {
+      "path": "../../libs/api/mail"
+    },
+    {
+      "path": "../../libs/api/database"
+    },
+    {
       "path": "../../libs/shared/contracts"
     },
     {

@@ -1,0 +1,14 @@
+# freetier-monitor settings
+DISK_WARN_PCT=80
+MEM_WARN_PCT=90
+EGRESS_WARN_TB=8
+IDLE_WARN_PCT=20
+# Phone alerts: install the "ntfy" app, subscribe to a hard-to-guess topic, put it here
+NTFY_TOPIC=""
+# Repeat an ongoing alert every N minutes
+ALERT_EVERY_MIN=60
+# Stop public services (nginx + WorkHub) when monthly egress reaches EGRESS_STOP_GB.
+# They restart automatically when the monthly counter resets.
+AUTO_STOP=true
+EGRESS_STOP_GB=9500
+STOP_SERVICES="nginx workhub-web workhub-api"

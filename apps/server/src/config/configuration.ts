@@ -1,3 +1,4 @@
+import type { MailConfig } from '@work-hub/mail';
 import type { Env } from './env.schema';
 
 export type AppConfig = {
@@ -9,6 +10,8 @@ export type AppConfig = {
   swaggerPath: string;
   swaggerEnabled: boolean;
   corsOrigins: string[];
+  databaseUrl: string;
+  mail: MailConfig;
 };
 
 export function toAppConfig(env: Env): AppConfig {
@@ -21,5 +24,14 @@ export function toAppConfig(env: Env): AppConfig {
     swaggerPath: env.SWAGGER_PATH,
     swaggerEnabled: env.SWAGGER_ENABLED,
     corsOrigins: env.CORS_ORIGINS,
+    databaseUrl: env.DATABASE_URL,
+    mail: {
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_SECURE,
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+      from: env.MAIL_FROM,
+    },
   };
 }

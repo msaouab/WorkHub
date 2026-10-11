@@ -4,13 +4,15 @@ import {
   HealthCheck,
   HealthCheckService,
   MemoryHealthIndicator,
+  PrismaHealthIndicator,
 } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
+import { PrismaService } from '@work-hub/database';
 import { PROBLEM_DETAILS_REF } from '../../common/swagger/build-openapi-document';
 
 /**
  * Liveness and readiness probes (outside the API prefix).
- * Readiness will gain Prisma + Redis checks once those modules exist.
+ * Readiness pings Postgres via Prisma; Redis check lands with the cache module.
  */
 @ApiTags('health')
 @SkipThrottle()
@@ -18,7 +20,9 @@ import { PROBLEM_DETAILS_REF } from '../../common/swagger/build-openapi-document
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    private readonly memory: MemoryHealthIndicator
+    private readonly memory: MemoryHealthIndicator,
+    private readonly prismaHealth: PrismaHealthIndicator,
+    private readonly prisma: PrismaService
   ) {}
 
   @Get('live')
@@ -36,9 +40,9 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Process can accept traffic' })
   @ApiResponse({ status: 503, ...PROBLEM_DETAILS_REF })
   checkReady() {
-    // TODO: add Prisma and Redis indicators when database/cache modules land.
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', 512 * 1024 * 1024),
+      () => this.prismaHealth.pingCheck('database', this.prisma),
     ]);
   }
 }

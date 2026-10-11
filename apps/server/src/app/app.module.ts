@@ -9,6 +9,9 @@ import { ProblemDetailsFilter } from '../common/filters/problem-details.filter';
 import { toAppConfig } from '../config/configuration';
 import { getEnvFilePaths } from '../config/env-files';
 import { validateEnv } from '../config/env.schema';
+import { DatabaseModule } from '@work-hub/database';
+import { MailModule } from '@work-hub/mail';
+import { ObserveModule } from '../observe';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -20,6 +23,13 @@ import { HealthModule } from './health/health.module';
       ignoreEnvFile: process.env.NODE_ENV === 'production',
       envFilePath: getEnvFilePaths(),
       validate: (raw) => toAppConfig(validateEnv(raw)),
+    }),
+    DatabaseModule,
+    MailModule,
+    ObserveModule.forRoot({
+      appKey: process.env.OBSERVE_APP_KEY ?? '',
+      appSecret: process.env.OBSERVE_APP_SECRET ?? '',
+      serviceId: 'workhub',
     }),
     LoggerModule.forRoot({
       pinoHttp: {

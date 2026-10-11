@@ -2,6 +2,7 @@
  * WorkHub API bootstrap.
  */
 
+import './preload-env';
 import { Logger, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -12,10 +13,12 @@ import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
 import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
 import type { AppConfig } from './config/configuration';
+import { ObserveInstrument } from './observe';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    instrument: ObserveInstrument,
   });
   app.useLogger(app.get(PinoLogger));
 

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ThrottlerException } from '@nestjs/throttler';
 import { ErrorCode } from '@work-hub/constants';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 import { ZodValidationException } from 'nestjs-zod';
 import { ProblemDetailsFilter } from './problem-details.filter';
@@ -42,6 +42,8 @@ describe('ProblemDetailsFilter', () => {
       }),
     }),
   };
+
+  afterEach(() => { vi.restoreAllMocks(); });
 
   beforeEach(() => {
     statusCode = 0;
@@ -111,6 +113,8 @@ describe('ProblemDetailsFilter', () => {
   });
 
   it('keeps Terminus readiness details on ServiceUnavailableException', () => {
+    const logError = vi.spyOn(filter['logger'], 'error').mockImplementation(() => undefined);
+
     const healthPayload = {
       status: 'error',
       info: {},
@@ -126,5 +130,6 @@ describe('ProblemDetailsFilter', () => {
       detail: 'One or more readiness checks failed.',
       details: healthPayload,
     });
+    expect(logError).toHaveBeenCalledOnce();
   });
 });

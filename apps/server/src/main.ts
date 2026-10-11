@@ -19,6 +19,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
     instrument: ObserveInstrument,
+
+    bodyParser: false,
   });
   app.useLogger(app.get(PinoLogger));
 
@@ -37,10 +39,6 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   app.use(helmet());
   app.enableShutdownHooks();
-
-  // JSON / urlencoded body cap (file uploads will use a dedicated multipart limit later).
-  app.useBodyParser('json', { limit: '1mb' });
-  app.useBodyParser('urlencoded', { limit: '1mb', extended: true });
 
   // Probes stay outside /api/v1 for load balancers.
   app.setGlobalPrefix(apiPrefix, {

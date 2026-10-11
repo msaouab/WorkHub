@@ -9,6 +9,7 @@ const base = {
   SMTP_HOST: 'localhost',
   SMTP_PORT: '1025',
   MAIL_FROM: 'WorkHub <no-reply@workhub.local>',
+  BETTER_AUTH_SECRET: 'x'.repeat(32),
 };
 
 describe('validateEnv', () => {
@@ -36,6 +37,11 @@ describe('validateEnv', () => {
         user: undefined,
         pass: undefined,
         from: 'WorkHub <no-reply@workhub.local>',
+      },
+      auth: {
+        baseUrl: 'http://localhost:3333',
+        secret: 'x'.repeat(32),
+        trustedOrigins: ['http://localhost:3000'],
       },
     });
   });
@@ -116,5 +122,11 @@ describe('validateEnv', () => {
     expect(() =>
       validateEnv({ ...base, CORS_ORIGINS: 'not-a-url' })
     ).toThrow(/CORS_ORIGINS/);
+  });
+
+  it('rejects a BETTER_AUTH_SECRET shorter than 32 characters', () => {
+    expect(() =>
+      validateEnv({ ...base, BETTER_AUTH_SECRET: 'x'.repeat(31) })
+    ).toThrow(/BETTER_AUTH_SECRET/);
   });
 });

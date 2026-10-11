@@ -23,6 +23,9 @@
     },
     {
       "path": "./libs/api/mail"
+    },
+    {
+      "path": "./libs/api/auth"
     }
   ]
 }

@@ -52,6 +52,9 @@
     },
     {
       "path": "../../libs/shared/constants"
+    },
+    {
+      "path": "../../libs/api/auth"
     }
   ]
 }

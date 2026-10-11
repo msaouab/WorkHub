@@ -9,6 +9,7 @@ import {
 import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '@work-hub/database';
 import { PROBLEM_DETAILS_REF } from '../../common/swagger/build-openapi-document';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
 /**
  * Liveness and readiness probes (outside the API prefix).
@@ -16,6 +17,7 @@ import { PROBLEM_DETAILS_REF } from '../../common/swagger/build-openapi-document
  */
 @ApiTags('health')
 @SkipThrottle()
+@AllowAnonymous()
 @Controller('health')
 export class HealthController {
   constructor(

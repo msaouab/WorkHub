@@ -1,5 +1,6 @@
 import type { MailConfig } from '@work-hub/mail';
 import type { Env } from './env.schema';
+import type { AuthConfig } from '@work-hub/auth';
 
 export type AppConfig = {
   nodeEnv: Env['NODE_ENV'];
@@ -12,6 +13,7 @@ export type AppConfig = {
   corsOrigins: string[];
   databaseUrl: string;
   mail: MailConfig;
+  auth: AuthConfig;
 };
 
 export function toAppConfig(env: Env): AppConfig {
@@ -32,6 +34,11 @@ export function toAppConfig(env: Env): AppConfig {
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
       from: env.MAIL_FROM,
+    },
+    auth: {
+      baseUrl: env.APP_URL,
+      secret: env.BETTER_AUTH_SECRET,
+      trustedOrigins: env.CORS_ORIGINS,
     },
   };
 }

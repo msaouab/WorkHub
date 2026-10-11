@@ -1,18 +1,22 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule, minutes } from '@nestjs/throttler';
 import { randomUUID } from 'node:crypto';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { ProblemDetailsFilter } from '../common/filters/problem-details.filter';
-import { toAppConfig } from '../config/configuration';
 import { getEnvFilePaths } from '../config/env-files';
 import { validateEnv } from '../config/env.schema';
-import { DatabaseModule } from '@work-hub/database';
-import { MailModule } from '@work-hub/mail';
 import { ObserveModule } from '../observe';
 import { HealthModule } from './health/health.module';
+
+import { AuthModule } from '@thallesp/nestjs-better-auth';
+import { createAuth } from '@work-hub/auth';
+import { toAppConfig, type AppConfig } from '../config/configuration';
+import { DatabaseModule, PrismaService } from '@work-hub/database';
+import { MailModule, MailService } from '@work-hub/mail';
+import { MeModule } from './me/me.module';
 
 @Module({
   imports: [
@@ -30,6 +34,20 @@ import { HealthModule } from './health/health.module';
       appKey: process.env.OBSERVE_APP_KEY ?? '',
       appSecret: process.env.OBSERVE_APP_SECRET ?? '',
       serviceId: 'workhub',
+    }),
+    AuthModule.forRootAsync({
+      inject: [PrismaService, MailService, ConfigService],
+      useFactory: (
+        prisma: PrismaService,
+        mail: MailService,
+        config: ConfigService<AppConfig, true>
+      ) => ({
+        auth: createAuth({ prisma, mail, config: config.get('auth', { infer: true }) }),
+        bodyParser: {
+          json: { limit: '1mb' },
+          urlencoded: { limit: '1mb', extended: true },
+        },
+      }),
     }),
     LoggerModule.forRoot({
       pinoHttp: {
@@ -54,6 +72,7 @@ import { HealthModule } from './health/health.module';
       { name: 'default', ttl: minutes(1), limit: 100 },
     ]),
     HealthModule,
+    MeModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

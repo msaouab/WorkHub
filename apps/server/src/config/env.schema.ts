@@ -54,6 +54,7 @@ export const envSchema = z.object({
   SMTP_PASS: optionalStringSchema,
   /** Sender shown to users, e.g. "WorkHub <no-reply@workhub.app>" */
   MAIL_FROM: z.string().trim().min(1),
+  BETTER_AUTH_SECRET: z.string().min(32),
 }).refine((env) => Boolean(env.SMTP_USER) === Boolean(env.SMTP_PASS), {
   message: 'SMTP_USER and SMTP_PASS must be set together (or both left empty)',
   path: ['SMTP_PASS'],

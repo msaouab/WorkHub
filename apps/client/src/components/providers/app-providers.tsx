@@ -1,5 +1,6 @@
 'use client';
 
+import type { Locale } from '@work-hub/constants';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
@@ -24,7 +25,13 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
-export function AppProviders({ children }: { children: ReactNode }) {
+export function AppProviders({
+  children,
+}: {
+  children: ReactNode;
+  /** Reserved for future preference hydration; locale comes from next-intl. */
+  defaultLocale?: Locale;
+}) {
   const queryClient = getQueryClient();
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

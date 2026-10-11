@@ -27,16 +27,27 @@
           "cwd": "apps/client",
           "command": "next dev"
         }
+      },
+      "typecheck": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "apps/client",
+          "command": "tsc --noEmit -p tsconfig.json"
+        }
       }
     }
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@tanstack/react-query": "^5.104.1",
+    "@work-hub/constants": "workspace:^",
+    "@work-hub/contracts": "workspace:^",
+    "better-auth": "1.7.7",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.54.0",
     "next": "~16.1.6",
+    "next-intl": "^4.14.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "shadcn": "^4.21.4",

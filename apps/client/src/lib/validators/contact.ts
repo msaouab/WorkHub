@@ -1,14 +1,16 @@
 import { z } from 'zod';
 
-export const contactSchema = z.object({
-  name: z.string().trim().min(2, 'Enter your full name'),
-  email: z.string().trim().email('Enter a valid work email'),
-  company: z.string().trim().min(2, 'Enter your company name'),
-  message: z
-    .string()
-    .trim()
-    .min(10, 'Tell us a bit more (at least 10 characters)')
-    .max(2000, 'Message is too long'),
-});
+type Translate = (key: string) => string;
 
-export type ContactInput = z.infer<typeof contactSchema>;
+export function createContactSchema(t: Translate) {
+  return z.object({
+    name: z.string().trim().min(2, t('fullName')),
+    email: z.email(t('workEmail')),
+    company: z.string().trim().min(2, t('company')),
+    message: z
+      .string()
+      .trim()
+      .min(10, t('messageMin'))
+      .max(2000, t('messageMax')),
+  });
+}

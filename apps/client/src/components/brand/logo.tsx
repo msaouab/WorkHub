@@ -1,4 +1,6 @@
-import { site } from '@/content/site';
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export type LogoTone = 'default' | 'inverse';
@@ -76,8 +78,10 @@ type LogoProps = {
   markClassName?: string;
 };
 
-/** Mark + wordmark lockup. The visible "WorkHub" text provides the accessible name. */
+/** Mark + wordmark lockup. The visible brand text provides the accessible name. */
 export function Logo({ tone = 'default', className, markClassName }: LogoProps) {
+  const t = useTranslations('Site');
+
   return (
     <span
       className={cn(
@@ -87,7 +91,7 @@ export function Logo({ tone = 'default', className, markClassName }: LogoProps) 
       )}
     >
       <LogoMark tone={tone} className={markClassName} />
-      {site.brand}
+      {t('brand')}
     </span>
   );
 }

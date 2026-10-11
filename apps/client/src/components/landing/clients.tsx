@@ -1,29 +1,32 @@
+import { getTranslations } from 'next-intl/server';
 import {
   LandingSection,
   LandingSectionHeader,
 } from '@/components/landing/section';
-import { landingPage } from '@/content/landing';
+import { landingStructure } from '@/content/landing-structure';
 
-function ClientMarks() {
+function ClientMarks({ names }: { names: string[] }) {
   return (
     <ul
       className="flex shrink-0 items-center gap-12 px-6 sm:gap-16 sm:px-8"
       aria-hidden
     >
-      {landingPage.clients.items.map((client) => (
+      {names.map((name) => (
         <li
-          key={client.id}
+          key={name}
           className="font-display text-xl font-semibold tracking-tight text-foreground/35 whitespace-nowrap sm:text-2xl"
         >
-          {client.name}
+          {name}
         </li>
       ))}
     </ul>
   );
 }
 
-export function Clients() {
-  const { clients } = landingPage;
+export async function Clients() {
+  const t = await getTranslations('Landing.clients');
+  const itemT = await getTranslations('Landing.clients.items');
+  const names = landingStructure.clients.ids.map((id) => itemT(id));
 
   return (
     <LandingSection
@@ -40,13 +43,13 @@ export function Clients() {
           />
 
           <div className="flex w-max animate-marquee motion-reduce:animate-none">
-            <ClientMarks />
-            <ClientMarks />
+            <ClientMarks names={names} />
+            <ClientMarks names={names} />
           </div>
 
           <ul className="sr-only">
-            {clients.items.map((client) => (
-              <li key={client.id}>{client.name}</li>
+            {names.map((name) => (
+              <li key={name}>{name}</li>
             ))}
           </ul>
         </div>
@@ -54,8 +57,8 @@ export function Clients() {
     >
       <LandingSectionHeader
         id="landing-clients-title"
-        title={clients.title}
-        description={clients.description}
+        title={t('title')}
+        description={t('description')}
       />
     </LandingSection>
   );

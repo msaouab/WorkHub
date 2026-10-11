@@ -1,0 +1,233 @@
+{
+  "Metadata": {
+    "title": "WorkHub — Leave and papers, in one place",
+    "description": "Multi-tenant leave, holidays, and HR document requests for small and mid-size companies.",
+    "contactTitle": "Contact — WorkHub",
+    "signInTitle": "Sign in — WorkHub",
+    "signUpTitle": "Sign up — WorkHub",
+    "forgotPasswordTitle": "Forgot password — WorkHub",
+    "resetPasswordTitle": "Reset password — WorkHub",
+    "verifyEmailTitle": "Verify email — WorkHub",
+    "verifyEmailDescription": "Confirm your email to activate your WorkHub account.",
+    "appTitle": "Account — WorkHub",
+    "appDescription": "Your WorkHub account."
+  },
+  "Common": {
+    "loading": "Loading…",
+    "signingOut": "Signing out…",
+    "signingIn": "Signing in…",
+    "creatingAccount": "Creating account…",
+    "sending": "Sending…",
+    "language": "Language",
+    "account": "Account",
+    "unavailable": "Unavailable"
+  },
+  "Locale": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "Site": {
+    "brand": "WorkHub",
+    "nav": {
+      "product": "Product",
+      "contact": "Talk to us",
+      "signIn": "Sign in",
+      "signUp": "Sign up",
+      "signOut": "Sign out"
+    },
+    "footer": {
+      "tagline": "Leave, holidays, and HR documents for growing teams."
+    }
+  },
+  "Landing": {
+    "hero": {
+      "brand": "WorkHub",
+      "title": "Leave and papers, in one place",
+      "description": "One link to join your company, one screen to see who is off, one click to request a day off or a document.",
+      "imageAlt": "Bright open office with desks and natural light",
+      "primaryCta": "Start your space",
+      "secondaryCta": "See the product"
+    },
+    "problem": {
+      "title": "Leave still lives in spreadsheets and chat",
+      "description": "Balances drift, approvals get lost, and employees wait days for a salary certificate. WorkHub replaces the scattered trail with one clear path for every request."
+    },
+    "clients": {
+      "title": "Built for teams that outgrew the spreadsheet",
+      "description": "Studios, clinics, agencies, and growing companies across MENA and francophone markets — without a full HRIS.",
+      "items": {
+        "agency": "Agencies",
+        "clinic": "Clinics",
+        "studio": "Studios",
+        "retail": "Retail",
+        "saas": "SaaS",
+        "consulting": "Consulting"
+      }
+    },
+    "stats": {
+      "title": "Built around clear outcomes",
+      "description": "v1 targets and capacity — sized for small teams, not enterprise sprawl.",
+      "items": {
+        "onboard": "to onboard a ~20-person company",
+        "decision": "median request-to-decision target",
+        "members": "members supported per company space",
+        "roles": "roles — owner, admin, manager, employee",
+        "languages": "languages for HR papers (AR, FR, EN)",
+        "place": "for leave, holidays, and HR papers"
+      },
+      "suffixes": {
+        "onboard": " min",
+        "decision": " h",
+        "members": "+",
+        "roles": "",
+        "languages": "",
+        "place": " place"
+      }
+    },
+    "product": {
+      "title": "Built for how small teams actually work",
+      "description": "Spaces, invites, leave, holidays, and document requests — scoped by role from day one.",
+      "pillars": {
+        "leave-bank": {
+          "title": "Leave bank",
+          "description": "Balances by leave type, with team visibility so planning stays honest."
+        },
+        "approvals": {
+          "title": "Approvals with context",
+          "description": "Managers decide with comments and a full audit trail of every change."
+        },
+        "documents": {
+          "title": "HR papers",
+          "description": "Work certificates, salary letters, and payslip copies without email chase."
+        }
+      }
+    },
+    "path": {
+      "title": "From invite to decision, without the chase",
+      "steps": {
+        "join": {
+          "title": "Join your space",
+          "description": "Invite link, email invite, or verified company domain."
+        },
+        "request": {
+          "title": "Request in one click",
+          "description": "Time off or an HR paper — same clear flow for everyone."
+        },
+        "decide": {
+          "title": "Decide with a trail",
+          "description": "Approve, deny, comment — every decision stays visible."
+        }
+      }
+    },
+    "cta": {
+      "title": "Onboard a 20-person team in under 10 minutes",
+      "description": "WorkHub is built so leave and document requests move inside the product — with a median decision time under 24 hours.",
+      "primaryCta": "Talk to us",
+      "secondaryCta": "Explore features"
+    }
+  },
+  "Contact": {
+    "title": "Talk to us",
+    "description": "Tell us about your team. We’ll help you see if WorkHub fits leave and HR document workflows.",
+    "fields": {
+      "name": { "label": "Full name", "placeholder": "Alex Morgan" },
+      "email": { "label": "Work email", "placeholder": "alex@company.com" },
+      "company": { "label": "Company", "placeholder": "Acme Ltd" },
+      "message": {
+        "label": "How can we help?",
+        "placeholder": "Team size, current leave process, what you need…"
+      }
+    },
+    "submit": "Send message",
+    "successTitle": "Message received",
+    "successBody": "Thanks for reaching out. We’ll get back to you within one business day."
+  },
+  "Auth": {
+    "signIn": {
+      "title": "Welcome back",
+      "description": "Sign in to your WorkHub account.",
+      "submit": "Sign in",
+      "switchPrompt": "New here?",
+      "switchLink": "Create an account",
+      "forgotLink": "Forgot password?",
+      "verifiedBanner": "Email verified. You can sign in now.",
+      "resetBanner": "Password updated. Sign in with your new password."
+    },
+    "signUp": {
+      "title": "Create your account",
+      "description": "Start with email and password. You can invite your team later.",
+      "submit": "Create account",
+      "switchPrompt": "Already have an account?",
+      "switchLink": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "description": "Enter your email and we’ll send a reset link if an account exists.",
+      "submit": "Send reset link",
+      "successTitle": "Check your email",
+      "successBody": "If an account exists for {email}, we sent a link to reset your password. The link expires in 30 minutes.",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "description": "Use at least 10 characters. You’ll need to sign in again after this.",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "missingToken": "This reset link is missing or invalid. Request a new one to continue.",
+      "invalidToken": "This reset link is invalid or has expired. Request a new one to continue.",
+      "requestNewLink": "Request a new link",
+      "backToSignIn": "Back to sign in"
+    },
+    "verifyEmail": {
+      "title": "Check your email",
+      "description": "We sent a verification link to {email}. Open it to activate your account.",
+      "resend": "Resend verification email",
+      "resent": "Verification email sent again.",
+      "backToSignIn": "Back to sign in",
+      "missingEmail": "Missing email. Start from <link>sign up</link>."
+    },
+    "mailpitHint": "Locally, open Mailpit at http://localhost:8025 to read the message.",
+    "fields": {
+      "name": { "label": "Name", "placeholder": "Sara Benali" },
+      "email": { "label": "Email", "placeholder": "you@company.com" },
+      "password": { "label": "Password", "placeholder": "At least 10 characters" },
+      "confirmPassword": {
+        "label": "Confirm password",
+        "placeholder": "Repeat your new password"
+      },
+      "newPassword": {
+        "label": "New password",
+        "placeholder": "At least 10 characters"
+      }
+    },
+    "appShell": {
+      "title": "You’re signed in",
+      "description": "Spaces and invites come next. For now this confirms your session works.",
+      "signOut": "Sign out",
+      "checkingSession": "Checking session…",
+      "name": "Name",
+      "email": "Email",
+      "locale": "Language",
+      "emailVerified": "Email verified",
+      "yes": "Yes",
+      "no": "No"
+    }
+  },
+  "Validation": {
+    "fullName": "Enter your full name",
+    "workEmail": "Enter a valid work email",
+    "company": "Enter your company name",
+    "messageMin": "Tell us a bit more (at least 10 characters)",
+    "messageMax": "Message is too long",
+    "email": "Enter a valid email",
+    "passwordRequired": "Enter your password",
+    "passwordMax": "Password is too long",
+    "passwordMin": "Use at least {min} characters",
+    "nameMin": "Enter your name",
+    "nameMax": "Name is too long",
+    "confirmPassword": "Confirm your password",
+    "passwordMismatch": "Passwords do not match",
+    "invalidInput": "Invalid input"
+  }
+}

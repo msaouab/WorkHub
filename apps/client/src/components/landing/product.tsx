@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import {
   LandingItemText,
   LandingItemTitle,
@@ -5,25 +6,25 @@ import {
   LandingSectionBody,
   LandingSectionHeader,
 } from '@/components/landing/section';
-import { landingPage } from '@/content/landing';
+import { landingStructure } from '@/content/landing-structure';
 
-export function Product() {
-  const { product } = landingPage;
+export async function Product() {
+  const t = await getTranslations('Landing.product');
 
   return (
     <LandingSection id="product" aria-labelledby="landing-product-title">
       <LandingSectionHeader
         id="landing-product-title"
-        title={product.title}
-        description={product.description}
+        title={t('title')}
+        description={t('description')}
       />
 
       <LandingSectionBody>
         <ul className="grid gap-10 sm:grid-cols-3 sm:gap-8">
-          {product.pillars.map((pillar) => (
-            <li key={pillar.id} className="max-w-sm">
-              <LandingItemTitle>{pillar.title}</LandingItemTitle>
-              <LandingItemText>{pillar.description}</LandingItemText>
+          {landingStructure.product.pillarIds.map((id) => (
+            <li key={id} className="max-w-sm">
+              <LandingItemTitle>{t(`pillars.${id}.title`)}</LandingItemTitle>
+              <LandingItemText>{t(`pillars.${id}.description`)}</LandingItemText>
             </li>
           ))}
         </ul>

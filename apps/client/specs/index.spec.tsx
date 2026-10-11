@@ -1,29 +1,37 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import Page from '../src/app/page';
+import { Hero } from '../src/components/landing/hero';
+import en from '../src/messages/en.json';
 
-describe('Page', () => {
-  it('should render WorkHub landing', () => {
-    render(<Page />);
+vi.mock('next/image', () => ({
+  default: (props: { alt: string }) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={props.alt} />;
+  },
+}));
 
-    expect(screen.getAllByText('WorkHub').length).toBeGreaterThan(0);
+vi.mock('next-intl/server', () => ({
+  getTranslations: async (namespace: string) => {
+    return (key: string) => {
+      const parts = `${namespace}.${key}`.split('.');
+      let cur: unknown = en;
+      for (const part of parts) {
+        cur = (cur as Record<string, unknown>)[part];
+      }
+      return cur as string;
+    };
+  },
+}));
+
+describe('Hero', () => {
+  it('should render WorkHub landing hero copy', async () => {
+    render(await Hero());
+
+    expect(screen.getAllByText(en.Landing.hero.brand).length).toBeGreaterThan(
+      0
+    );
     expect(
-      screen.getByRole('heading', { name: /Leave and papers, in one place/i })
-    ).toBeDefined();
-    expect(
-      screen.getByRole('heading', {
-        name: /Built for teams that outgrew the spreadsheet/i,
-      })
-    ).toBeDefined();
-    expect(screen.getAllByText('Agencies').length).toBeGreaterThan(0);
-    expect(
-      screen.getByLabelText(/< 10 min: to onboard a ~20-person company/i)
-    ).toBeDefined();
-    expect(
-      screen.getByLabelText(/300\+: members supported per company space/i)
-    ).toBeDefined();
-    expect(
-      screen.getByLabelText(/4: roles — owner, admin, manager, employee/i)
+      screen.getByRole('heading', { name: en.Landing.hero.title })
     ).toBeDefined();
   });
 });

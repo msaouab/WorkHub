@@ -1,18 +1,18 @@
+import { getTranslations } from 'next-intl/server';
 import {
   LandingSection,
   LandingSectionHeader,
 } from '@/components/landing/section';
-import { landingPage } from '@/content/landing';
 
-export function Problem() {
-  const { problem } = landingPage;
+export async function Problem() {
+  const t = await getTranslations('Landing.problem');
 
   return (
     <LandingSection tone="muted">
       <LandingSectionHeader
         tone="muted"
-        title={problem.title}
-        description={problem.description}
+        title={t('title')}
+        description={t('description')}
       />
     </LandingSection>
   );

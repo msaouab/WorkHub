@@ -1,0 +1,98 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher';
+import { useMe } from '@/hooks/use-me';
+import { useRouter } from '@/i18n/navigation';
+import { authClient } from '@/lib/auth-client';
+
+export function AppHome() {
+  const t = useTranslations('Auth.appShell');
+  const tCommon = useTranslations('Common');
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { data: me, isPending: mePending, isError } = useMe();
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    if (!sessionPending && !session?.user) {
+      router.replace('/sign-in');
+    }
+  }, [session, sessionPending, router]);
+
+  async function onSignOut() {
+    setSigningOut(true);
+    await authClient.signOut();
+    setSigningOut(false);
+    router.replace('/');
+    router.refresh();
+  }
+
+  if (sessionPending || !session?.user) {
+    return (
+      <p className="text-sm text-muted-foreground" role="status">
+        {t('checkingSession')}
+      </p>
+    );
+  }
+
+  const user = me ?? {
+    name: session.user.name,
+    email: session.user.email,
+    locale: '…',
+    emailVerified: session.user.emailVerified,
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            {t('title')}
+          </h1>
+          <p className="mt-3 text-muted-foreground">{t('description')}</p>
+        </div>
+        <LocaleSwitcher />
+      </div>
+
+      <dl className="grid gap-3 rounded-xl border border-border/80 bg-background/90 p-5 text-sm">
+        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+          <dt className="text-muted-foreground">{t('name')}</dt>
+          <dd className="font-medium text-foreground">{user.name}</dd>
+        </div>
+        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+          <dt className="text-muted-foreground">{t('email')}</dt>
+          <dd className="font-medium text-foreground">{user.email}</dd>
+        </div>
+        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+          <dt className="text-muted-foreground">{t('locale')}</dt>
+          <dd className="font-medium text-foreground">
+            {mePending
+              ? tCommon('loading')
+              : isError
+                ? tCommon('unavailable')
+                : user.locale}
+          </dd>
+        </div>
+        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+          <dt className="text-muted-foreground">{t('emailVerified')}</dt>
+          <dd className="font-medium text-foreground">
+            {user.emailVerified ? t('yes') : t('no')}
+          </dd>
+        </div>
+      </dl>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full sm:w-auto sm:self-start"
+        disabled={signingOut}
+        onClick={onSignOut}
+      >
+        {signingOut ? tCommon('signingOut') : t('signOut')}
+      </Button>
+    </div>
+  );
+}

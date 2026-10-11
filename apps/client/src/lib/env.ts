@@ -48,3 +48,17 @@ export function apiUrl(path = ''): string {
   }
   return `${base}/${path.replace(/^\//, '')}`;
 }
+
+/** API origin only (Better Auth mounts at /api/auth on this host). */
+export function apiOrigin(): string {
+  return getClientEnv().NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+}
+
+/** Public web app origin (callback URLs, redirects). */
+export function appUrl(path = ''): string {
+  const base = getClientEnv().NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+  if (!path) {
+    return base;
+  }
+  return `${base}/${path.replace(/^\//, '')}`;
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   LandingItemText,
@@ -9,9 +10,9 @@ import {
 } from '@/components/landing/section';
 import {
   formatLandingStat,
-  landingPage,
-  type LandingStat,
-} from '@/content/landing';
+  landingStructure,
+  type LandingStatMetric,
+} from '@/content/landing-structure';
 
 const COUNT_DURATION_MS = 1100;
 
@@ -70,9 +71,13 @@ function useInViewOnce<T extends Element>(ref: RefObject<T | null>): boolean {
 
 function StatValue({
   stat,
+  label,
+  suffix,
   delayMs,
 }: {
-  stat: LandingStat;
+  stat: LandingStatMetric;
+  label: string;
+  suffix: string;
   delayMs: number;
 }) {
   const ref = useRef<HTMLParagraphElement>(null);
@@ -82,7 +87,7 @@ function StatValue({
   const display = formatLandingStat({
     prefix: stat.prefix,
     target: count,
-    suffix: stat.suffix,
+    suffix,
   });
 
   useEffect(() => {
@@ -125,7 +130,7 @@ function StatValue({
     <p
       ref={ref}
       className="font-display text-4xl font-semibold tracking-tight text-primary tabular-nums sm:text-5xl"
-      aria-label={`${formatLandingStat(stat)}: ${stat.label}`}
+      aria-label={`${formatLandingStat({ ...stat, suffix })}: ${label}`}
     >
       <span aria-hidden="true">{display}</span>
     </p>
@@ -133,28 +138,37 @@ function StatValue({
 }
 
 export function Stats() {
-  const { stats } = landingPage;
+  const t = useTranslations('Landing.stats');
 
   return (
     <LandingSection aria-labelledby="landing-stats-title" tone="muted">
       <LandingSectionHeader
         id="landing-stats-title"
         tone="muted"
-        title={stats.title}
-        description={stats.description}
+        title={t('title')}
+        description={t('description')}
       />
 
       <LandingSectionBody tone="muted">
         <dl className="grid gap-10 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-3">
-          {stats.items.map((stat, index) => (
-            <div key={stat.id} className="max-w-xs">
-              <dt className="sr-only">{stat.label}</dt>
-              <dd>
-                <StatValue stat={stat} delayMs={index * 100} />
-                <LandingItemText tone="muted">{stat.label}</LandingItemText>
-              </dd>
-            </div>
-          ))}
+          {landingStructure.stats.items.map((stat, index) => {
+            const label = t(`items.${stat.id}`);
+            const suffix = t(`suffixes.${stat.id}`);
+            return (
+              <div key={stat.id} className="max-w-xs">
+                <dt className="sr-only">{label}</dt>
+                <dd>
+                  <StatValue
+                    stat={stat}
+                    label={label}
+                    suffix={suffix}
+                    delayMs={index * 100}
+                  />
+                  <LandingItemText tone="muted">{label}</LandingItemText>
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       </LandingSectionBody>
     </LandingSection>

@@ -1,0 +1,233 @@
+{
+  "Metadata": {
+    "title": "WorkHub — Congés et documents, au même endroit",
+    "description": "Congés, jours fériés et demandes de documents RH multi-entreprises pour les PME.",
+    "contactTitle": "Contact — WorkHub",
+    "signInTitle": "Connexion — WorkHub",
+    "signUpTitle": "Inscription — WorkHub",
+    "forgotPasswordTitle": "Mot de passe oublié — WorkHub",
+    "resetPasswordTitle": "Réinitialiser le mot de passe — WorkHub",
+    "verifyEmailTitle": "Vérifier l’e-mail — WorkHub",
+    "verifyEmailDescription": "Confirmez votre e-mail pour activer votre compte WorkHub.",
+    "appTitle": "Compte — WorkHub",
+    "appDescription": "Votre compte WorkHub."
+  },
+  "Common": {
+    "loading": "Chargement…",
+    "signingOut": "Déconnexion…",
+    "signingIn": "Connexion…",
+    "creatingAccount": "Création du compte…",
+    "sending": "Envoi…",
+    "language": "Langue",
+    "account": "Compte",
+    "unavailable": "Indisponible"
+  },
+  "Locale": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "Site": {
+    "brand": "WorkHub",
+    "nav": {
+      "product": "Produit",
+      "contact": "Nous contacter",
+      "signIn": "Connexion",
+      "signUp": "Inscription",
+      "signOut": "Déconnexion"
+    },
+    "footer": {
+      "tagline": "Congés, jours fériés et documents RH pour les équipes en croissance."
+    }
+  },
+  "Landing": {
+    "hero": {
+      "brand": "WorkHub",
+      "title": "Congés et documents, au même endroit",
+      "description": "Un lien pour rejoindre votre entreprise, un écran pour voir qui est absent, un clic pour demander un jour de congé ou un document.",
+      "imageAlt": "Bureau lumineux et ouvert avec des bureaux et de la lumière naturelle",
+      "primaryCta": "Créer votre espace",
+      "secondaryCta": "Voir le produit"
+    },
+    "problem": {
+      "title": "Les congés vivent encore dans les tableurs et le chat",
+      "description": "Les soldes dérivent, les validations se perdent, et les collaborateurs attendent des jours pour une attestation de salaire. WorkHub remplace ce parcours dispersé par un chemin clair pour chaque demande."
+    },
+    "clients": {
+      "title": "Conçu pour les équipes qui ont dépassé le tableur",
+      "description": "Studios, cliniques, agences et entreprises en croissance au MENA et dans les marchés francophones — sans un SIRH complet.",
+      "items": {
+        "agency": "Agences",
+        "clinic": "Cliniques",
+        "studio": "Studios",
+        "retail": "Commerce",
+        "saas": "SaaS",
+        "consulting": "Conseil"
+      }
+    },
+    "stats": {
+      "title": "Construit autour de résultats clairs",
+      "description": "Objectifs et capacité v1 — dimensionnés pour les petites équipes, pas pour l’entreprise géante.",
+      "items": {
+        "onboard": "pour onboarder une entreprise d’environ 20 personnes",
+        "decision": "délai médian cible demande → décision",
+        "members": "membres supportés par espace entreprise",
+        "roles": "rôles — propriétaire, admin, manager, employé",
+        "languages": "langues pour les documents RH (AR, FR, EN)",
+        "place": "pour les congés, jours fériés et documents RH"
+      },
+      "suffixes": {
+        "onboard": " min",
+        "decision": " h",
+        "members": "+",
+        "roles": "",
+        "languages": "",
+        "place": " lieu"
+      }
+    },
+    "product": {
+      "title": "Conçu pour le vrai travail des petites équipes",
+      "description": "Espaces, invitations, congés, jours fériés et demandes de documents — avec des rôles dès le premier jour.",
+      "pillars": {
+        "leave-bank": {
+          "title": "Banque de congés",
+          "description": "Soldes par type de congé, avec visibilité d’équipe pour planifier honnêtement."
+        },
+        "approvals": {
+          "title": "Validations avec contexte",
+          "description": "Les managers décident avec des commentaires et une piste d’audit complète."
+        },
+        "documents": {
+          "title": "Documents RH",
+          "description": "Attestations de travail, certificats de salaire et copies de bulletins sans course aux e-mails."
+        }
+      }
+    },
+    "path": {
+      "title": "De l’invitation à la décision, sans relance",
+      "steps": {
+        "join": {
+          "title": "Rejoignez votre espace",
+          "description": "Lien d’invitation, invitation e-mail, ou domaine d’entreprise vérifié."
+        },
+        "request": {
+          "title": "Demandez en un clic",
+          "description": "Congé ou document RH — le même parcours clair pour tous."
+        },
+        "decide": {
+          "title": "Décidez avec une trace",
+          "description": "Approuver, refuser, commenter — chaque décision reste visible."
+        }
+      }
+    },
+    "cta": {
+      "title": "Onboardez une équipe de 20 personnes en moins de 10 minutes",
+      "description": "WorkHub est conçu pour que les congés et documents avancent dans le produit — avec un délai médian de décision sous 24 heures.",
+      "primaryCta": "Nous contacter",
+      "secondaryCta": "Explorer les fonctionnalités"
+    }
+  },
+  "Contact": {
+    "title": "Nous contacter",
+    "description": "Parlez-nous de votre équipe. Nous verrons si WorkHub convient à vos congés et documents RH.",
+    "fields": {
+      "name": { "label": "Nom complet", "placeholder": "Alex Morgan" },
+      "email": { "label": "E-mail professionnel", "placeholder": "alex@entreprise.com" },
+      "company": { "label": "Entreprise", "placeholder": "Acme SARL" },
+      "message": {
+        "label": "Comment pouvons-nous vous aider ?",
+        "placeholder": "Taille d’équipe, processus actuel, besoins…"
+      }
+    },
+    "submit": "Envoyer le message",
+    "successTitle": "Message reçu",
+    "successBody": "Merci pour votre message. Nous vous répondrons sous un jour ouvré."
+  },
+  "Auth": {
+    "signIn": {
+      "title": "Bon retour",
+      "description": "Connectez-vous à votre compte WorkHub.",
+      "submit": "Se connecter",
+      "switchPrompt": "Nouveau ici ?",
+      "switchLink": "Créer un compte",
+      "forgotLink": "Mot de passe oublié ?",
+      "verifiedBanner": "E-mail vérifié. Vous pouvez vous connecter.",
+      "resetBanner": "Mot de passe mis à jour. Connectez-vous avec le nouveau."
+    },
+    "signUp": {
+      "title": "Créer votre compte",
+      "description": "Commencez avec e-mail et mot de passe. Vous pourrez inviter votre équipe ensuite.",
+      "submit": "Créer le compte",
+      "switchPrompt": "Vous avez déjà un compte ?",
+      "switchLink": "Se connecter"
+    },
+    "forgotPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "description": "Entrez votre e-mail : nous enverrons un lien si un compte existe.",
+      "submit": "Envoyer le lien",
+      "successTitle": "Vérifiez votre e-mail",
+      "successBody": "Si un compte existe pour {email}, nous avons envoyé un lien pour réinitialiser le mot de passe. Le lien expire dans 30 minutes.",
+      "backToSignIn": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Choisissez un nouveau mot de passe",
+      "description": "Au moins 10 caractères. Vous devrez vous reconnecter ensuite.",
+      "submit": "Mettre à jour",
+      "submitting": "Mise à jour…",
+      "missingToken": "Ce lien de réinitialisation est manquant ou invalide. Demandez-en un nouveau.",
+      "invalidToken": "Ce lien est invalide ou a expiré. Demandez-en un nouveau.",
+      "requestNewLink": "Demander un nouveau lien",
+      "backToSignIn": "Retour à la connexion"
+    },
+    "verifyEmail": {
+      "title": "Vérifiez votre e-mail",
+      "description": "Nous avons envoyé un lien de vérification à {email}. Ouvrez-le pour activer votre compte.",
+      "resend": "Renvoyer l’e-mail de vérification",
+      "resent": "E-mail de vérification renvoyé.",
+      "backToSignIn": "Retour à la connexion",
+      "missingEmail": "E-mail manquant. Commencez par <link>l’inscription</link>."
+    },
+    "mailpitHint": "En local, ouvrez Mailpit sur http://localhost:8025 pour lire le message.",
+    "fields": {
+      "name": { "label": "Nom", "placeholder": "Sara Benali" },
+      "email": { "label": "E-mail", "placeholder": "vous@entreprise.com" },
+      "password": { "label": "Mot de passe", "placeholder": "Au moins 10 caractères" },
+      "confirmPassword": {
+        "label": "Confirmer le mot de passe",
+        "placeholder": "Répétez le nouveau mot de passe"
+      },
+      "newPassword": {
+        "label": "Nouveau mot de passe",
+        "placeholder": "Au moins 10 caractères"
+      }
+    },
+    "appShell": {
+      "title": "Vous êtes connecté",
+      "description": "Les espaces et invitations viennent ensuite. Pour l’instant, cela confirme que votre session fonctionne.",
+      "signOut": "Se déconnecter",
+      "checkingSession": "Vérification de la session…",
+      "name": "Nom",
+      "email": "E-mail",
+      "locale": "Langue",
+      "emailVerified": "E-mail vérifié",
+      "yes": "Oui",
+      "no": "Non"
+    }
+  },
+  "Validation": {
+    "fullName": "Entrez votre nom complet",
+    "workEmail": "Entrez un e-mail professionnel valide",
+    "company": "Entrez le nom de votre entreprise",
+    "messageMin": "Donnez un peu plus de détails (au moins 10 caractères)",
+    "messageMax": "Le message est trop long",
+    "email": "Entrez un e-mail valide",
+    "passwordRequired": "Entrez votre mot de passe",
+    "passwordMax": "Le mot de passe est trop long",
+    "passwordMin": "Utilisez au moins {min} caractères",
+    "nameMin": "Entrez votre nom",
+    "nameMax": "Le nom est trop long",
+    "confirmPassword": "Confirmez votre mot de passe",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "invalidInput": "Saisie invalide"
+  }
+}

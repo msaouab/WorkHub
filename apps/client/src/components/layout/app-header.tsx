@@ -1,32 +1,32 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { AuthNav } from '@/components/auth/auth-nav';
 import { Logo } from '@/components/brand/logo';
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher';
 import { buttonVariants } from '@/components/ui/button-variants';
-import { site } from '@/content/site';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
-export function AppHeader() {
+export async function AppHeader() {
+  const t = await getTranslations('Site.nav');
+
   return (
     <header className="border-b border-border/80 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6 sm:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-6 sm:px-8">
         <Link href="/" className="rounded-lg">
           <Logo />
         </Link>
         <nav className="flex items-center gap-2">
           <Link
-            href={site.nav.product.href}
+            href="/"
             className={cn(
               buttonVariants({ variant: 'ghost' }),
               'hidden sm:inline-flex'
             )}
           >
-            {site.nav.product.label}
+            {t('product')}
           </Link>
-          <Link
-            href={site.nav.contact.href}
-            className={cn(buttonVariants({ variant: 'default' }))}
-          >
-            {site.nav.contact.label}
-          </Link>
+          <LocaleSwitcher />
+          <AuthNav />
         </nav>
       </div>
     </header>

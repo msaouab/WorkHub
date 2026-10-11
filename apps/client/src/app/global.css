@@ -10,6 +10,7 @@
     --font-heading: var(--font-display-loaded), ui-sans-serif, system-ui, sans-serif;
     --font-display: var(--font-display-loaded), ui-sans-serif, system-ui, sans-serif;
     --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
+    --font-arabic: var(--font-arabic-loaded), var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
     --animate-rise: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
     --animate-fade: fade 1.1s ease both;
     --animate-ken: ken 18s ease-out both;
@@ -181,6 +182,15 @@
 
   html {
     @apply font-sans scroll-smooth;
+  }
+
+  .font-arabic {
+    font-family: var(--font-arabic);
+  }
+
+  .font-arabic .font-display,
+  .font-arabic .font-heading {
+    font-family: var(--font-arabic);
   }
 }
 

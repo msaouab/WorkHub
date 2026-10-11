@@ -1,14 +1,15 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { buttonVariants } from '@/components/ui/button-variants';
 import {
   LandingSection,
   LandingSectionHeader,
 } from '@/components/landing/section';
-import { landingPage } from '@/content/landing';
+import { landingStructure } from '@/content/landing-structure';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
-export function FinalCta() {
-  const { cta } = landingPage;
+export async function FinalCta() {
+  const t = await getTranslations('Landing.cta');
 
   return (
     <LandingSection
@@ -23,25 +24,25 @@ export function FinalCta() {
     >
       <LandingSectionHeader
         tone="soft"
-        title={cta.title}
-        description={cta.description}
+        title={t('title')}
+        description={t('description')}
       />
       <div className="mt-10 flex flex-wrap items-center gap-3">
         <Link
-          href={cta.primaryCta.href}
+          href={landingStructure.cta.primaryCtaHref}
           className={cn(buttonVariants({ size: 'lg' }), 'px-6')}
         >
-          {cta.primaryCta.label}
+          {t('primaryCta')}
         </Link>
-        <Link
-          href={cta.secondaryCta.href}
+        <a
+          href={landingStructure.cta.secondaryCtaHref}
           className={cn(
             buttonVariants({ size: 'lg', variant: 'outline' }),
             'px-6'
           )}
         >
-          {cta.secondaryCta.label}
-        </Link>
+          {t('secondaryCta')}
+        </a>
       </div>
     </LandingSection>
   );

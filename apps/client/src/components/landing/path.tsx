@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import {
   LandingItemText,
   LandingItemTitle,
@@ -5,32 +6,37 @@ import {
   LandingSectionBody,
   LandingSectionHeader,
 } from '@/components/landing/section';
-import { formatStepNumber, landingPage } from '@/content/landing';
+import {
+  formatStepNumber,
+  landingStructure,
+} from '@/content/landing-structure';
 
-export function Path() {
-  const { path } = landingPage;
+export async function Path() {
+  const t = await getTranslations('Landing.path');
 
   return (
     <LandingSection aria-labelledby="landing-path-title" tone="inverse">
       <LandingSectionHeader
         id="landing-path-title"
         tone="inverse"
-        title={path.title}
+        title={t('title')}
       />
 
       <LandingSectionBody tone="inverse">
         <ol className="grid gap-10 sm:grid-cols-3 sm:gap-8">
-          {path.steps.map((step, index) => (
-            <li key={step.id}>
+          {landingStructure.path.stepIds.map((id, index) => (
+            <li key={id}>
               <p
                 aria-hidden
                 className="font-display text-sm tracking-[0.2em] text-primary-foreground/60"
               >
                 {formatStepNumber(index)}
               </p>
-              <LandingItemTitle className="mt-3">{step.title}</LandingItemTitle>
+              <LandingItemTitle className="mt-3">
+                {t(`steps.${id}.title`)}
+              </LandingItemTitle>
               <LandingItemText tone="inverse">
-                {step.description}
+                {t(`steps.${id}.description`)}
               </LandingItemText>
             </li>
           ))}

@@ -29,7 +29,7 @@ async function generate() {
     abortOnError: true,
   });
 
-  const document = buildOpenApiDocument(app, { appUrl: OPENAPI_SERVER_URL });
+  const document = await buildOpenApiDocument(app, { appUrl: OPENAPI_SERVER_URL });
 
   const outPath = join(__dirname, '..', 'openapi.json');
   writeFileSync(outPath, `${JSON.stringify(document, null, 2)}\n`, 'utf8');

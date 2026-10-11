@@ -55,8 +55,8 @@ async function bootstrap() {
 
   if (swaggerEnabled) {
     // Swagger UI assets resolve from node_modules (webpack externalDependencies: 'none' + pnpm-safe externals).
-    const documentFactory = () => buildOpenApiDocument(app, { appUrl });
-    SwaggerModule.setup(swaggerPath, app, documentFactory);
+    const document = await buildOpenApiDocument(app, { appUrl });
+    SwaggerModule.setup(swaggerPath, app, document);
   }
 
   await app.listen(port, host);

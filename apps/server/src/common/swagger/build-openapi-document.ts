@@ -1,8 +1,15 @@
 import type { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import {
+  DocumentBuilder,
+  type OpenAPIObject,
+  SwaggerModule,
+} from '@nestjs/swagger';
+import { AuthService } from '@thallesp/nestjs-better-auth';
+import { AUTH_BASE_PATH, type Auth } from '@work-hub/auth';
 import { problemDetailsSchema } from '@work-hub/contracts';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { z } from 'zod';
+import { mergeAuthOpenApi, SESSION_SECURITY } from './merge-auth-openapi';
 import { OPENAPI_SERVER_URL } from './openapi.constants';
 
 export type BuildOpenApiOptions = {
@@ -12,18 +19,23 @@ export type BuildOpenApiOptions = {
   version?: string;
 };
 
-export function buildOpenApiDocument(
+export async function buildOpenApiDocument(
   app: INestApplication,
-  options: BuildOpenApiOptions = {}
-): OpenAPIObject {
+  options: BuildOpenApiOptions = {},
+): Promise<OpenAPIObject> {
   const config = new DocumentBuilder()
     .setTitle(options.title ?? 'WorkHub API')
     .setDescription(
-      'REST API for leave, holidays, and HR document requests. Space-scoped routes live under /api/v1/spaces/{spaceId}. Errors use RFC 9457 problem+json with a stable `code`.'
+      'REST API for leave, holidays, and HR document requests. Space-scoped routes live under /api/v1/spaces/{spaceId}. Errors use RFC 9457 problem+json with a stable `code`.',
     )
     .setVersion(options.version ?? '1.0')
     .addServer(options.appUrl ?? OPENAPI_SERVER_URL)
-    // Cookie session auth (SRS NFR-06) will use addCookieAuth when the auth module lands.
+    // Session cookie set by Better Auth on sign-in (HttpOnly; the browser sends it automatically).
+    .addCookieAuth(
+      'better-auth.session_token',
+      { type: 'apiKey', in: 'cookie' },
+      SESSION_SECURITY,
+    )
     .addTag('health')
     .build();
 
@@ -40,7 +52,9 @@ export function buildOpenApiDocument(
     ProblemDetails: zodToOpenApiSchema(problemDetailsSchema),
   };
 
-  return cleanupOpenApiDoc(document);
+  const auth = app.get<AuthService<Auth>>(AuthService).instance;
+  const authDoc = await auth.api.generateOpenAPISchema();
+  return mergeAuthOpenApi(cleanupOpenApiDoc(document), authDoc, AUTH_BASE_PATH);
 }
 
 /** Unwrap Zod 4 `toJSONSchema` `$ref` + `definitions` into a plain OpenAPI schema object. */

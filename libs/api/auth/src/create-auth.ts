@@ -2,7 +2,11 @@ import type { PrismaService } from '@work-hub/database';
 import type { MailService } from '@work-hub/mail';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { openAPI } from 'better-auth/plugins';
 import { passwordHasher } from './password';
+
+/** Where Better Auth's routes are mounted. Also used to prefix them in Swagger. */
+export const AUTH_BASE_PATH = '/api/auth';
 
 export type AuthConfig = {
   /** Public URL of this API, e.g. http://localhost:3333 */
@@ -12,6 +16,29 @@ export type AuthConfig = {
   /** Browser origins allowed to call auth endpoints (CSRF protection) */
   trustedOrigins: string[];
 };
+
+/**
+ * Better Auth routes we don't expose (they return 404 and are left out of Swagger).
+ * Re-enable a route by deleting it here, e.g. the social ones in Step 5.
+ */
+const DISABLED_PATHS = [
+  // Not needed: we sign in with OAuth providers but never call their APIs.
+  '/get-access-token',
+  '/refresh-token',
+  '/account-info',
+  '/update-session', // no custom session data
+  '/ok', // /health/* covers this
+  '/open-api/generate-schema', // Swagger reads it internally
+  // Later: Step 5 (OAuth providers)
+  '/sign-in/social',
+  '/link-social',
+  '/unlink-account',
+  // Later: needs its own design
+  '/change-email', // must verify the new address
+  '/delete-user', // GDPR flow (NFR-08)
+  '/delete-user/callback',
+  '/verify-password', // re-auth for sensitive actions
+];
 
 export function createAuth({
   prisma,
@@ -25,7 +52,7 @@ export function createAuth({
   return betterAuth({
     appName: 'WorkHub',
     baseURL: config.baseUrl,
-    basePath: '/api/auth',
+    basePath: AUTH_BASE_PATH,
     secret: config.secret,
     trustedOrigins: config.trustedOrigins,
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
@@ -70,6 +97,9 @@ export function createAuth({
         '/request-password-reset': { window: 60, max: 3 },
       },
     },
+    // Describes the auth routes as OpenAPI; merged into our Swagger page (no separate reference page).
+    plugins: [openAPI({ disableDefaultReference: true })],
+    disabledPaths: DISABLED_PATHS,
   });
 }
 

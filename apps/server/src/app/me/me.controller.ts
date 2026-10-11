@@ -1,10 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import type { Auth } from '@work-hub/auth';
 import { PROBLEM_DETAILS_REF } from '../../common/swagger/build-openapi-document';
+import { SESSION_SECURITY } from '../../common/swagger/merge-auth-openapi';
 
 @ApiTags('me')
+@ApiCookieAuth(SESSION_SECURITY)
 @Controller('me')
 export class MeController {
   @Get()

@@ -6,6 +6,11 @@ import { hash, verify } from '@node-rs/argon2';
  */
 export const passwordHasher = {
   hash: (password: string): Promise<string> => hash(password),
-  verify: ({ hash: digest, password }: { hash: string; password: string }): Promise<boolean> =>
-    verify(digest, password),
+  verify: ({
+    hash: digest,
+    password,
+  }: {
+    hash: string;
+    password: string;
+  }): Promise<boolean> => verify(digest, password),
 };

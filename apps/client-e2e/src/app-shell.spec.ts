@@ -16,7 +16,9 @@ async function signIn(
 }
 
 test.describe('app shell (WH-053)', () => {
-  test('owner sees full nav; member has no Manage', async ({ page }) => {
+  test('owner sees full nav and every item opens its route', async ({
+    page,
+  }) => {
     await signIn(page, 'owner@workhub.test');
     await page.goto('/en/s/acme');
 
@@ -29,14 +31,39 @@ test.describe('app shell (WH-053)', () => {
     await expect(desktop.getByText('Manage', { exact: true })).toBeVisible();
     await expect(nav.getByRole('link', { name: /Settings/ })).toBeVisible();
 
-    await nav.getByRole('link', { name: /My leave/ }).click();
-    await expect(page).toHaveURL(/\/en\/s\/acme\/leave/);
-    await expect(
-      page.getByRole('heading', { name: 'My leave' })
-    ).toBeVisible();
-    await expect(
-      page.getByText("We're building this. It'll be ready soon.")
-    ).toBeVisible();
+    const routes: { path: string; heading: string; soon?: boolean }[] = [
+      { path: '/en/s/acme/leave', heading: 'My leave', soon: true },
+      { path: '/en/s/acme/calendar', heading: 'Team calendar', soon: true },
+      { path: '/en/s/acme/holidays', heading: 'Holidays', soon: true },
+      { path: '/en/s/acme/documents', heading: 'Documents', soon: true },
+      { path: '/en/s/acme/people', heading: 'People', soon: true },
+      { path: '/en/s/acme/approvals', heading: 'Approvals', soon: true },
+      { path: '/en/s/acme/invites', heading: 'Invites', soon: true },
+      {
+        path: '/en/s/acme/roles',
+        heading: 'Roles and permissions',
+        soon: true,
+      },
+      { path: '/en/s/acme/teams', heading: 'Teams', soon: true },
+      {
+        path: '/en/s/acme/leave-policies',
+        heading: 'Leave policies',
+        soon: true,
+      },
+      { path: '/en/s/acme/settings', heading: 'Workspace settings' },
+    ];
+
+    for (const item of routes) {
+      await page.goto(item.path);
+      await expect(
+        page.getByRole('heading', { name: item.heading })
+      ).toBeVisible();
+      if (item.soon) {
+        await expect(
+          page.getByText("We're building this. It'll be ready soon.")
+        ).toBeVisible();
+      }
+    }
   });
 
   test('member has no Manage; roles URL is no access', async ({ page }) => {

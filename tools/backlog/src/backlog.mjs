@@ -181,8 +181,9 @@ export function hookContext({ event, tickets, problems, pending }) {
     for (const { ticket, reason } of pending) lines.push(`- ${ticket.id} (P${ticket.priority}) ${ticket.title}: ${reason}`);
     lines.push(
       'For each: check acceptance criteria + Definition of Done (code, `pnpm nx run-many -t typecheck lint test`, running app).',
-      'Committed and passing → delete the ticket + its Review tracker row. Otherwise → dated 🔁 Review entry + tracker row.',
-      'Then run `pnpm backlog --mark-reviewed <IDs>` and `pnpm backlog` (must print ✓). Tell the user what you found.'
+      'Correct, committed and passing with no feedback → delete the ticket + its Review tracker row.',
+      'Otherwise → set its status to `in progress`, add a dated 🔁 Review entry with a checklist, and delete its tracker row.',
+      'Then run `pnpm backlog` (must print ✓). Tell the user what you found.'
     );
   } else if (event === 'session-start' && queue.length) {
     lines.push(`${queue.length} ticket(s) under review, all reviewed since their last change: ${queue.map((t) => t.id).join(', ')}.`);

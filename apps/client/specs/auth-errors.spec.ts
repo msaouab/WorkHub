@@ -4,7 +4,6 @@ import { authErrorKey, authErrorMessage } from '../src/lib/auth-errors';
 const messages = {
   INVALID_EMAIL_OR_PASSWORD: 'Invalid email or password',
   EMAIL_NOT_VERIFIED: 'Email not verified',
-  USER_ALREADY_EXISTS: 'Account already exists',
   PASSWORD_TOO_SHORT: 'Password is too short',
   INVALID_TOKEN: 'Invalid or expired link',
   TOO_MANY_REQUESTS: 'Too many attempts',
@@ -20,9 +19,6 @@ describe('authErrorKey', () => {
     );
     expect(authErrorKey({ code: 'EMAIL_NOT_VERIFIED' })).toBe(
       'EMAIL_NOT_VERIFIED'
-    );
-    expect(authErrorKey({ code: 'USER_ALREADY_EXISTS' })).toBe(
-      'USER_ALREADY_EXISTS'
     );
   });
 

@@ -10,8 +10,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { Logger as PinoLogger } from 'nestjs-pino';
-import { AppModule } from './app/app.module';
-import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
+import { AppModule } from './app.module';
+import { buildOpenApiDocument } from './swagger/build-openapi-document';
 import type { AppConfig } from './config/configuration';
 import { ObserveInstrument } from './observe';
 

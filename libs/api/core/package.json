@@ -1,0 +1,31 @@
+{
+  "name": "@work-hub/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "@work-hub/source": "./src/index.ts",
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "nx": {
+    "tags": ["scope:api", "type:util"]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/throttler": "^6.7.1",
+    "@work-hub/constants": "workspace:^",
+    "@work-hub/contracts": "workspace:^",
+    "nestjs-zod": "^5.5.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "vitest": "~5.0.1"
+  }
+}

@@ -22,11 +22,11 @@ export function AppHome() {
     );
   }
 
-  const user = me ?? {
-    name: sessionUser.name,
-    email: sessionUser.email,
-    locale: '…',
-    emailVerified: sessionUser.emailVerified,
+  const user = {
+    name: me?.name ?? sessionUser.name,
+    email: me?.email ?? sessionUser.email,
+    locale: me?.locale,
+    emailVerified: me?.emailVerified ?? sessionUser.emailVerified,
   };
 
   return (

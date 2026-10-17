@@ -5,6 +5,13 @@ import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth-client';
 
+/** Shared across every `useAuth()` call so sign-out and the auth guard agree. */
+let signingOut = false;
+
+export function isSigningOutSession() {
+  return signingOut;
+}
+
 export function useAuth() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -14,15 +21,18 @@ export function useAuth() {
 
   async function signOut() {
     setIsSigningOut(true);
+    signingOut = true;
     try {
       const result = await authClient.signOut();
       if (result.error) {
         return;
       }
       queryClient.clear();
-      router.replace('/');
+      // One destination only — `useRequireAuth` skips its own redirect while this runs.
+      router.replace('/sign-in');
       router.refresh();
     } finally {
+      signingOut = false;
       setIsSigningOut(false);
     }
   }

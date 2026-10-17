@@ -1,5 +1,4 @@
 import '../global.css';
-import { type Locale } from '@work-hub/constants';
 import { Figtree, IBM_Plex_Sans_Arabic, Syne } from 'next/font/google';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -38,12 +37,11 @@ export default async function LocaleLayout({
   children,
   params,
 }: LocaleLayoutProps) {
-  const { locale: rawLocale } = await params;
-  if (!hasLocale(routing.locales, rawLocale)) {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
-  const locale = rawLocale as Locale;
   setRequestLocale(locale);
   const messages = await getMessages();
   const dir = localeDirection(locale);

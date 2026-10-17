@@ -191,7 +191,6 @@
     "errors": {
       "INVALID_EMAIL_OR_PASSWORD": "البريد أو كلمة المرور غير صحيحة.",
       "EMAIL_NOT_VERIFIED": "البريد غير مؤكَّد.",
-      "USER_ALREADY_EXISTS": "يوجد حساب بهذا البريد بالفعل.",
       "PASSWORD_TOO_SHORT": "كلمة المرور قصيرة جدًا.",
       "INVALID_TOKEN": "هذا الرابط غير صالح أو منتهي.",
       "TOO_MANY_REQUESTS": "محاولات كثيرة. انتظر دقيقة ثم أعد المحاولة.",

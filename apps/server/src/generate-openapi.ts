@@ -10,9 +10,9 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { AppModule } from './app/app.module';
-import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
-import { OPENAPI_SERVER_URL } from './common/swagger/openapi.constants';
+import { AppModule } from './app.module';
+import { buildOpenApiDocument } from './swagger/build-openapi-document';
+import { OPENAPI_SERVER_URL } from './swagger/openapi.constants';
 
 function applyGeneratorEnvDefaults(): void {
   process.env.NODE_ENV ??= 'development';

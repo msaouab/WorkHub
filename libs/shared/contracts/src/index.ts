@@ -14,3 +14,17 @@ export {
   type MeResponse,
   type UpdateMe,
 } from './me';
+export {
+  createSpaceSchema,
+  membershipStatusSchema,
+  meSpaceSchema,
+  meSpacesResponseSchema,
+  spaceResponseSchema,
+  spaceRoleSchema,
+  spaceSlugSchema,
+  type CreateSpace,
+  type MeSpace,
+  type MeSpacesResponse,
+  type SpaceResponse,
+  type SpaceRole,
+} from './spaces';

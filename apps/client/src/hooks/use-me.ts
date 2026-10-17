@@ -6,17 +6,11 @@ import { fetchMe } from '@/lib/api/me';
 import { queryKeys } from '@/lib/api/query-keys';
 
 export function useMe() {
-  const { isSignedIn, isPending: sessionPending } = useAuth();
+  const { isSignedIn } = useAuth();
 
-  const query = useQuery({
+  return useQuery({
     queryKey: queryKeys.me,
     queryFn: fetchMe,
     enabled: isSignedIn,
   });
-
-  return {
-    ...query,
-    sessionPending,
-    signedIn: isSignedIn,
-  };
 }

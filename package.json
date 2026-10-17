@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "nx run @work-hub/source:dev",
+    "dev": "node tools/dev/src/cli.mjs check && nx run @work-hub/source:dev",
+    "dev:reset": "node tools/dev/src/cli.mjs reset",
     "dev:client": "nx dev @work-hub/client",
     "dev:server": "nx serve server",
     "build": "nx run-many -t build --projects=@work-hub/client,server",

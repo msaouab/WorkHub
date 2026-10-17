@@ -37,10 +37,19 @@
   ],
   "references": [
     {
+      "path": "../../libs/api/users"
+    },
+    {
+      "path": "../../libs/api/spaces"
+    },
+    {
       "path": "../../libs/api/mail"
     },
     {
       "path": "../../libs/api/database"
+    },
+    {
+      "path": "../../libs/api/core"
     },
     {
       "path": "../../libs/shared/contracts"

@@ -25,13 +25,72 @@ model User {
   emailVerified Boolean   @default(false) @map("email_verified")
   image         String?
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   sessions      Session[]
   accounts      Account[]
+  memberships   Membership[]
 
   locale        Locale    @default(en)
 
   @@map("users")
+}
+
+enum MembershipStatus {
+  active
+  deactivated
+}
+
+model Space {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  name          String
+  slug          String    @unique @db.Citext
+  defaultRoleId String?   @unique @map("default_role_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  defaultRole Role?         @relation("SpaceDefaultRole", fields: [defaultRoleId], references: [id], onDelete: Restrict)
+  roles       Role[]        @relation("SpaceRoles")
+  memberships Membership[]
+
+  @@map("spaces")
+}
+
+model Role {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  spaceId     String   @map("space_id") @db.Uuid
+  name        String
+  permissions String[]
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  space           Space         @relation("SpaceRoles", fields: [spaceId], references: [id], onDelete: Cascade)
+  defaultForSpace Space?        @relation("SpaceDefaultRole")
+  memberships     Membership[]
+
+  @@unique([spaceId, name])
+  @@index([spaceId])
+  @@map("roles")
+}
+
+model Membership {
+  id        String           @id @default(uuid(7)) @db.Uuid
+  spaceId   String           @map("space_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  roleId    String           @map("role_id") @db.Uuid
+  status    MembershipStatus @default(active)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role  Role  @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([spaceId, userId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("memberships")
 }
 
 model Session {

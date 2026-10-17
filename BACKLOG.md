@@ -13,27 +13,27 @@ All tickets are in **one list, sorted by priority** (P0 → P3), **then by statu
 |---|---|---|
 | `start` | Created, not touched yet | Whoever creates the ticket |
 | `in progress` | Someone started, or touched code in this ticket's scope | You, or Claude when it sees changes in that scope |
-| `under-review` | You consider it finished | **You** |
-| `done` | Reviewed against the Definition of Done **and committed** | **Claude**, which then **deletes the ticket from this file** |
+| `under-review` | You consider it finished and want it reviewed | **You** |
+| `done` | Reviewed with no feedback against the Definition of Done **and committed** | **Claude**, which then **deletes the ticket from this file** |
 
 ```
 start ──▶ in progress ──▶ under-review ──▶ done  (ticket deleted; history lives in git)
                 ▲               │
-                └── changes ────┘   (review found issues: the ticket stays
-                    requested        under-review with a feedback list)
+                └── changes ────┘   (review found issues: the ticket goes back to
+                    requested        `in progress` with a dated feedback checklist)
 ```
 
 **Review rules (Claude's job):** for each ticket with status `under-review`:
 1. Check every acceptance criterion and the Definition of Done: read the code, run `pnpm nx run-many -t typecheck lint test`, and check the running app for user-facing work.
-2. **All good and committed** → the ticket is **deleted** from this file, along with its Review tracker row. Its history stays in git through the ticket ID in the commit message.
-3. **Not done** → the ticket stays `under-review`, gets a dated **Review** entry marked 🔁 *changes requested* with a checklist, and its Review tracker row is updated. When the fixes land, it's reviewed again.
+2. **Correct, committed, and no feedback at all** → the ticket is **deleted** from this file, along with its Review tracker row. Its history stays in git through the ticket ID in the commit message.
+3. **Any feedback** → the ticket goes back to **`in progress`**, gets a dated **Review** entry marked 🔁 *changes requested* with a checklist, and its Review tracker row is deleted. When the fixes land, set it to `under-review` again and it gets reviewed again.
 4. New problems outside the ticket's scope become new `start` tickets, placed by priority.
 
-**Automatic tracking:** Claude Code hooks (`.claude/settings.json`) run the tracker at the start of each session and on every message. When an `under-review` ticket changed since its last review (its text was edited, or new work was committed), or the file breaks a rule, Claude is told and reviews it. After reviewing, Claude records it with `pnpm backlog --mark-reviewed <IDs>`.
+**Automatic tracking:** Claude Code hooks (`.claude/settings.json`) run the tracker at the start of each session and on every message. When a ticket is `under-review` and hasn't been reviewed since its last change, or the file breaks a rule, Claude is told and reviews it. Each review either deletes the ticket or sends it back to `in progress`. (`pnpm backlog --mark-reviewed <IDs>` is still there for the rare ticket that has to stay under review, e.g. while waiting on a commit.)
 
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also catches format mistakes: unknown or `done` status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-038**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-047**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -84,13 +84,6 @@ A ticket moves to **Done** only when all of these hold. Problems found during re
 - `pnpm nx run-many -t typecheck lint test` is green with **0 warnings**.
 - Committed, with the ticket ID in the commit message (e.g. `WH-002: …`), so `git log --grep WH-002` finds it.
 
-**Roadmap (from the plan we agreed):** one feature at a time, backend and frontend together:
-1. Login UI + frontend foundation (translations, RTL, hooks). **Current milestone**
-2. Workspaces, roles, memberships (+ per-workspace data isolation)
-3. Invites (email and link, expiry, default role)
-4. Permissions management
-5. OAuth sign-in (Google, GitHub, Microsoft, GitLab)
-
 ---
 
 ## Review tracker
@@ -99,19 +92,13 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 | Ticket | Under review since | Last review | Result | Open feedback |
 |---|---|---|---|---|
-| WH-035 · Backlog workflow and `pnpm backlog` tracker | 2026-10-17 | 2026-10-17 | 🔁 hooks added; commit + confirm in a new session | 1 |
-| WH-001 · Finish moving the web app to language URLs (`/en`, `/fr`, `/ar`) | 2026-10-17 | 2026-10-17 | 🔁 changes requested: remove `as Locale` cast | 4 |
-| WH-002 · Bug: unverified users hit a dead end on sign-in | 2026-10-17 | 2026-10-17 | 🔁 committed; browser check pending | 1 |
-| WH-033 · Bug: sign-in and sign-up errors are always in English | 2026-10-17 | 2026-10-17 | 🔁 changes requested: remove dead `USER_ALREADY_EXISTS`, browser check | 4 |
-| WH-031 · Show/hide password button on password fields | 2026-10-17 | 2026-10-17 | 🔁 committed; browser check pending | 3 |
-| WH-034 · Email addresses inside Arabic sentences may display out of order | 2026-10-17 | 2026-10-17 | 🔁 committed; browser check pending | 0 |
 
 ## Tickets
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
 
 ### WH-036 · Bug: `pnpm dev` breaks with "Internal Server Error" after an unclean restart
-- **Type:** bug · **Priority:** P0 · **Status:** start · **Area:** tooling
+- **Type:** bug · **Priority:** P0 · **Status:** in progress · **Area:** tooling
 - **Why:** on 2026-10-17 every page returned 500 (`GET /en/sign-in?reset=1 500`, `SyntaxError: Unexpected non-whitespace character after JSON at position 573`) and the API exited with `NX Process exited with code 1`. Nothing in the app code was wrong; two leftovers from an earlier `pnpm dev` that didn't shut down cleanly caused it:
   1. **Corrupted Next.js dev manifest.** `apps/client/.next/dev/prerender-manifest.json` is 621 bytes: valid JSON for the first 573, then 48 bytes left over from an older, longer copy (`…6d0"}}621caa…6d0"}}`). The file was rewritten without being truncated, which happens when two `next dev` runs write to the same `.next/dev`. Next.js reads this file on every request, so every page fails.
   2. **Orphaned API server.** PID 8936 (started 10:51, parent PID 1, Node **v20**, while `pnpm dev` uses v22) still listens on `:3333` and the debugger port `:9229`. The new `nx serve server` can't bind and exits with code 1. Worse, the browser keeps talking to the **old** process, so the API runs stale code and reviews/browser checks test the wrong build.
@@ -121,27 +108,181 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - Add `pnpm dev:reset`: stops WorkHub dev processes left behind (only ones from this repo), and deletes `apps/client/.next/dev`.
   - Document both in the README developer notes (see WH-027).
 - **Acceptance criteria:**
-  - [ ] With the fix above applied, `/en/sign-in`, `/fr/sign-in` and `/ar/sign-in` load (200) and the API answers on `:3333` from the current code.
-  - [ ] With an orphaned server holding `:3333`, `pnpm dev` prints which PID/command holds the port and how to fix it.
-  - [ ] `pnpm dev:reset` recovers from both problems above in one command, and touches no process outside this repo.
+  - [x] With the fix above applied, `/en/sign-in`, `/fr/sign-in` and `/ar/sign-in` load (200) and the API answers on `:3333` from the current code. _(2026-10-17: all three sign-in pages 200; `/health/live` 200)_
+  - [x] With an orphaned server holding `:3333`, `pnpm dev` prints which PID/command holds the port and how to fix it. _(2026-10-17: `tools/dev` check; foreign listener left alone)_
+  - [x] `pnpm dev:reset` recovers from both problems above in one command, and touches no process outside this repo. _(clears `apps/client/.next`; kills only WorkHub listeners; live `planReset` would kill `next-server` + `@nx` serve; 14 unit tests)_
 - **Depends on:** WH-027 (README) for the docs part.
+- **Progress (2026-10-17):** `tools/dev` added (`pnpm dev` runs the port check first, `pnpm dev:reset`), with 9 unit tests. Docs are WH-027's.
+- **Review (2026-10-17):** 🔁 changes requested. The port check works (it named `next-server` on `:3000` and exited 1), but `dev:reset` misses the processes it exists to kill:
+  - [x] **Real Next and Nx processes are classified as "not WorkHub".** Next renames itself `next-server (v16.1.7)`; the API runs as `node … --inspect=localhost:9229 …/node_modules/@nx/js/dist/src/executors/node/node-with-esm-loader`. Neither matches `WORKHUB_MARKERS` (`/@nx/` ≠ `/nx/`), so `isWorkHubDevProcess()` returns `false` for both, even with `cwd` = repo root. Since only WorkHub's ports are inspected, "under this repo" is the real ownership check: accept `cwd` under the repo for `node`/`next-server`, or add `next-server` and `/@nx/` markers.
+  - [x] **Tests use made-up command lines.** Use real `ps -o command=` output for `next dev` and `nx serve server`.
+  - [x] **A sibling checkout counts as this repo.** `command.includes(repoRoot)` (`dev.mjs:37`) has no trailing `/`, so `…/WorkHub-fork` matches `…/WorkHub`. Use the same `${root}/` rule as `pathIsUnderRepo()`, plus a test.
+  - [x] Browser-check AC 1 (`pnpm dev` from clean, all 3 sign-in pages 200, API on `:3333`).
+  - [ ] Commit `tools/dev/` and `package.json`.
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested. The fix is still uncommitted, and `pnpm nx run-many -t typecheck lint test` fails on this project:
+  - [x] **Lint fails:** `tools/dev/src/dev.test.mjs:196`, `no-regex-spaces` (`/:9229  pid…/`). Use `/:9229 {2}pid…/` or build the expected string.
+  - [x] **`next-server` is still "not WorkHub".** Checked against the live process on `:3000`: `isWorkHubDevProcess({ command: 'next-server (v16.1.7)', cwd: <repo> })` → `false`, so `dev:reset` would leave it running. Add `next-server` (and `/@nx/`) to `WORKHUB_MARKERS`, or trust `cwd` under the repo for `node`/`next-server`.
+  - [x] **A sibling checkout still counts as this repo.** `isWorkHubDevProcess({ command: 'node /x/WorkHub-fork/…/next dev', repoRoot: '/x/WorkHub' })` → `true`. `dev.mjs:40` `command.includes(repoRoot)` needs the `${root}/` rule, plus a test.
+  - [x] Tests with real `ps -o command=` lines (copy the `next-server` one above and the `@nx/js/…/node-with-esm-loader` one).
+  - [x] AC 1 in the browser. At review time, the web app answered on `:3000`, but **nothing listened on `:3333`**: the API inside your running `pnpm dev` is down.
+  - [ ] Commit `tools/dev/` and `package.json`.
+- **Progress (2026-10-17):** `WORKHUB_MARKERS` includes `next-server` and `/@nx/`; `commandMentionsRepo` uses `${root}/`; tests use live `ps` lines; AC1 green. Only the commit remains.
+- **Re-check (2026-10-17, 4th pass):** ✅ code is right. `next-server` and `/@nx/` are in `WORKHUB_MARKERS`; `commandMentionsRepo()` requires the `/` separator; the tests use real `ps` lines, including a sibling-checkout case; lint and tests pass. **Only the commit is left.**
 
-### WH-006 · Browser test of every auth flow after the language move
-- **Type:** chore · **Priority:** P1 · **Status:** start · **Area:** client + api
-- **Why:** sign-up, verify, forgot and reset password have only been tested with curl, or not at all, since the web pages changed.
-- **Scope:** manual browser pass, then one automated Playwright test in `apps/client-e2e`.
+
+### WH-044 · API structure: one library per domain, with enforced module boundaries
+- **Type:** tech-debt · **Priority:** P0 · **Status:** in progress · **Area:** api + tooling
+- **Why:** the team is growing, and invites, permissions and leave are about to land. Today `depConstraints` allows every project to import every other (`* → *`, `eslint.config.mjs:25`), so the tags are decoration, and domains are split between `apps/server/src/modules` (`me`) and `libs/api` (`spaces`). Moving now costs two small domains; after WH-010/011 it costs five.
+- **Why libraries, not app folders:**
+  - Nx enforces rules only between projects, never between folders inside one;
+  - `index.ts` is the public API, so internal files can't be imported;
+  - `nx affected` and the cache re-test only what changed;
+  - `CODEOWNERS` maps one owner per domain;
+  - other apps (the seed in WH-040, a future worker) can reuse services.
+- **Target structure:**
+  ```
+  apps/
+    server/src/                  wiring only, no business logic
+      main.ts                    helmet, CORS, /api/v1 prefix, Swagger
+      app.module.ts              imports domain modules; global guard/filter/pipe
+      config/                    env schema → typed AppConfig
+      swagger/                   builds the OpenAPI document   (was common/swagger)
+      health/                    /health/live, /health/ready   (was modules/health)
+    client/                      Next.js
+    client-e2e/                  Playwright: critical flows only
+  libs/
+    api/                         scope:api
+      users/        feature      GET/PATCH /me                  (was apps/server/src/modules/me)
+      spaces/       feature      /spaces, /me/spaces
+      access/       feature      SpaceGuard, @RequirePermission, SpaceAccess (was in core)
+      auth/         data-access  Better Auth instance
+      database/     data-access  Prisma, withTenant, migrations, RLS
+      mail/         data-access  sending + templates
+      core/         util         ProblemDetailsFilter, Swagger constants (no DB)
+    shared/                      scope:shared, used by server and client
+      contracts/    util         Zod request/response schemas
+      constants/    util         error codes, permissions, locales
+  tools/                         seed, backlog, dev
+  docs/architecture.md
+  CODEOWNERS
+  ```
+- **Every domain library has the same shape:**
+  ```
+  libs/api/<domain>/src/
+    index.ts                     public API: the Module (+ a service only if another domain needs it)
+    <domain>.module.ts
+    controllers/                 HTTP only: routes, Swagger, guards
+    <domain>.service.ts          business rules; every query through withTenant()
+    dto/                         nestjs-zod DTOs built from @work-hub/contracts
+    *.spec.ts                    unit tests
+    *.integration.spec.ts        real Postgres (RLS, transactions)
+  ```
+- **Dependency rules (`depConstraints`):**
+
+  | Tag | May import |
+  |---|---|
+  | `type:app` | anything |
+  | `type:feature` | `data-access`, `util`, and another `feature` only through its `index.ts` |
+  | `type:data-access` | `data-access`, `util` |
+  | `type:util` | `util` only |
+  | `scope:api` | `scope:api`, `scope:shared` |
+  | `scope:client` | `scope:client`, `scope:shared` |
+  | `scope:shared` | `scope:shared` only |
+
+- **Steps:**
+  - [x] Create `libs/api/users`:
+    ```
+    nx g @nx/nest:library libs/api/users --tags=scope:api,type:feature
+    ```
+    Move `apps/server/src/modules/me` into it (controller, `dto/update-me.dto.ts`, spec).
+  - [x] Create `libs/api/access` (`scope:api,type:feature`). Move `SpaceGuard`, `RequirePermissionGuard`, `@RequirePermission`, `@CurrentSpaceAccess` and `SpaceAccess` out of `libs/api/core/src/space`, with their specs.
+  - [x] Move `GET /me/spaces` from `MeController` into `libs/api/spaces` (`controllers/me-spaces.controller.ts`). Group the spaces controllers under `controllers/`, and the DTOs under `dto/`.
+  - [x] In `apps/server/src`:
+    - move `common/swagger` to `swagger/` and `modules/health` to `health/`;
+    - move `common/guards/auth-throttle.ts` next to its single user, or into `core`;
+    - delete the empty `.gitkeep` folders (`common/{decorators,filters,interceptors,middleware,pipes}`, `providers/`).
+  - [x] Tag every project: `apps/client` as `scope:client,type:app`, `apps/client-e2e` as `scope:client,type:e2e`. Then replace `* → *` in `eslint.config.mjs` with the rules above.
+  - [x] `pnpm nx sync`, then `pnpm nx run-many -t typecheck lint test`, all green.
+  - [x] `CODEOWNERS`:
+    - an owner per `libs/api/<domain>`;
+    - a lead's review on `libs/shared/*` (a contract change touches both sides) and on `libs/api/database/prisma/migrations`.
+  - [x] `docs/architecture.md`: the tree above, the rules table, and "how to add a domain".
 - **Acceptance criteria:**
-  - [ ] Manual, in `en` and `ar`: sign up → email in Mailpit → link signs in → `/app` shows the user → sign out.
-    _2026-10-17: passed in `en` (by hand) and in `ar` (browser test): sign-up → `/ar/verify-email` → email link → `/ar/app` signed in → sign-out → `/ar/app` redirects to `/ar/sign-in`. Found WH-032 (language saved as `en`), WH-033, WH-034._
-  - [x] Manual: forgot password → email → reset page → new password works, old one fails. _(2026-10-17: reset token used, all sessions revoked)_
-  - [ ] Playwright test: sign up a new `@workhub.test` user, read the verification link from the Mailpit API (`GET localhost:8025/api/v1/message/latest`), open it, and assert `/app` shows the user's name.
-  - [ ] The Playwright test cleans up after itself (or the suite runs `pnpm db:seed -- --reset` first).
-- **Depends on:** WH-001, WH-002.
+  - [x] No domain code is left in `apps/server/src`; only `main.ts`, `app.module.ts`, `config/`, `swagger/` and `health/` remain. _(plus wiring: `observe.ts`, `preload-env.ts`, `generate-openapi.ts`, `assets/`)_
+  - [x] Importing `@work-hub/database` from a `type:util` lib, or any `scope:api` lib from `apps/client`, fails `pnpm nx lint` (check once, then revert).
+  - [x] `pnpm nx run-many -t typecheck lint test` is green; `/api/v1/me`, `/api/v1/me/spaces` and Swagger work as before on the running app. _(`/me` + `/me/spaces` → 401 unsigned; `/docs` → 200)_
+  - [x] `CODEOWNERS` and `docs/architecture.md` exist.
+- **Progress (2026-10-17):** started. Do this before WH-040, WH-041 and WH-010, so new domains are born in the new layout.
+- **Progress (2026-10-17):** `libs/api/{users,access}` created; space guards moved out of `core`; `GET /me/spaces` owned by `spaces`; server slimmed to wiring; `depConstraints` enforced; `CODEOWNERS` + `docs/architecture.md`; typecheck/lint/test green; live smoke on `:3333`.
+- **Related:** WH-039 (its `core` → `PrismaService` and `/me/spaces` review items are fixed here); WH-038/039 should be committed first, so the move is a clean diff.
+- **Review (2026-10-17):** 🔁 changes requested (small). The structure is right. Checked:
+  - all 15 projects pass typecheck, lint and test, uncached;
+  - **lint really enforces the rules:** temporary imports were rejected for `core` → `@work-hub/database` (util → data-access), `apps/client` → `@work-hub/spaces` (client → api) and `contracts` → `core` (shared → api);
+  - live API: `/me` 200; `POST /spaces` 201 with Owner; duplicate slug 409; another user gets 404 and doesn't see it in `/me/spaces`; Swagger lists `/me`, `/me/spaces`, `/spaces`, `/spaces/{spaceId}`.
+  - [x] **Controllers talk to Prisma.** `MeController` injects `PrismaService` and runs `prisma.user.update()` itself (`users/src/controllers/me.controller.ts:42,61`). That breaks the rule in our own `docs/architecture.md` ("controllers: HTTP; service: business rules"). Add `UsersService.updateLocale(userId, locale)`, and make the controller call it (plus a unit test for the service).
+  - [x] **Dead code moved instead of deleted.** `AuthLoginThrottle` (`core/src/throttling/auth-throttle.ts`) is used nowhere, because Better Auth rate-limits sign-in itself, and its comment refers to a `POST /auth/login` that doesn't exist. Delete it and its export.
+  - [x] **Two gaps in `depConstraints`:**
+    - `type:app` → `type:e2e` is allowed, which is backwards (e2e tests the app; the app never imports e2e). Remove it.
+    - `type:tool` has no rule, so `tools/seed` can import anything of any type. Add `type:tool` → `feature`, `data-access`, `util`.
+    - Update the table in `docs/architecture.md` to match.
+  - [x] `docs/architecture.md`, "How to add a domain": include the actual command, `pnpm nx g @nx/nest:library libs/api/<name> --tags=scope:api,type:feature`.
+  - [ ] Commit (best as one commit of renames/moves, separate from WH-038/039's logic, so `git log --follow` keeps history).
+- **Progress (2026-10-17):** review fixes applied (`UsersService`, throttle removed, depConstraints + docs). Commit still open.
+- **Re-check (2026-10-17, 4th pass):** ✅ all feedback fixed: `UsersService` (with a spec) behind `MeController`, `AuthLoginThrottle` deleted, `type:app` no longer allows `e2e`, a `type:tool` rule added, the generator command in the docs. `PATCH /me` → 200 live. **Only the commit is left.**
+
+
+### WH-045 · Bug: signed-in users can open sign-in/sign-up; rename `/app` → `/dashboard`
+- **Type:** bug · **Priority:** P1 · **Status:** start · **Area:** client
+- **Why:** a signed-in user who opens a link to `/sign-in` or `/sign-up` sees the form again instead of their workspace. Reproduced 2026-10-17 with a valid session cookie (`get-session` → 200): `GET /en/sign-in`, `/en/sign-up` and `/en/forgot-password` all return **200**, with no redirect. "App" is also a vague name for the signed-in home page; it becomes `/dashboard`.
+- **Root cause:**
+  - `src/proxy.ts` is only the next-intl middleware: it never looks at the session.
+  - The `(auth)` layout has no guard at all.
+  - The only check is in the browser (`useRequireAuth` on `/app`), and it works one way only: signed out → sign-in. Nothing sends signed-in users away from the auth pages.
+  - This is also why `/app` flickers "Checking session…" (was WH-023, now part of this ticket).
+- **Design (decided):** route decisions happen on the **server**, in `proxy.ts`, before anything renders.
+  - Compose with next-intl: read the locale, check the session, then either redirect or hand the request to `createMiddleware(routing)`.
+  - **Check the session for real; don't just look for the cookie.** Call the API's `GET /api/auth/get-session`, passing the request's `cookie` header, and only for the routes below.
+    - A presence check (`getSessionCookie()`) isn't enough. With an expired or revoked cookie, the proxy would send `/sign-in` → `/dashboard`, the dashboard's client guard would send it back to `/sign-in`, and the user would be stuck in a **redirect loop**.
+    - If the API is unreachable, treat the user as signed out (fail open to the public page, never loop). The API still protects all data.
+  - **Rules:**
+
+    | Route | Signed in | Signed out |
+    |---|---|---|
+    | `/{locale}/sign-in`, `/sign-up`, `/forgot-password` | → `/{locale}/dashboard` | show |
+    | `/{locale}/dashboard/**` (and later `/s/**`) | show | → `/{locale}/sign-in` |
+    | `/{locale}/reset-password`, `/verify-email` | show | show |
+    | `/`, `/contact` | show | show |
+
+    `reset-password` and `verify-email` stay open in both states: people reach them from an email link, possibly while signed in on another account.
+  - Redirect to the **user's saved language** (`session.user.locale`) when it's valid, otherwise the URL's language. This matches the sign-in form.
+  - `useRequireAuth` stays as a client-side fallback (e.g. sign-out on an open page). The proxy makes it a no-op on first load, so no flicker.
+  - **Production note:** this works locally because cookies ignore the port (`localhost:3000` gets the cookie that `:3333` set). With the web app and the API on different hosts, the web server never receives the cookie. Before deploying, either serve the API under the web origin (a `/api` rewrite) or set Better Auth `advanced.crossSubDomainCookies`. Record it in WH-026.
+- **Rename `/app` → `/dashboard`:**
+  - move `src/app/[locale]/app/` to `src/app/[locale]/dashboard/`, and rename `AppHome` to `DashboardHome` (`components/auth/app-home.tsx` → `components/dashboard/dashboard-home.tsx`);
+  - update every link and redirect:
+    - `auth-nav.tsx:28` (`href`);
+    - `sign-in-form.tsx:63` (`router.replace`);
+    - the email `callbackURL`s in `sign-up-form.tsx:45` and `verify-email-panel.tsx:31`;
+  - update the tests: `specs/use-locale-switcher.spec.tsx:26,108`, `specs/use-auth.spec.tsx:23`, and `client-e2e/src/auth-signup.spec.ts:49,67`;
+  - put the route name in **one constant** (e.g. `ROUTES.dashboard` in `src/lib/routes.ts`) that the proxy, forms and nav all use, so the next rename touches one line;
+  - **keep old links working:** verification emails already sent carry `callbackURL=/{locale}/app`. `/{locale}/app` must permanently redirect (308) to `/{locale}/dashboard`, via `redirects()` in `next.config` or the proxy.
+- **Acceptance criteria:**
+  - [ ] Signed in, opening `/en/sign-in`, `/en/sign-up` or `/en/forgot-password` lands on `/en/dashboard` (or the saved language's dashboard) through a server redirect: the form never flashes.
+  - [ ] Signed out, opening `/en/dashboard` lands on `/en/sign-in` through a server redirect: no "Checking session…" flicker.
+  - [ ] An expired or invalid session cookie shows the sign-in page, with **no redirect loop**.
+  - [ ] With the API down, the auth pages still render (no 500, no loop).
+  - [ ] Sign-in, sign-up verification and the nav link all go to `/dashboard`. `/en/app` returns 308 → `/en/dashboard`.
+  - [ ] No `'/app'` string is left in `apps/client/src` (`grep` finds nothing outside the redirect).
+  - [ ] Unit tests for the proxy's decision function: one per row of the table above, plus the stale-cookie and API-down cases. The e2e sign-up test asserts `/dashboard`.
+  - [ ] Works in `en`, `fr` and `ar`.
+- **Replaces:** WH-023 (pages guarded only in the browser).
+- **Related:** WH-026 (cookies across hosts in production), WH-041 (workspace pages under `/s/{slug}` reuse the same proxy rules).
 
 ### WH-009 · Workspaces, roles and memberships (backend + UI)
 - **Type:** feature · **Priority:** P1 (next milestone) · **Status:** start · **Area:** api + client + database
 - **Why:** the core of the product. Users create workspaces, and every piece of business data belongs to exactly one workspace (SRS: "space").
-- **Scope (to split into smaller tickets when started):**
+- **Split into:** WH-038 (database + RLS) → WH-039 (API + guard) → WH-040 (seed) → WH-041 (UI). This ticket is done when all four are, plus the acceptance test below.
+- **Scope:**
   - **Database:** `spaces`, `roles` (permission lists), `memberships` (user × space × role) and a default role per workspace. Plus **row-level security**, so a query can only ever see one workspace's rows, with the API connecting as the restricted `workhub_app` role.
   - **API:**
     - `POST /api/v1/spaces`: creating a workspace makes you its owner;
@@ -153,56 +294,113 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Decided design:** workspace in the URL, never in the session. Role checked per request. `lastWorkspaceId` on the user only to choose where to land after sign-in.
 - **Acceptance (high level):** a user in workspace A can never read or change workspace B's data. An integration test proves it.
 
-### WH-003 · Security: sign-out keeps the previous user's data in the browser cache
-- **Type:** security · **Priority:** P1 · **Status:** under-review · **Area:** client
-- **Why:** `AppHome` and `AuthNav` call `authClient.signOut()` but never clear TanStack Query's cache. If user A signs out and user B signs in on the same browser, B can briefly see A's cached `/me` data.
-- **Scope:** sign-out calls `queryClient.clear()` after `authClient.signOut()`. Done once, inside `useAuth()` (WH-004), and used everywhere.
-- **Acceptance criteria:**
-  - [ ] Sign in as `member@workhub.test`, open `/app`, sign out, then sign in as `admin@workhub.test`: the page never shows Mia's data, not even for a moment.
-  - [ ] There is only one sign-out implementation in the client (no copies in components).
-- **Depends on:** WH-004.
-- **Progress (2026-10-17):** `useAuth()` (`src/hooks/use-auth.ts`) signs out and then calls `queryClient.clear()`; no component calls `authClient.signOut()` directly anymore. Uncommitted. Still to check: the browser test in the acceptance criteria (sign out as Mia, sign in as Adam, Mia's data never shows).
-
-### WH-005 · Language switcher: `useUpdateMe`, `useLocaleSwitcher`, `useDirection`
-- **Type:** feature · **Priority:** P1 · **Status:** under-review · **Area:** client
-- **Why:** users must be able to change their language. The API already supports it (`PATCH /api/v1/me`).
-- **Progress (2026-10-17):** a working `LocaleSwitcher` component exists (`src/components/i18n/locale-switcher.tsx`). It calls `updateMe()`, refreshes the `['me']` cache and switches the URL language. What's left is moving that logic into the hooks below, so other screens can reuse it, and checking the acceptance criteria in the browser.
-- **Review (2026-10-17) of `locale-switcher.tsx`:** works (browser-checked: your account `en` → `ar` was saved). Issues:
-  - [x] **Errors are swallowed:** `catch { }` hides a failed save. The URL changes but the saved language doesn't, and the user isn't told. That breaks the acceptance criterion "a failed save shows an error message". Show a translated error, and keep or revert the URL deliberately.
-  - [x] **Logic in the component:** `updateMe` plus the cache update belong in `useUpdateMe()`, and the switch flow in `useLocaleSwitcher()` (this ticket's scope).
-  - [x] **Raw cache key `['me']`:** use `queryKeys.me` (WH-004). Use `setQueryData` with the returned user instead of `invalidateQueries`, which costs an extra `/me` request.
-  - [x] **`useMe()` just to know if the user is signed in:** it fetches `/me` on every page that shows the switcher. Use `useAuth().isSignedIn` (WH-004).
-  - [x] **Duplicate locale check:** replace `LOCALES.includes(next as Locale)` and the cast with the existing `isAppLocale(next)` from `src/i18n/locale.ts`.
-  - [x] `router.refresh()` right after `router.replace(…, { locale })` likely re-renders twice. Check whether it's needed.
+### WH-040 · Seed: an "Acme" workspace with owner, admin and member
+- **Type:** chore · **Priority:** P1 · **Status:** start · **Area:** tools · **Part of:** WH-009
+- **Blocked by:** WH-039
+- **Why:** every workspace feature needs a ready-made workspace with one user per role to test against.
 - **Scope:**
-  - **`useUpdateMe()`:** TanStack Query mutation that calls `updateMe()` from `lib/api/me.ts`. On success it writes the returned user into the `queryKeys.me` cache, so no refetch is needed.
-  - **`useLocaleSwitcher()`:** `switchLocale(locale)` does two things:
-    1. changes the URL language (next-intl router, same page);
-    2. if signed in, saves the choice with `useUpdateMe`.
-    Signed-out visitors only get the URL change.
-  - **`useDirection()`:** returns `'rtl'` or `'ltr'` for the current language, from `RTL_LOCALES`. For client components that must flip things (icons, arrows). The server `layout.tsx` uses `RTL_LOCALES` directly.
-  - A language selector in the header and on `/app`, showing `English` / `Français` / `العربية`.
+  - `pnpm db:seed` creates "Acme" (`acme`) with `owner@`, `admin@` and `member@workhub.test` in the matching roles.
+  - Running it twice is safe.
+  - `--reset` removes it.
 - **Acceptance criteria:**
-  - [ ] Switching to Arabic on `/en/app` moves to `/ar/app`, mirrors the layout, and `GET /api/v1/me` then returns `"locale":"ar"`.
-  - [ ] After sign-out and sign-in again, the app opens in the saved language.
-  - [ ] Signed-out visitors can switch language; no API call is made.
-  - [ ] A failed save shows an error message and does not break the page.
-- **Depends on:** WH-001, WH-004.
-- **Review (2026-10-17, round 2):** round-1 issues fixed ✅:
-  - logic moved into `useUpdateMe` / `useLocaleSwitcher` / `useDirection`;
-  - a failed save shows a translated error and keeps the page as it was;
-  - `queryKeys.me` with `setQueryData` (no extra `/me` request);
-  - signed-in check from the session, not `/me`;
-  - `isAppLocale()` used;
-  - `router.refresh()` removed.
+  - [ ] After `pnpm db:seed`, `member@workhub.test` sees Acme in `GET /me/spaces` with the Member role.
+  - [ ] Running it twice changes nothing; `--reset` recreates it.
 
-  Left:
-  - [ ] **Acceptance not met yet:** "after sign-out and sign-in again, the app opens in the saved language". `sign-in-form.tsx:61` goes to `/app` in the *current URL's* language. Use the `locale` from the sign-in response's `user` instead.
-  - [ ] Unit tests for the 3 hooks: save failure shows the error and doesn't navigate; signed-out users don't call the API; `useDirection` returns `rtl` for `ar`.
-  - [ ] `useDirection()` has no users yet. Fine as planned API, but keep it covered by a test so it doesn't rot.
+### WH-041 · Workspaces UI: create, switch, and workspace pages
+- **Type:** feature · **Priority:** P1 · **Status:** start · **Area:** client · **Part of:** WH-009
+- **Blocked by:** WH-039
+- **Why:** users need to create and move between workspaces. Includes the planned hooks WH-014 (`useSpaces`) and WH-015 (`useSpace` / `useCurrentSpace`).
+- **Scope:**
+  - `/{locale}/spaces/new` (create form);
+  - a workspace switcher in the header;
+  - workspace pages under `/{locale}/s/{slug}`;
+  - after sign-in, open your last workspace, or a picker if you have several;
+  - a "no access" page for a slug you're not a member of.
+- **Acceptance criteria:**
+  - [ ] Creating a workspace redirects to `/{locale}/s/{slug}`, and it appears in the switcher without a reload.
+  - [ ] Two tabs on two workspaces each show the right data.
+  - [ ] Works in `en`, `fr` and `ar` (RTL).
+
+### WH-006 · Browser test of every auth flow after the language move
+- **Type:** chore · **Priority:** P1 · **Status:** in progress · **Area:** client + api
+- **Why:** sign-up, verify, forgot and reset password have only been tested with curl, or not at all, since the web pages changed.
+- **Scope:** manual browser pass, then one automated Playwright test in `apps/client-e2e`.
+- **Acceptance criteria:**
+  - [x] Manual, in `en` and `ar`: sign up → email in Mailpit → link signs in → `/app` shows the user → sign out.
+    _2026-10-17: passed in `en` (by hand) and in `ar` (browser test): sign-up → `/ar/verify-email` → email link → `/ar/app` signed in → sign-out → `/ar/app` redirects to `/ar/sign-in`. Found WH-032 (language saved as `en`), WH-033, WH-034._
+  - [x] Manual: forgot password → email → reset page → new password works, old one fails. _(2026-10-17: reset token used, all sessions revoked)_
+  - [ ] Playwright test: sign up a new `@workhub.test` user, read the verification link from the Mailpit API (`GET localhost:8025/api/v1/message/latest`), open it, and assert `/app` shows the user's name.
+  - [ ] The Playwright test cleans up after itself (or the suite runs `pnpm db:seed -- --reset` first).
+- **Depends on:** WH-001, WH-002.
+- **Progress (2026-10-17):** the manual pass is now complete in `en`, `ar` and `fr`: sign-up, verify, unverified redirect + resend, wrong password (translated), language switch, saved language after sign-in, sign-out with no data leak, forgot/reset. **Only the Playwright test is left.**
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested (small):
+  - [x] Playwright test written (`apps/client-e2e/src/auth-signup.spec.ts`): sign-up → Mailpit link → `/en/app` shows name and email. Good: unique email per run, Mailpit polled with a deadline.
+  - [ ] **AC 4 not met: nothing cleans up.** Each run leaves an `e2e.<timestamp>@workhub.test` user. Add a Playwright `globalSetup` that runs `pnpm db:seed -- --reset`, or delete `e2e.%@workhub.test` users in `globalTeardown`.
+  - [ ] Not run in this review: the API was down. Run `pnpm nx e2e client-e2e` once green.
+  - [ ] Commit.
+- **Re-check (2026-10-17, 4th pass):** no change since the last review. Cleanup (AC 4) and an actual `pnpm nx e2e client-e2e` run are still open.
+
+
+### WH-038 · Workspaces database: spaces, roles, memberships, with row-level security
+- **Type:** feature · **Priority:** P1 · **Status:** in progress · **Area:** database · **Part of:** WH-009
+- **Why:** every business record will belong to exactly one workspace. Isolation must be enforced by **Postgres itself** (NFR-01), so a forgotten `where` in app code can't leak another company's data.
+- **Scope:**
+  - Prisma models:
+    - `Space`: uuid v7, `name`, `slug` (citext, unique), `defaultRoleId`, timestamps, `deletedAt`;
+    - `Role`: `spaceId`, `name`, `permissions text[]`, `isSystem`;
+    - `Membership`: `spaceId`, `userId`, `roleId`, `status` = `active` | `deactivated`, unique (`spaceId`, `userId`).
+  - A migration enabling **and forcing** row-level security on these tables:
+    - policies match `current_setting('app.space_id', true)`;
+    - users may also see their own memberships via `app.user_id`, which `GET /me/spaces` needs.
+  - Permission catalog in `libs/shared/constants`: the permission names, and the system role presets (Owner, Admin, Member).
+- **Acceptance criteria:**
+  - [x] `prisma migrate deploy` on an empty database applies cleanly. _(single `spaces_roles_memberships` migration; local DB patched to match)_
+  - [x] As `workhub_app`, with no `app.space_id` set, every query returns **0 rows** (fails closed).
+  - [x] Integration test: with `app.space_id` = A, rows of workspace B are invisible.
+  - [x] A test keeps the permission catalog and the system presets consistent.
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested:
+  - [x] Tables, `FORCE ROW LEVEL SECURITY`, fail-closed `NULLIF(current_setting(…, true), '')` policies; `rls.integration.spec.ts` (3 tests) passes, including "no `app.space_id` → 0 rows" and "A cannot see B".
+  - [x] **Remove the `app.space_create` escape hatch** (`20261017130200_space_create_select_policy`). While it's `on`, `spaces_select` shows **every** workspace in the database: one missed reset, or any code that sets it, defeats RLS. Instead, create the id in the app (UUID v7), set `app.space_id` to it **before** the insert, and pass `id` to `space.create()`. `RETURNING` then passes the normal `id = app.space_id` rule. Drop `spaceCreate` from `TenantContext`.
+  - [x] Since nothing is committed, fold the two migrations into one (`spaces_roles_memberships`).
+  - [ ] Commit.
+- **Progress (2026-10-17):** `space_create` removed; `spaces_insert` requires `id = app.space_id`; `uuidv7()` exported from `@work-hub/database`; create path updated in WH-039.
+- **Re-check (2026-10-17, 4th pass):** the fix is right. The migrations are folded into `20261017125105_spaces_roles_memberships`, the dev database's `spaces_select` has no `space_create` clause, and `spaceCreate` is gone from `TenantContext`. `uuidv7()` has a spec. One blocker:
+  - [ ] **The old migration is back on disk:** `prisma/migrations/20261017130200_space_create_select_policy/` (untracked, re-created 13:41, possibly by an editor undo). If it's committed, `prisma migrate deploy` on any fresh database **re-adds the "see every workspace" policy**. Delete the folder before committing, then check `ls prisma/migrations` shows 4 migrations.
+
+
+### WH-039 · Workspaces API: create, list mine, and the workspace guard
+- **Type:** feature · **Priority:** P1 · **Status:** in progress · **Area:** api · **Part of:** WH-009
+- **Blocked by:** WH-038
+- **Why:** the endpoints and the per-request access check every later feature (invites, permissions, leave) builds on.
+- **Scope:**
+  - **`POST /api/v1/spaces { name, slug }`**: in one transaction, create the space and its system roles, set Member as the default role, and make the creator Owner.
+  - **`GET /api/v1/me/spaces`**: the current user's workspaces.
+  - **`SpaceGuard`** on `/api/v1/spaces/:spaceId/**`:
+    - loads the membership and role **fresh on every request**;
+    - answers 404 when you're not a member (don't reveal the workspace exists), 403 when your membership is deactivated.
+  - **`withTenant()`**: sets `app.space_id` / `app.user_id` inside a transaction.
+  - **`@RequirePermission()`**: blocks a route unless your role has the named permission.
+  - Request and response shapes in `libs/shared/contracts`.
+- **Acceptance criteria:**
+  - [x] Creating a workspace makes the creator Owner. A duplicate slug returns 409 problem+json.
+  - [x] Guard tests: non-member → 404, deactivated → 403, member → allowed, with the role loaded per request.
+  - [x] Cross-tenant integration test through the API: user A gets nothing of workspace B.
+  - [x] Swagger documents the routes, with the session lock.
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested:
+  - [x] `SpaceGuard` (404 non-member, 403 deactivated, role loaded per request), `@RequirePermission`, `withTenant()`, 409 on duplicate slug; `spaces.integration.spec.ts` (5 tests) passes.
+  - [x] Follows WH-038: `SpacesService.create()` sets `spaceCreate: true` (`spaces.service.ts:31`). Switch to "pre-generated id + `app.space_id` first".
+  - [x] **Boundaries:** _(fixed in WH-044: `libs/api/access`)_ `@work-hub/core` is tagged `type:util` but `SpaceGuard` injects `PrismaService` (`type:data-access`). Move the guard, decorators and types into a `type:feature` access-control lib or `libs/api/spaces`, or retag `core`. See the structure note in WH-044.
+  - [x] _(fixed in WH-044: `MeSpacesController` in `libs/api/spaces`)_ `GET /me/spaces` lives in the app's `MeController` but is implemented by `SpacesService`. Move it into `libs/api/spaces` (a `MeSpacesController` with `@Controller('me/spaces')`), so the workspace domain owns all of its routes.
+  - [x] Running app checked (3rd pass, 2026-10-17): create 201 Owner, duplicate 409, non-member 404, `/me/spaces` scoped per user.
+  - [x] **New: `GET /spaces/not-a-uuid` → 500.** `SpaceGuard` passes the raw `:spaceId` to Prisma, and Postgres rejects it as an invalid uuid. Guards run before pipes, so `ParseUUIDPipe` won't catch it: validate the format inside `SpaceGuard` (e.g. `z.uuid()`), and answer **404** (same as "not a member"), plus a guard test.
+  - [ ] Commit.
+- **Progress (2026-10-17):** create uses pre-generated `uuidv7` + `withTenant({ userId, spaceId })`; `SpaceGuard` rejects non-UUID `:spaceId` with 404.
+- **Re-check (2026-10-17, 4th pass):** the code is right. `create()` pre-generates the id and sets `app.space_id` first; `SpaceGuard` rejects a non-UUID `:spaceId` with 404 (`SPACE_ID_RE`, with a test); `spaces.integration.spec.ts` passes.
+  - [ ] **Live check pending: your running API is stale.** `apps/server/dist/main.js` was built at 13:24 and doesn't contain `SPACE_ID_RE`, so the live API still answers 500 for `/spaces/not-a-uuid` and for `POST /spaces` (the old code sets `app.space_create`, which the new database policy no longer honours). The watcher stopped rebuilding: restart `pnpm dev` (`pnpm dev:reset` first if needed), then re-check that create → 201, bad id → 404, other user → 404.
+
 
 ### WH-004 · Hooks foundation: `queryKeys`, `useAuth`, `useRequireAuth`
-- **Type:** tech-debt · **Priority:** P1 · **Status:** under-review · **Area:** client
+- **Type:** tech-debt · **Priority:** P1 · **Status:** in progress · **Area:** client
 - **Why:** session logic is copied into `AppHome` and `AuthNav`, and each future page would copy it again. Cache keys written by hand (`['me']`) lead to "screen didn't update" bugs when a typo appears.
 - **Scope:**
   - **`src/lib/api/query-keys.ts`:** every TanStack Query key in one object, e.g. `queryKeys.me`, `queryKeys.spaces.detail(slug)`. All hooks use it; no raw key arrays anywhere.
@@ -210,15 +408,26 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - **`src/hooks/use-require-auth.ts` → `useRequireAuth()`:** for signed-in pages. Redirects to `/{locale}/sign-in` when there's no session; returns the same values as `useAuth`. This is a user-experience guard only: the API still rejects every request without a session.
   - Replace the duplicated logic in `AppHome` (its `useEffect` redirect) and `AuthNav` with these hooks. Update `useMe` to use `queryKeys.me`.
 - **Acceptance criteria:**
-  - [ ] `AppHome` and `AuthNav` contain no direct `authClient.useSession()` or `authClient.signOut()` calls.
-  - [ ] Opening `/en/app` while signed out redirects to `/en/sign-in`; while signed in, it shows the user.
+  - [x] `AppHome` and `AuthNav` contain no direct `authClient.useSession()` or `authClient.signOut()` calls.
+  - [x] Opening `/en/app` while signed out redirects to `/en/sign-in`; while signed in, it shows the user.
   - [x] No raw query-key arrays remain in the client (`grep "queryKey: \['"` finds nothing).
-  - [ ] Unit tests for `useAuth` (sign-out clears the cache) and `useRequireAuth` (redirects when signed out).
+  - [x] Unit tests for `useAuth` (sign-out clears the cache) and `useRequireAuth` (redirects when signed out).
 - **Depends on:** WH-001 (redirect target is a localized URL).
-- **Progress (2026-10-17):** `src/lib/api/query-keys.ts` exists, `useMe` uses `queryKeys.me`, no raw key arrays remain. **Not started:** `useAuth()` and `useRequireAuth()`. Sign-out is still duplicated in `auth-nav.tsx:25` and `app-home.tsx:27`, so **WH-003 (cache not cleared on sign-out) is still open**.
+- **Progress (2026-10-17):** `queryKeys`, `useAuth()`, `useRequireAuth()` done with 6 tests; `AppHome` and `AuthNav` use them; `/en/app` signed out → `/en/sign-in`.
+- **Review (2026-10-17):** 🔁 changes requested:
+  - [x] **Sign-out lands on a random page.** `useAuth().signOut()` does `router.replace('/')` (`use-auth.ts:23`) while the page's `useRequireAuth` sees the session vanish and does `router.replace('/sign-in')` (`use-require-auth.ts:14`); whichever runs last wins (browser check landed on `/ar/sign-in`). `isSigningOut` can't fix it as written: it's `useState` per `useAuth()` call, so `AuthNav`'s instance and `AppHome`'s guard don't share it. Use shared state (module flag, small store or the query cache), or pick one destination, e.g. `signOut({ redirectTo })`.
+  - [x] A test for the race: sign out with `useRequireAuth` mounted, assert exactly one redirect.
+  - [x] **Dead code in `useMe`:** `sessionPending` and `signedIn` are returned but never read. Remove them.
+  - [x] **Dead placeholder in `AppHome`:** `locale: '…'` in the fallback object can never be shown. Drop it.
+  - [ ] Commit.
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested (small): the earlier feedback is fixed. A module-level `signingOut` flag shared by `useAuth` and `useRequireAuth`, one destination (`/sign-in`), `useMe` dead fields gone, `AppHome` placeholder gone; tests pass.
+  - [x] The race test should assert **exactly one** redirect, as the earlier item asked: `expect(mocks.replace).toHaveBeenCalledOnce()` (`use-auth.spec.tsx`), not only `toHaveBeenCalledWith`.
+  - [ ] Commit.
+- **Re-check (2026-10-17, 4th pass):** ✅ the race test now asserts `toHaveBeenCalledOnce()` (`use-auth.spec.tsx:105`). **Only the commit is left.**
+
 
 ### WH-001 · Finish moving the web app to language URLs (`/en`, `/fr`, `/ar`)
-- **Type:** feature · **Priority:** P1 · **Status:** under-review · **Area:** client
+- **Type:** feature · **Priority:** P1 · **Status:** in progress · **Area:** client
 - **Why:** NFR-10 requires EN and AR at launch (FR later), with full right-to-left layout for Arabic. Every later page builds on this, so it must be finished first.
 - **Scope:**
   - All pages live under `apps/client/src/app/[locale]/`.
@@ -234,70 +443,35 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - [x] All 3 message files have the same keys, **checked by a test**. Today they match (159 keys each), but nothing stops them drifting.
   - [x] Rename `src/middleware.ts` → `src/proxy.ts`. Confirmed: Next.js 16 deprecates the `middleware` file name (https://nextjs.org/docs/messages/middleware-to-proxy).
   - [x] `pnpm nx run-many -t typecheck lint test --projects=@work-hub/client` is green.
-  - [ ] Commit the `nx sync` change in `apps/client/tsconfig.json` (new reference to `libs/shared/constants`). It's uncommitted, and without it a fresh clone's `pnpm dev` refuses to start.
-- **Notes:** the main work landed in `fbff533`.
-- **Review (2026-10-17):** structure is right: shared `LOCALES`/`DEFAULT_LOCALE`, `hasLocale` guard with `notFound()`, `setRequestLocale` for static rendering, `localeDirection()` from `RTL_LOCALES`. To clean up:
-  - [x] `layout.tsx`: `locale === 'ar' ? 'font-arabic'` hard-codes Arabic. Derive it from the locale, e.g. a `LOCALE_FONT` map next to `localeDirection()`, so a future RTL language doesn't silently get the wrong font.
-  - [x] `layout.tsx`: `defaultLocale={locale ?? DEFAULT_LOCALE}`: `locale` can't be empty after the `hasLocale` check, so `?? DEFAULT_LOCALE` is dead code. The `rawLocale as Locale` cast is also unneeded, since `hasLocale` already narrows the type.
-  - [x] `src/i18n/locale.ts`: `isAppLocale()` is exported but used nowhere. `LocaleSwitcher` re-implements the same check with `LOCALES.includes(...)`. Use one (see WH-005).
-- **Review (2026-10-17, round 2):** ✅ `proxy.ts` works (`/sign-in` → 307 `/en/sign-in`); `specs/message-keys.spec.ts` keeps en/fr/ar identical; `localeFontClass()` replaces the hard-coded `'ar'`; dead `?? DEFAULT_LOCALE` removed; `isAppLocale()` now used. Left:
-  - [ ] `layout.tsx:46`: `rawLocale as Locale` is still there. `hasLocale()` already narrows the type, so use the value directly.
-  - [ ] Minor: `localeFontClass()` picks the Arabic font for *any* right-to-left language. A per-language map (`{ ar: 'font-arabic' }`) would be exact if a non-Arabic RTL language is ever added.
-  - [ ] Commit, including the `apps/client/tsconfig.json` reference.
-- **Review (2026-10-17, round 3, after commit `96c3d33`):** 🔁 committed; still left: the `rawLocale as Locale` cast at `layout.tsx:46` (and the optional per-language font map).
+  - [x] Commit the `nx sync` change in `apps/client/tsconfig.json` (new reference to `libs/shared/constants`). _(in `96c3d33`)_
+- **Notes:** the main work landed in `fbff533`; review fixes in `96c3d33` (`proxy.ts`, message-key test, `localeFontClass()`, `isAppLocale()`).
+- **Review (2026-10-17):** 🔁 changes requested:
+  - [x] `layout.tsx:46`: drop the `rawLocale as Locale` cast. `routing.locales` comes from `LOCALES`, so `hasLocale()` already narrows `rawLocale` to `Locale`.
+  - [x] Optional: `localeFontClass()` picks the Arabic font for *any* RTL language; a per-language map (`{ ar: 'font-arabic' }`) is exact. _(skipped — fine per 2nd pass)_
+  - [ ] Commit.
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested: only the commit is left. The `rawLocale as Locale` cast is gone and `hasLocale()` narrows the type; tests pass. The optional font map wasn't done, which is fine.
+  - [ ] Commit.
+- **Re-check (2026-10-17, 4th pass):** ✅ unchanged and green. **Only the commit is left.**
 
-### WH-002 · Bug: unverified users hit a dead end on sign-in
-- **Type:** bug · **Priority:** P1 · **Status:** under-review · **Area:** client
-- **Why:** a user who signs in before verifying their email only sees "Email not verified", with no way to get a new link. A redirect fixing this was added, then lost when the sign-in form was rewritten for translations (WH-001).
-- **Scope:** in `sign-in-form.tsx`, when the error code is `EMAIL_NOT_VERIFIED`, redirect to `/{locale}/verify-email?email=…`. The "Resend" button already exists there.
-- **Acceptance criteria:**
-  - [x] Signing in as `unverified@workhub.test` / `workhub-dev-1` lands on the verify-email page, with the email filled in.
-  - [ ] "Resend" sends a new email (visible in Mailpit).
-  - [x] The redirect keeps the current language (`/ar/...` stays Arabic).
-- **Depends on:** WH-001 (localized URLs).
-- **Review (2026-10-17, round 2):** ✅ `sign-in-form.tsx` redirects on `EMAIL_NOT_VERIFIED`, keeps `{ locale }`, and URL-encodes the email. Left: [ ] confirm "Resend" in the browser after restarting the dev server, then commit.
-- **Review (2026-10-17, round 3, after commit `96c3d33`):** 🔁 code committed ✅; only the browser checks in the acceptance criteria are left. Once they pass, this ticket is done.
 
 ### WH-033 · Bug: sign-in and sign-up errors are always in English
-- **Type:** bug · **Priority:** P1 · **Status:** under-review · **Area:** client
+- **Type:** bug · **Priority:** P1 · **Status:** in progress · **Area:** client
 - **Why:** on `/ar/sign-in`, a failed sign-in shows Better Auth's English text ("Email not verified", "Invalid email or password"…), because `authErrorMessage()` shows `error.message` as-is.
 - **Scope:** map Better Auth error **codes** to translated messages in `messages/{en,fr,ar}.json`. The codes include `INVALID_EMAIL_OR_PASSWORD`, `EMAIL_NOT_VERIFIED`, `USER_ALREADY_EXISTS`, `PASSWORD_TOO_SHORT`, `INVALID_TOKEN` and 429 (too many attempts). Unknown codes fall back to a translated "Something went wrong". Never show the server's raw English text.
 - **Acceptance criteria:**
-  - [ ] Wrong password on `/ar/sign-in` shows Arabic text; on `/fr/sign-in`, French.
+  - [x] Wrong password on `/ar/sign-in` shows Arabic text; on `/fr/sign-in`, French. _(browser 2026-10-17)_
   - [x] ~~Signing up with an existing email shows "account already exists"~~. **Corrected 2026-10-17:** with email verification on, Better Auth deliberately answers a duplicate sign-up exactly like a new one (no error, no email, nothing changed), so nobody can probe which emails have accounts. Verified with `member@workhub.test`. The right check: a duplicate sign-up shows the same "check your email" screen as a new one.
-  - [ ] Six quick wrong attempts show a translated "too many attempts" message.
+  - [x] Six quick wrong attempts show a translated "too many attempts" message. _(browser 2026-10-17)_
   - [x] A unit test covers the code → message mapping, including the fallback.
 - **Related:** WH-002 (that code redirects instead of showing a message).
-- **Review (2026-10-17, round 2):** ✅ `authErrorKey()` maps codes → translated keys and never returns the server text (tested, including an "Internal prisma dump" case); all 5 forms use it; 429 is handled by status. Left:
-  - [ ] **Dead entry:** `USER_ALREADY_EXISTS` can't happen in our setup (see the correction above), and Better Auth's real code is `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`. Remove it and its 3 translations, or rename it if email verification is ever turned off.
-  - [ ] Browser check: wrong password on `/ar/sign-in` shows Arabic; 6 quick tries show the translated "too many attempts".
-- **Review (2026-10-17, round 3, after commit `96c3d33`):** 🔁 committed; still left: remove the dead `USER_ALREADY_EXISTS` entry and its 3 translations, plus the browser check.
+- **Progress (2026-10-17):** `authErrorKey()` maps codes → translated keys and never returns server text (tested, incl. an "Internal prisma dump" case); all 5 forms use it; 429 handled by status. Committed in `96c3d33`.
+- **Review (2026-10-17):** 🔁 changes requested:
+  - [x] **Dead `USER_ALREADY_EXISTS` entry** (`auth-errors.ts:5`, line 194 of all 3 message files, `specs/auth-errors.spec.ts:24`). Better Auth 1.7.7 `sign-up.mjs`: with `requireEmailVerification` on, a duplicate sign-up returns the generic success; with it off, the code is `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`. It can never match. Remove the code, its 3 translations and the assertion.
+  - [ ] Commit.
+- **Review (2026-10-17, 2nd pass):** 🔁 changes requested: only the commit is left. `USER_ALREADY_EXISTS` is removed from `auth-errors.ts`, from the spec, and from all 3 message files (0 matches); tests pass.
+  - [ ] Commit.
+- **Re-check (2026-10-17, 4th pass):** ✅ unchanged and green. **Only the commit is left.**
 
-### WH-035 · Backlog workflow (start → in progress → under-review → done) and `pnpm backlog` tracker
-- **Type:** chore · **Priority:** P1 · **Status:** under-review · **Area:** docs + tools
-- **Why:** you asked for a clear 4-step ticket workflow, with Claude reviewing every `under-review` ticket and deleting it once done (or sending it back with feedback), and for one list sorted by priority.
-- **Scope:**
-  - `BACKLOG.md`: a Workflow section, the Definition of Done, a Review tracker table, and **one `## Tickets` list sorted by priority**. Done tickets are deleted; their history is in git via the ticket ID in the commit message. The old statuses were mapped: `ready`/`later`/`blocked` → `start`, `implemented, waiting for commit` → `under-review`.
-  - `tools/backlog/` (`@work-hub/backlog`, no dependencies): parses the backlog and checks it:
-    - every status is `start`, `in progress` or `under-review` (a `done` ticket must be deleted);
-    - every ticket sits under `## Tickets`;
-    - the list is sorted by priority, then status (start → in progress → under-review);
-    - no duplicate IDs;
-    - the Review tracker lists exactly the `under-review` tickets.
-  - `pnpm backlog` prints the review queue (`⟳ needs review` marks), then every ticket by priority, and exits 1 on any problem.
-  - **Automatic tracking:** `.claude/settings.json` runs the tracker as Claude Code hooks:
-    - `SessionStart`: injects the review queue and the rules into Claude's context;
-    - `UserPromptSubmit`: injects a note **only** when an `under-review` ticket needs review or the file breaks a rule; silent otherwise.
-  - A ticket needs review when its **fingerprint** (ticket text + current commit) differs from the last review recorded with `pnpm backlog --mark-reviewed <IDs|all>`. Reviews are stored in `.claude/backlog-review-state.json` (local, gitignored). Runs on the shell's default Node (20+).
-- **Acceptance criteria:**
-  - [x] `pnpm backlog` reports `✓ BACKLOG.md is valid` on the real file.
-  - [x] `node:test` tests cover each rule; Nx runs them with `lint` in `run-many`.
-  - [x] The tracker already caught a real inconsistency during the first restructure (a ticket listed as done while still active).
-  - [x] 10 tests pass on Node 20 (the hooks' Node); the exact hook command returns valid hook JSON in ~0.02 s and stays silent once reviews are recorded.
-  - [x] First real run: flagged all 9 tickets after commit `96c3d33`, and drove the round-3 review that closed WH-020, WH-029 and WH-030.
-  - [ ] Commit `.claude/settings.json` + the tracker changes.
-  - [ ] Check that the hooks fire in a **new** Claude Code session: settings created mid-session may not be watched.
-- **Review (2026-10-17):** ✅ self-check; waiting for your look and the commit.
 
 ### WH-007 · Forms: switch the auth forms to React Hook Form + Zod
 - **Type:** tech-debt · **Priority:** P2 · **Status:** start · **Area:** client
@@ -322,6 +496,25 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - [ ] The verification email itself is in that language once WH-013 is done.
 - **Depends on:** WH-005 for (a); nothing for (b).
 
+### WH-046 · Members API: list, deactivate, remove, leave
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api
+- **Blocked by:** WH-039
+- **Why:** nothing on the API side lists or manages a workspace's members yet. WH-016 (`useMembers`) has no endpoint to call, and invites (WH-010) and role changes (WH-011) both need a member list to show their results.
+- **Scope** (in `libs/api/spaces`, or a new `libs/api/members` if it grows):
+  - `GET /api/v1/spaces/{spaceId}/members?cursor=&limit=&q=`: cursor pagination (`cursorPaginationQuerySchema`), search by name/email, and each member's role and status. Needs `members.read`.
+  - `POST /api/v1/spaces/{spaceId}/members/{membershipId}/deactivate` and `/reactivate`: needs `members.write`.
+  - `DELETE /api/v1/spaces/{spaceId}/members/{membershipId}`: remove a member. Needs `members.write`.
+  - `DELETE /api/v1/spaces/{spaceId}/members/me`: leave a workspace.
+  - **Safety rules:**
+    - nobody can deactivate or remove an Owner;
+    - the last Owner can't leave (transfer ownership first, in WH-011);
+    - you can't deactivate yourself.
+  - Request and response shapes in `libs/shared/contracts`.
+- **Acceptance criteria:**
+  - [ ] The member list pages correctly (cursor) and search narrows it. A `member` role without `members.read` gets 403.
+  - [ ] A deactivated member gets 403 on that workspace's routes, on the next request (the role is loaded per request).
+  - [ ] Each safety rule is covered by a test; a cross-tenant integration test shows workspace A's admin can't touch workspace B's members (404).
+
 ### WH-010 · Invites by email and by link
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
 - **Why:** your original requirement. Join a workspace only by invite (email or link); invites expire; new members get the workspace's default role.
@@ -332,6 +525,13 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - accept flow `/{locale}/invite/{token}` (sign in or sign up first, then join);
   - hooks WH-016, WH-017, WH-018.
 - **Depends on:** WH-009.
+- **Plan (2026-10-17):** too big for one ticket. Split it like WH-009 when it starts:
+  1. database: `invites` table (`token_hash`, `email` or link, `role_id`, `expires_at`, `max_uses`/`uses`, `revoked_at`), with RLS;
+  2. API: create, list, revoke, preview and accept;
+  3. the invite email (with WH-013, in the invitee's language);
+  4. the accept page.
+  - **Accepting needs a return URL:** a signed-out invitee goes to sign-in or sign-up, then comes **back** to `/{locale}/invite/{token}`. The WH-045 proxy and sign-in form need a safe `?next=` parameter (same-origin paths only, never a full URL).
+  - **Depends on:** WH-046 (members) and WH-045 (proxy + `next`).
 
 ### WH-011 · Permissions management
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -400,57 +600,22 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **What:** `true`/`false` for a permission in the current workspace, using the same permission names as the API (shared constants).
 - **Done when:** a member doesn't see "Invite" or "Change role" buttons; an admin does. The API still returns 403 if someone calls it anyway.
 
-### WH-037 · Animated logo loader for loading states
-- **Type:** feature · **Priority:** P2 · **Status:** under-review · **Area:** client
-- **Why:** loading states were plain grey text ("Loading…", "Checking session…"). A branded animated mark makes waits feel intentional and consistent across pages.
-- **Scope:**
-  - `LogoLoader` and `PageLoader` (`src/components/brand/logo-loader.tsx`): the hub-monogram W draws itself, then each node pops in as the line reaches it; it holds, fades and loops every 2.4s. Sizes `sm`/`md`/`lg`, `default`/`inverse` tones, translated `role="status"` label (screen-reader only unless `showLabel`).
-  - Shared mark geometry moved to `logo-geometry.ts` (plain module, so server components can import it); `logo.tsx` now uses it, with no visual change.
-  - Keyframes and `--animate-logo-*` tokens in `global.css`.
-  - Used in: new route-level `app/[locale]/loading.tsx` (`PageLoader`), the "Checking session…" state in `AppHome`, and the `Suspense` fallbacks on sign-in and reset-password.
+### WH-043 · Remove the unused `JoinPreview` scaffold (and Zustand)
+- **Type:** tech-debt · **Priority:** P3 · **Status:** start · **Area:** client
+- **Why:** found while reviewing WH-001. `src/components/join-preview.tsx` is imported nowhere, yet it holds hard-coded English ("Join a space", "Invalid input", "Ready to join with …"). It's the only user of `src/stores/ui-store.ts` and `src/lib/validators/join-space.ts`, and `ui-store` is the only use of the `zustand` dependency.
+- **Scope:** delete the 3 files and remove `zustand` from `apps/client/package.json`, unless the workspaces UI (WH-041) needs a client store. If it does, keep Zustand and say so here.
 - **Acceptance criteria:**
-  - [x] The loader is announced as a status with a translated label (en/fr/ar); the SVG is hidden from screen readers. _(unit tests)_
-  - [x] With "reduce motion" on, there is no drawing or scaling, only a slow fade of the whole mark.
-  - [x] It appears only after 150ms, so fast loads don't flash.
-  - [x] Animation frames checked in the browser on the dev server: line draws, nodes pop in order at 0%/~22%/45%, then fade.
-  - [ ] Check in the running app with the OS "reduce motion" setting on, and in dark mode.
-  - [ ] Check `/ar` (the mark must not mirror; the label is right-aligned under it).
-- **Progress (2026-10-17):** implemented, uncommitted. `pnpm nx run-many -t typecheck lint test -p @work-hub/client` passes (26 tests, 6 new in `specs/logo-loader.spec.tsx`).
+  - [ ] No unused components, stores or validators are left in `apps/client/src`.
+  - [ ] `pnpm nx run-many -t typecheck lint test` is green.
 
-### WH-028 · Readiness probe leaks internal error text and uses the wrong error code
-- **Type:** security · **Priority:** P2 · **Status:** under-review · **Area:** api
-- **Why:** with the database down, the public `GET /health/ready` returns Prisma's internal message (`Invalid prisma.$queryRawUnsafe() invocation`) and labels a 503 as `"code":"INTERNAL_ERROR"`. Internal details help attackers, and the wrong code misleads monitoring.
-- **Scope:**
-  - The database health check returns a generic `"unreachable"` and logs the real reason server-side, as the Step 1 guide proposed. Terminus' `PrismaHealthIndicator` puts the raw error in the response.
-  - Add `SERVICE_UNAVAILABLE` to `ErrorCode` in `libs/shared/constants`, and use it for 503s in `ProblemDetailsFilter`.
+### WH-042 · Dark mode: decide, then implement or remove the unused styles
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** client
+- **Why:** `global.css` has a `.dark` block, but nothing ever turns it on, and it defines no brand colors. WH-037's "check in dark mode" couldn't be done.
+- **Scope:** decide whether WorkHub supports dark mode.
+  - **If yes:** follow the system preference (with an optional toggle), define the brand tokens under `.dark`, and check every page, including the logo loader.
+  - **If no:** delete the dead `.dark` block.
 - **Acceptance criteria:**
-  - [ ] With Docker stopped, `/health/ready` returns 503 with `"code":"SERVICE_UNAVAILABLE"` and no Prisma text.
-  - [ ] The real error appears in the server log.
-  - [x] The filter and health tests cover both points.
-- **Review (2026-10-17, round 2):** ✅ new `SERVICE_UNAVAILABLE` code in the shared constants, mapped by the filter; the database check returns a generic `"unreachable"` and logs the real error; a test asserts "prisma" never reaches the response. Left:
-  - [ ] **No timeout.** The replaced Terminus helper gave up after 1 s. The new `checkDatabase()` waits as long as the database takes, and `PrismaService` sets no `connectionTimeoutMillis`, so a *hanging* database makes `/health/ready` hang. Add a ~1 s timeout and report `down` when it fires.
-  - [ ] **Test noise:** the "database down" test prints a red `ERROR [HealthController] …` line. Silence and assert it, like `problem-details.filter.spec.ts` does (`vi.spyOn(controller['logger'], 'error')`).
-  - [ ] Minor: prefer the tagged `$queryRaw` form over `$queryRawUnsafe('SELECT 1')`. It's safe as written, but the tagged form is the pattern worth copying.
-  - [ ] Check in the browser with Docker stopped: `/health/ready` → 503 `SERVICE_UNAVAILABLE`, no Prisma text. Restart `pnpm dev` first: the running server still has the old code.
-
-### WH-031 · Show/hide password button on password fields
-- **Type:** feature · **Priority:** P2 · **Status:** under-review · **Area:** client
-- **Why:** users mistype long passwords (the minimum is 10 characters). A visibility toggle reduces failed sign-ins and resets.
-- **Scope:** a reusable `PasswordInput` (`src/components/ui/password-input.tsx`) with an eye button, used in sign-in, sign-up and reset-password. Translated labels (`Auth.fields.password.show` / `hide`), positioned with logical CSS (`end-*`, `pe-*`) so it flips correctly in Arabic.
-- **Acceptance criteria:**
-  - [ ] The toggle works in all 3 forms, and the field goes back to hidden on submit or navigation.
-  - [ ] The button has an accessible label that matches its state ("Show password" / "Hide password") in each language, and is reachable with the keyboard.
-  - [x] In `/ar`, the eye icon doesn't overlap the text. _(The design changed on 2026-10-17: password and email fields now stay left-to-right in Arabic, so the icon is on the right. That's a valid, common choice for Latin-script values.)_
-  - [ ] The password managers' autofill (`autoComplete`) still works. _(the props are passed through unchanged; confirm in the browser)_
-- **Progress (2026-10-17):** `PasswordInput` is built and used in sign-in, sign-up and reset. `Input` now forces `dir="ltr"` for `email`, `password`, `url`, `tel` and `number` fields (uncommitted).
-- **Review (2026-10-17):**
-  - [x] Correct: `PasswordInput` sets `dir="ltr"` itself, because when shown, the field's type becomes `text`, which `Input` would no longer force to LTR. That case is handled.
-  - [x] **Accessibility:** use either `aria-pressed` with a **fixed** label ("Show password"), or a label that changes without `aria-pressed`, not both. Today the label flips **and** `aria-pressed` flips, so screen readers announce a pressed "Hide password" button, which is confusing.
-  - [x] **Arabic placeholders in LTR fields** ("10 أحرف على الأقل", "you@company.com") are now left-aligned on Arabic pages. Add `rtl:placeholder:text-right` in `Input` for forced-LTR fields, so the hint lines up with the right-aligned labels.
-  - [x] **Consistency:** `password-input.tsx`, `input.tsx` and `button.tsx` import `cn` from `'cn'`; the other 9 files use `'@/lib/utils'`, which just re-exports it. Pick one (`@/lib/utils`), so it can later be swapped for a tailwind-merge version in one place.
-  - [x] Add a unit test: clicking the button toggles the field type and the accessible state.
-- **Review (2026-10-17, round 2):** ✅ all 4 round-1 issues fixed: only the label changes (no `aria-pressed` conflict); `rtl:placeholder:text-right` lines up the hints; every file now imports `cn` from `@/lib/utils`; a unit test covers the toggle. Also verified that `inset-e-2` (dropdown-menu) is a valid Tailwind 4.3 class. Left: [ ] the first two criteria in the browser, then commit.
-- **Review (2026-10-17, round 3, after commit `96c3d33`):** 🔁 code committed ✅; only the browser checks in the acceptance criteria are left. Once they pass, this ticket is done.
+  - [ ] A decision is recorded here, and either every page reads well in dark mode, or the `.dark` block is gone.
 
 ### WH-008 · Bug: the sign-in "Email verified" banner never appears
 - **Type:** bug · **Priority:** P3 · **Status:** start · **Area:** client
@@ -472,11 +637,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Why:** `generate-openapi.ts` only sets defaults for the old env vars, and `PrismaService` connects at startup. It can't run in CI without a database.
 - **Fix when setting up CI:** default values for all required env vars, and no database connection needed to generate the document.
 
-### WH-023 · Pages guarded only in the browser
-- **Type:** tech-debt · **Priority:** P3 · **Status:** start · **Area:** client
-- **Why:** `/app` shows "Checking session…" and then redirects, because the guard runs in the browser. It's safe (the API refuses data) but flickers.
-- **Fix:** check the session server-side (middleware/proxy or a server component) and redirect before rendering.
-
 ### WH-024 · Rate-limit counters stored in memory
 - **Type:** tech-debt · **Priority:** P3 · **Status:** start · **Area:** api
 - **Why:** Better Auth's sign-in limits (5 a minute) reset when the server restarts, and don't work across several servers.
@@ -493,16 +653,10 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - its health check uses `/health/live`, which doesn't check the database;
   - the migration URL needs its own root-only env file.
 - **Fix when deployment work resumes.**
+- **Gap (from WH-045):** session cookies are set by the API host. If the web app is served from a different host, `proxy.ts` never receives the cookie. Serve the API under the web origin (a `/api` rewrite), or set Better Auth `advanced.crossSubDomainCookies`.
+
 
 ### WH-027 · Developer setup notes in the README
 - **Type:** chore · **Priority:** P3 · **Status:** start · **Area:** docs
 - **Why:** a new developer needs: Node 22 (`nvm use`, `nvm alias default 22`), `docker compose up -d`, `pnpm db:seed`, the test accounts, Mailpit at `localhost:8025`, Swagger at `localhost:3333/docs`.
 - **Done when:** a fresh clone can follow the README to a signed-in `/app` without asking anyone.
-
-### WH-034 · Email addresses inside Arabic sentences may display out of order
-- **Type:** bug · **Priority:** P3 · **Status:** under-review · **Area:** client
-- **Why:** on `/ar/verify-email`, the sentence "We sent a link to {email}" mixes a left-to-right address into right-to-left text. Browsers can then place the address or the punctuation around it in the wrong spot.
-- **Fix:** wrap inserted values that are left-to-right (emails, URLs) in `<bdi>`, or in `<span dir="ltr">`, using next-intl's rich text.
-- **Done when:** in `/ar`, the email in the verify page reads correctly, with the punctuation on the right side of it.
-- **Review (2026-10-17, round 2):** ✅ the verify-email and forgot-password messages wrap the email in `<bdi>` through `t.rich`, the recommended fix. Left: [ ] look at `/ar/verify-email` in the browser, then commit.
-- **Review (2026-10-17, round 3, after commit `96c3d33`):** 🔁 code committed ✅; only the browser checks in the acceptance criteria are left. Once they pass, this ticket is done.

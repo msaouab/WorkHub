@@ -1,0 +1,25 @@
+# Domain ownership. Paths are relative to the repo root.
+# A change under a domain requires review from that domain's owner.
+# Shared contracts and DB migrations also need a lead review.
+
+* @msaouab
+
+# Shared contracts / constants — both API and client consume these
+/libs/shared/ @msaouab
+
+# Database schema and RLS migrations
+/libs/api/database/prisma/migrations/ @msaouab
+
+# API domains
+/libs/api/users/ @msaouab
+/libs/api/spaces/ @msaouab
+/libs/api/access/ @msaouab
+/libs/api/auth/ @msaouab
+/libs/api/mail/ @msaouab
+/libs/api/core/ @msaouab
+/libs/api/database/ @msaouab
+
+# Apps
+/apps/server/ @msaouab
+/apps/client/ @msaouab
+/apps/client-e2e/ @msaouab

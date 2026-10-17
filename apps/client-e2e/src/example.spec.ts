@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('/');
-
-  // Expect h1 to contain a substring.
-  expect(await page.locator('h1').innerText()).toContain('Welcome');
+test('landing page loads', async ({ page }) => {
+  await page.goto('/en');
+  await expect(
+    page.getByRole('heading', { name: /Leave and papers/i })
+  ).toBeVisible();
 });

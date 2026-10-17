@@ -1,0 +1,27 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "src/**/*.spec.ts", "src/**/*.test.ts"],
+  "references": [
+    { "path": "../../shared/constants" },
+    { "path": "../../shared/contracts" },
+    { "path": "../access" },
+    { "path": "../auth" },
+    { "path": "../core" },
+    { "path": "../database" }
+  ]
+}

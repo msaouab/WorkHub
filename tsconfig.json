@@ -29,6 +29,18 @@
     },
     {
       "path": "./tools/seed"
+    },
+    {
+      "path": "./libs/api/spaces"
+    },
+    {
+      "path": "./libs/api/access"
+    },
+    {
+      "path": "./libs/api/users"
+    },
+    {
+      "path": "./libs/api/core"
     }
   ]
 }

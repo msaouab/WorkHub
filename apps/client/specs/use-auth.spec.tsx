@@ -69,8 +69,41 @@ describe('useAuth', () => {
 
     expect(mocks.signOut).toHaveBeenCalledOnce();
     expect(queryClient.getQueryData(queryKeys.me)).toBeUndefined();
-    expect(mocks.replace).toHaveBeenCalledWith('/');
+    expect(mocks.replace).toHaveBeenCalledWith('/sign-in');
     expect(mocks.refresh).toHaveBeenCalledOnce();
+  });
+
+  it('skips the auth-guard redirect while sign-out is in flight', async () => {
+    let finishSignOut!: (value: { error: null }) => void;
+    mocks.useSession.mockReturnValue({
+      data: { user: { id: '1' } },
+      isPending: false,
+    });
+    mocks.signOut.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSignOut = resolve;
+        })
+    );
+    const { Wrapper } = createWrapper();
+    const auth = renderHook(() => useAuth(), { wrapper: Wrapper });
+
+    act(() => {
+      void auth.result.current.signOut();
+    });
+
+    mocks.useSession.mockReturnValue({ data: null, isPending: false });
+    renderHook(() => useRequireAuth(), { wrapper: Wrapper });
+
+    expect(mocks.replace).not.toHaveBeenCalled();
+
+    await act(async () => {
+      finishSignOut({ error: null });
+      await Promise.resolve();
+    });
+
+    expect(mocks.replace).toHaveBeenCalledOnce();
+    expect(mocks.replace).toHaveBeenCalledWith('/sign-in');
   });
 
   it('keeps cached data when sign-out fails', async () => {

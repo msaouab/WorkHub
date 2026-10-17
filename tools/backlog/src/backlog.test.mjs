@@ -125,7 +125,7 @@ describe('review tracking', () => {
     assert.equal(quiet, null);
     const loud = hookContext({ event: 'prompt', tickets, problems: ['WH-005: bad'], pending: pendingReviews(tickets, 'c1') });
     assert.match(loud, /1 under-review ticket\(s\) need review/);
-    assert.match(loud, /--mark-reviewed/);
+    assert.match(loud, /status to `in progress`/);
     assert.match(loud, /WH-005: bad/);
     assert.match(hookContext({ event: 'session-start', tickets, problems: [], pending: [] }), /all reviewed since their last change: WH-001/);
   });

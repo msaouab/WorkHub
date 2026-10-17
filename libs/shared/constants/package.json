@@ -15,5 +15,8 @@
   },
   "nx": {
     "tags": ["scope:shared", "type:util"]
+  },
+  "devDependencies": {
+    "vitest": "~5.0.1"
   }
 }

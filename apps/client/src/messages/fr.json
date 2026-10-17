@@ -191,7 +191,6 @@
     "errors": {
       "INVALID_EMAIL_OR_PASSWORD": "E-mail ou mot de passe invalide.",
       "EMAIL_NOT_VERIFIED": "E-mail non vérifié.",
-      "USER_ALREADY_EXISTS": "Un compte existe déjà avec cet e-mail.",
       "PASSWORD_TOO_SHORT": "Le mot de passe est trop court.",
       "INVALID_TOKEN": "Ce lien est invalide ou a expiré.",
       "TOO_MANY_REQUESTS": "Trop de tentatives. Attendez une minute et réessayez.",

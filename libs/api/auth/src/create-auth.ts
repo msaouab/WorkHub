@@ -2,8 +2,12 @@ import type { PrismaClient } from '@work-hub/database';
 import type { MailService } from '@work-hub/mail';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { createAuthMiddleware } from 'better-auth/api';
 import { openAPI } from 'better-auth/plugins';
 import { passwordHasher } from './password';
+import { rejectClientImageUpdate } from './reject-client-image';
+import { localeFromRequestHeaders } from './signup-locale';
+import { stripClientImageUpdate } from './strip-client-image';
 
 /** Where Better Auth's routes are mounted. Also used to prefix them in Swagger. */
 export const AUTH_BASE_PATH = '/api/auth';
@@ -62,8 +66,33 @@ export function createAuth({
     advanced: { database: { generateId: false } },
     user: {
       additionalFields: {
-        // Matches the Locale enum; users can't set it at sign-up (yet).
+        // Matches the Locale enum; not a client body field — set via databaseHooks (WH-032).
         locale: { type: 'string', defaultValue: 'en', input: false },
+      },
+    },
+    // Route-level reject: databaseHooks alone can't drop `image` — Better Auth merges
+    // hook data onto the original payload, so omitted keys come back (WH-050).
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === '/update-user') {
+          rejectClientImageUpdate(ctx.body);
+        }
+      }),
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user, context) => {
+            const locale = localeFromRequestHeaders(context?.headers ?? null);
+            return { data: { ...user, locale } };
+          },
+        },
+        update: {
+          // Belt-and-suspenders if another code path updates the user.
+          before: async (user) => ({
+            data: stripClientImageUpdate(user as Record<string, unknown>),
+          }),
+        },
       },
     },
     emailAndPassword: {
@@ -97,6 +126,7 @@ export function createAuth({
         '/sign-in/email': { window: 60, max: 5 }, // NFR-06
         '/sign-up/email': { window: 60, max: 5 },
         '/request-password-reset': { window: 60, max: 3 },
+        '/get-session': false,
       },
     },
     // Describes the auth routes as OpenAPI; merged into our Swagger page (no separate reference page).

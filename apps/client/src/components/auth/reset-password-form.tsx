@@ -1,10 +1,14 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
+import { FieldError } from '@/components/ui/field-error';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -12,6 +16,8 @@ import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 import { createResetPasswordSchema } from '@/lib/validators/auth';
+
+type ResetValues = z.infer<ReturnType<typeof createResetPasswordSchema>>;
 
 export function ResetPasswordForm() {
   const t = useTranslations('Auth.resetPassword');
@@ -27,10 +33,15 @@ export function ResetPasswordForm() {
     [tValidation]
   );
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { password: '', confirmPassword: '' },
+  });
 
   if (linkError || !token) {
     return (
@@ -56,69 +67,73 @@ export function ResetPasswordForm() {
     );
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = schema.safeParse({ password, confirmPassword });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tValidation('invalidInput'));
-      return;
-    }
-
-    setPending(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (values) => {
     const { error: authError } = await authClient.resetPassword({
-      newPassword: parsed.data.password,
+      newPassword: values.password,
       token,
     });
-    setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError, tErrors));
+      setError('root', { message: authErrorMessage(authError, tErrors) });
       return;
     }
 
     router.replace('/sign-in?reset=1');
     router.refresh();
-  }
+  });
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-2">
         <Label htmlFor="reset-password">{tFields('newPassword.label')}</Label>
-        <PasswordInput
-          id="reset-password"
+        <Controller
           name="password"
-          autoComplete="new-password"
-          value={password}
-          onValueChange={setPassword}
-          placeholder={tFields('newPassword.placeholder')}
-          className="h-10"
-          required
+          control={control}
+          render={({ field, fieldState }) => (
+            <PasswordInput
+              id="reset-password"
+              autoComplete="new-password"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={tFields('newPassword.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+              required
+            />
+          )}
         />
+        <FieldError message={errors.password?.message} />
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="reset-confirm">{tFields('confirmPassword.label')}</Label>
-        <PasswordInput
-          id="reset-confirm"
+        <Controller
           name="confirmPassword"
-          autoComplete="new-password"
-          value={confirmPassword}
-          onValueChange={setConfirmPassword}
-          placeholder={tFields('confirmPassword.placeholder')}
-          className="h-10"
-          required
+          control={control}
+          render={({ field, fieldState }) => (
+            <PasswordInput
+              id="reset-confirm"
+              autoComplete="new-password"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={tFields('confirmPassword.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+              required
+            />
+          )}
         />
+        <FieldError message={errors.confirmPassword?.message} />
       </div>
 
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <FieldError message={errors.root?.message} />
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? t('submitting') : t('submit')}
+      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? t('submitting') : t('submit')}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

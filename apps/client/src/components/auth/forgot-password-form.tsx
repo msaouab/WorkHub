@@ -1,8 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
@@ -10,6 +14,8 @@ import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
 import { appUrl } from '@/lib/env';
 import { createForgotPasswordSchema } from '@/lib/validators/auth';
+
+type ForgotValues = z.infer<ReturnType<typeof createForgotPasswordSchema>>;
 
 export function ForgotPasswordForm() {
   const t = useTranslations('Auth.forgotPassword');
@@ -24,34 +30,31 @@ export function ForgotPasswordForm() {
     [tValidation]
   );
 
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = schema.safeParse({ email });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tValidation('invalidInput'));
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ForgotValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '' },
+  });
 
-    setPending(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (values) => {
     const { error: authError } = await authClient.requestPasswordReset({
-      email: parsed.data.email,
+      email: values.email,
       redirectTo: appUrl(`/${locale}/reset-password`),
     });
-    setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError, tErrors));
+      setError('root', { message: authErrorMessage(authError, tErrors) });
       return;
     }
 
-    setSubmittedEmail(parsed.data.email);
-  }
+    setSubmittedEmail(values.email);
+  });
 
   if (submittedEmail) {
     return (
@@ -91,27 +94,32 @@ export function ForgotPasswordForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-2">
         <Label htmlFor="forgot-email">{tFields('email.label')}</Label>
-        <Input
-          id="forgot-email"
+        <Controller
           name="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onValueChange={setEmail}
-          placeholder={tFields('email.placeholder')}
-          className="h-10"
-          required
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              id="forgot-email"
+              type="email"
+              autoComplete="email"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={tFields('email.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+              required
+            />
+          )}
         />
+        <FieldError message={errors.email?.message} />
       </div>
 
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <FieldError message={errors.root?.message} />
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? tCommon('sending') : t('submit')}
+      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? tCommon('sending') : t('submit')}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

@@ -12,6 +12,9 @@ export const ErrorCode = {
   CONFLICT: 'CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
   BAD_REQUEST: 'BAD_REQUEST',
+  IMAGE_TOO_LARGE: 'IMAGE_TOO_LARGE',
+  IMAGE_UNSUPPORTED_TYPE: 'IMAGE_UNSUPPORTED_TYPE',
+  IMAGE_TOO_SMALL: 'IMAGE_TOO_SMALL',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

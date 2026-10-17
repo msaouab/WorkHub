@@ -10,7 +10,56 @@
     "verifyEmailTitle": "تأكيد البريد — WorkHub",
     "verifyEmailDescription": "أكد بريدك الإلكتروني لتفعيل حساب WorkHub.",
     "appTitle": "الحساب — WorkHub",
-    "appDescription": "حسابك في WorkHub."
+    "appDescription": "حسابك في WorkHub.",
+    "spacesTitle": "مساحاتك — WorkHub",
+    "spacesDescription": "اختر مساحة عمل أو أنشئ واحدة جديدة.",
+    "spacesNewTitle": "إنشاء مساحة — WorkHub",
+    "spacesNewDescription": "ابدأ مساحة شركة جديدة على WorkHub.",
+    "spaceTitle": "{name} — WorkHub",
+    "spaceDescription": "مساحة عمل WorkHub الخاصة بك.",
+    "spaceSettingsTitle": "إعدادات المساحة — WorkHub",
+    "spaceSettingsDescription": "المظهر والإعدادات لهذه المساحة.",
+    "spaceMembersTitle": "الأعضاء — WorkHub",
+    "spaceMembersDescription": "الأشخاص في مساحة العمل هذه.",
+    "settingsTitle": "الإعدادات — WorkHub",
+    "settingsDescription": "إدارة حساب WorkHub الخاص بك."
+  },
+  "Shell": {
+    "skipToContent": "تخطَّ إلى المحتوى",
+    "openMenu": "فتح القائمة",
+    "collapse": "طيّ",
+    "expand": "توسيع",
+    "workspaceNav": "مساحة العمل",
+    "settingsNavLabel": "إعدادات الحساب",
+    "accountSettings": "إعدادات الحساب",
+    "spaceNav": {
+      "home": "الرئيسية",
+      "members": "الأعضاء",
+      "settings": "الإعدادات",
+      "manage": "إدارة",
+      "role": "{role}"
+    },
+    "settingsNav": {
+      "profile": "الملف الشخصي",
+      "language": "اللغة",
+      "password": "كلمة المرور",
+      "backTo": "العودة إلى {name}",
+      "backToDashboard": "العودة إلى لوحة التحكم"
+    }
+  },
+  "Dashboard": {
+    "title": "مساحاتك",
+    "description": "ادخل إلى مساحة، أو أنشئ واحدة جديدة.",
+    "create": "إنشاء مساحة",
+    "allSpaces": "كل المساحات",
+    "failed": "تعذّر تحميل مساحاتك."
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "الصفحة غير موجودة",
+    "description": "هذا الرابط لا يطابق أي شيء في WorkHub.",
+    "goHome": "الصفحة الرئيسية",
+    "goDashboard": "لوحة التحكم"
   },
   "Common": {
     "loading": "جارٍ التحميل…",
@@ -19,8 +68,53 @@
     "creatingAccount": "جارٍ إنشاء الحساب…",
     "sending": "جارٍ الإرسال…",
     "language": "اللغة",
-    "account": "الحساب",
-    "unavailable": "غير متاح"
+    "unavailable": "غير متاح",
+    "saving": "جارٍ الحفظ…"
+  },
+  "Account": {
+    "menu": {
+      "open": "قائمة الحساب: {name}",
+      "settings": "الإعدادات",
+      "signOut": "تسجيل الخروج",
+      "signingOut": "جارٍ تسجيل الخروج…"
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "description": "ملفك ولغتك وكلمة المرور.",
+      "profileTitle": "الملف الشخصي",
+      "nameLabel": "الاسم الكامل",
+      "emailLabel": "البريد",
+      "emailHint": "تغيير البريد غير متاح بعد.",
+      "saveProfile": "حفظ الاسم",
+      "profileSaved": "تم تحديث الاسم.",
+      "languageTitle": "اللغة",
+      "languageDescription": "تُستخدم في التطبيق والرسائل.",
+      "passwordTitle": "كلمة المرور",
+      "currentPassword": "كلمة المرور الحالية",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور الجديدة",
+      "changePassword": "تغيير كلمة المرور",
+      "passwordChanged": "تم تحديث كلمة المرور. تم إنهاء الجلسات الأخرى.",
+      "avatar": {
+        "title": "صورة الملف الشخصي",
+        "description": "تظهر في قائمة الحساب ولاحقًا في قوائم الأعضاء.",
+        "change": "تغيير الصورة",
+        "remove": "إزالة",
+        "cropTitle": "قص الصورة",
+        "cropHint": "اسحب لإعادة التموضع، قرّب الإطار، ثم احفظ.",
+        "cropCanvas": "معاينة القص",
+        "zoom": "تكبير",
+        "save": "حفظ الصورة",
+        "cancel": "إلغاء",
+        "uploading": "جارٍ الرفع…",
+        "errors": {
+          "tooLarge": "هذه الصورة كبيرة جدًا (بحد أقصى 2 ميغابايت).",
+          "unsupported": "استخدم صورة PNG أو JPEG أو WebP.",
+          "tooSmall": "هذه الصورة صغيرة جدًا (128×128 على الأقل).",
+          "failed": "تعذّر تحديث صورتك."
+        }
+      }
+    }
   },
   "Locale": {
     "en": "English",
@@ -192,6 +286,7 @@
       "INVALID_EMAIL_OR_PASSWORD": "البريد أو كلمة المرور غير صحيحة.",
       "EMAIL_NOT_VERIFIED": "البريد غير مؤكَّد.",
       "PASSWORD_TOO_SHORT": "كلمة المرور قصيرة جدًا.",
+      "INVALID_PASSWORD": "كلمة المرور الحالية غير صحيحة.",
       "INVALID_TOKEN": "هذا الرابط غير صالح أو منتهي.",
       "TOO_MANY_REQUESTS": "محاولات كثيرة. انتظر دقيقة ثم أعد المحاولة.",
       "fallback": "حدث خطأ. حاول مرة أخرى."
@@ -217,7 +312,7 @@
     },
     "appShell": {
       "title": "أنت مسجّل الدخول",
-      "description": "المساحات والدعوات تأتي لاحقًا. هذا يؤكد أن جلستك تعمل الآن.",
+      "description": "جارٍ فتح مساحة العمل…",
       "signOut": "تسجيل الخروج",
       "checkingSession": "جارٍ التحقق من الجلسة…",
       "name": "الاسم",
@@ -226,6 +321,107 @@
       "emailVerified": "البريد مؤكد",
       "yes": "نعم",
       "no": "لا"
+    }
+  },
+  "Spaces": {
+    "switcher": {
+      "loading": "المساحات…",
+      "pick": "المساحات",
+      "create": "إنشاء مساحة",
+      "all": "كل المساحات",
+      "dashboard": "لوحة التحكم"
+    },
+    "members": {
+      "title": "الأعضاء",
+      "comingSoon": "قائمة أعضاء «{name}» قادمة قريبًا."
+    },
+    "picker": {
+      "loading": "جارٍ تحميل المساحات…",
+      "failed": "تعذّر تحميل مساحاتك.",
+      "title": "اختر مساحة عمل",
+      "description": "اختر أين تريد العمل، أو أنشئ مساحة أخرى.",
+      "emptyTitle": "أنشئ مساحتك الأولى",
+      "emptyDescription": "المساحة تجمع الإجازات والعطل والوثائق لشركة واحدة.",
+      "create": "إنشاء مساحة"
+    },
+    "create": {
+      "title": "إنشاء مساحة",
+      "description": "ستكون المالك. يمكنك دعوة الآخرين لاحقًا.",
+      "nameLabel": "اسم المساحة",
+      "namePlaceholder": "Acme Corp",
+      "slugLabel": "معرّف الرابط",
+      "slugPlaceholder": "acme",
+      "slugHint": "أحرف صغيرة وأرقام وشرطات. يُستخدم في الرابط.",
+      "slugLatinHint": "استخدم أحرفًا لاتينية وأرقامًا وشرطات للرابط (مثل acme).",
+      "submit": "إنشاء المساحة",
+      "submitting": "جارٍ الإنشاء…",
+      "invalid": "تحقق من الاسم والمعرّف.",
+      "slugTaken": "هذا المعرّف مستخدم بالفعل.",
+      "failed": "تعذّر إنشاء المساحة. حاول مرة أخرى."
+    },
+    "home": {
+      "loading": "جارٍ تحميل المساحة…",
+      "failed": "تعذّر تحميل هذه المساحة.",
+      "eyebrow": "مساحة العمل",
+      "description": "أنت مسجّل الدخول كـ {role}.",
+      "slug": "المعرّف",
+      "role": "دورك",
+      "status": "العضوية",
+      "roles": {
+        "Owner": "المالك",
+        "Admin": "المشرف",
+        "Member": "عضو"
+      },
+      "statusValues": {
+        "active": "نشط",
+        "deactivated": "موقوف"
+      },
+      "noAccessTitle": "لا يوجد وصول",
+      "noAccessDescription": "لست عضوًا في «{slug}»، أو أنها غير موجودة.",
+      "pausedTitle": "الوصول موقوف",
+      "pausedDescription": "وصولك إلى «{name}» موقوف. اطلب من مشرف إعادة تفعيل حسابك.",
+      "backToSpaces": "العودة إلى المساحات",
+      "settings": "إعدادات المساحة"
+    },
+    "settings": {
+      "loading": "جارٍ تحميل الإعدادات…",
+      "failed": "تعذّر تحميل إعدادات المساحة.",
+      "title": "إعدادات المساحة",
+      "description": "إدارة مظهر مساحة العمل هذه.",
+      "brandingTitle": "الهوية البصرية",
+      "brandingDescription": "الشعار والغلاف الظاهران في الصفحة الرئيسية وفي المبدّل.",
+      "noAccess": "لست عضوًا في «{slug}»، أو أنها غير موجودة.",
+      "back": "العودة إلى المساحات",
+      "backToSpace": "العودة إلى المساحة"
+    },
+    "branding": {
+      "changeCover": "تغيير الغلاف",
+      "reposition": "إعادة التموضع",
+      "removeCover": "إزالة الغلاف",
+      "changeLogo": "تغيير",
+      "removeLogo": "إزالة",
+      "presets": "أغلفة جاهزة",
+      "positionLabel": "الموضع العمودي",
+      "savePosition": "حفظ الموضع",
+      "cancel": "إلغاء",
+      "uploading": "جارٍ الرفع…",
+      "presetNames": {
+        "aurora": "شفق",
+        "dusk": "غسق",
+        "forest": "غابة",
+        "slate": "أردواز",
+        "sand": "رمل",
+        "ocean": "محيط",
+        "ember": "جمر",
+        "lilac": "أرجواني"
+      },
+      "errors": {
+        "tooLarge": "هذه الصورة كبيرة جدًا.",
+        "unsupported": "استخدم صورة PNG أو JPEG أو WebP.",
+        "tooSmall": "هذه الصورة صغيرة جدًا.",
+        "logoFailed": "تعذّر تحديث الشعار.",
+        "coverFailed": "تعذّر تحديث الغلاف."
+      }
     }
   },
   "Validation": {
@@ -242,6 +438,11 @@
     "nameMax": "الاسم طويل جدًا",
     "confirmPassword": "أكد كلمة المرور",
     "passwordMismatch": "كلمتا المرور غير متطابقتين",
-    "invalidInput": "إدخال غير صالح"
+    "invalidInput": "إدخال غير صالح",
+    "spaceNameMin": "أدخل اسم المساحة",
+    "spaceNameMax": "الاسم طويل جدًا",
+    "spaceSlugMin": "يجب أن يكون المعرّف حرفين على الأقل",
+    "spaceSlugMax": "المعرّف طويل جدًا",
+    "spaceSlugFormat": "استخدم أحرفًا صغيرة وأرقامًا وشرطات"
   }
 }

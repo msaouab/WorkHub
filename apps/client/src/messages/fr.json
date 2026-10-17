@@ -10,7 +10,56 @@
     "verifyEmailTitle": "Vérifier l'e-mail — WorkHub",
     "verifyEmailDescription": "Confirmez votre e-mail pour activer votre compte WorkHub.",
     "appTitle": "Compte — WorkHub",
-    "appDescription": "Votre compte WorkHub."
+    "appDescription": "Votre compte WorkHub.",
+    "spacesTitle": "Vos espaces — WorkHub",
+    "spacesDescription": "Choisissez un espace ou créez-en un nouveau.",
+    "spacesNewTitle": "Créer un espace — WorkHub",
+    "spacesNewDescription": "Démarrez un nouvel espace entreprise sur WorkHub.",
+    "spaceTitle": "{name} — WorkHub",
+    "spaceDescription": "Votre espace WorkHub.",
+    "spaceSettingsTitle": "Paramètres de l'espace — WorkHub",
+    "spaceSettingsDescription": "Apparence et paramètres de cet espace.",
+    "spaceMembersTitle": "Membres — WorkHub",
+    "spaceMembersDescription": "Les personnes de cet espace.",
+    "settingsTitle": "Paramètres — WorkHub",
+    "settingsDescription": "Gérez votre compte WorkHub."
+  },
+  "Shell": {
+    "skipToContent": "Aller au contenu",
+    "openMenu": "Ouvrir le menu",
+    "collapse": "Réduire",
+    "expand": "Développer",
+    "workspaceNav": "Espace",
+    "settingsNavLabel": "Paramètres du compte",
+    "accountSettings": "Paramètres du compte",
+    "spaceNav": {
+      "home": "Accueil",
+      "members": "Membres",
+      "settings": "Paramètres",
+      "manage": "Gérer",
+      "role": "{role}"
+    },
+    "settingsNav": {
+      "profile": "Profil",
+      "language": "Langue",
+      "password": "Mot de passe",
+      "backTo": "Retour à {name}",
+      "backToDashboard": "Retour au tableau de bord"
+    }
+  },
+  "Dashboard": {
+    "title": "Vos espaces",
+    "description": "Ouvrez un espace, ou créez-en un autre.",
+    "create": "Créer un espace",
+    "allSpaces": "Tous les espaces",
+    "failed": "Impossible de charger vos espaces."
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Page introuvable",
+    "description": "Ce lien ne correspond à rien sur WorkHub.",
+    "goHome": "Accueil",
+    "goDashboard": "Tableau de bord"
   },
   "Common": {
     "loading": "Chargement…",
@@ -19,8 +68,53 @@
     "creatingAccount": "Création du compte…",
     "sending": "Envoi…",
     "language": "Langue",
-    "account": "Compte",
-    "unavailable": "Indisponible"
+    "unavailable": "Indisponible",
+    "saving": "Enregistrement…"
+  },
+  "Account": {
+    "menu": {
+      "open": "Menu compte : {name}",
+      "settings": "Paramètres",
+      "signOut": "Se déconnecter",
+      "signingOut": "Déconnexion…"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Votre profil, langue et mot de passe.",
+      "profileTitle": "Profil",
+      "nameLabel": "Nom complet",
+      "emailLabel": "E-mail",
+      "emailHint": "Le changement d'e-mail n'est pas encore disponible.",
+      "saveProfile": "Enregistrer le nom",
+      "profileSaved": "Nom mis à jour.",
+      "languageTitle": "Langue",
+      "languageDescription": "Utilisée pour l'application et les e-mails.",
+      "passwordTitle": "Mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "changePassword": "Changer le mot de passe",
+      "passwordChanged": "Mot de passe mis à jour. Les autres sessions ont été fermées.",
+      "avatar": {
+        "title": "Photo de profil",
+        "description": "Affichée dans le menu compte et plus tard dans les listes de membres.",
+        "change": "Changer la photo",
+        "remove": "Supprimer",
+        "cropTitle": "Recadrer la photo",
+        "cropHint": "Faites glisser pour recentrer, zoomez, puis enregistrez.",
+        "cropCanvas": "Aperçu du recadrage",
+        "zoom": "Zoom",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "uploading": "Envoi…",
+        "errors": {
+          "tooLarge": "Cette image est trop volumineuse (max 2 Mo).",
+          "unsupported": "Utilisez une image PNG, JPEG ou WebP.",
+          "tooSmall": "Cette image est trop petite (min 128×128).",
+          "failed": "Impossible de mettre à jour la photo."
+        }
+      }
+    }
   },
   "Locale": {
     "en": "English",
@@ -192,6 +286,7 @@
       "INVALID_EMAIL_OR_PASSWORD": "E-mail ou mot de passe invalide.",
       "EMAIL_NOT_VERIFIED": "E-mail non vérifié.",
       "PASSWORD_TOO_SHORT": "Le mot de passe est trop court.",
+      "INVALID_PASSWORD": "Le mot de passe actuel est incorrect.",
       "INVALID_TOKEN": "Ce lien est invalide ou a expiré.",
       "TOO_MANY_REQUESTS": "Trop de tentatives. Attendez une minute et réessayez.",
       "fallback": "Une erreur s'est produite. Réessayez."
@@ -217,7 +312,7 @@
     },
     "appShell": {
       "title": "Vous êtes connecté",
-      "description": "Les espaces et invitations viennent ensuite. Pour l'instant, cela confirme que votre session fonctionne.",
+      "description": "Ouverture de votre espace…",
       "signOut": "Se déconnecter",
       "checkingSession": "Vérification de la session…",
       "name": "Nom",
@@ -226,6 +321,107 @@
       "emailVerified": "E-mail vérifié",
       "yes": "Oui",
       "no": "Non"
+    }
+  },
+  "Spaces": {
+    "switcher": {
+      "loading": "Espaces…",
+      "pick": "Espaces",
+      "create": "Créer un espace",
+      "all": "Tous les espaces",
+      "dashboard": "Votre tableau de bord"
+    },
+    "members": {
+      "title": "Membres",
+      "comingSoon": "La liste des membres de « {name} » arrive bientôt."
+    },
+    "picker": {
+      "loading": "Chargement des espaces…",
+      "failed": "Impossible de charger vos espaces.",
+      "title": "Choisir un espace",
+      "description": "Choisissez où travailler, ou créez un autre espace.",
+      "emptyTitle": "Créez votre premier espace",
+      "emptyDescription": "Un espace regroupe congés, jours fériés et documents pour une entreprise.",
+      "create": "Créer un espace"
+    },
+    "create": {
+      "title": "Créer un espace",
+      "description": "Vous en serez le propriétaire. Vous pourrez inviter des personnes ensuite.",
+      "nameLabel": "Nom de l'espace",
+      "namePlaceholder": "Acme Corp",
+      "slugLabel": "Identifiant d'URL",
+      "slugPlaceholder": "acme",
+      "slugHint": "Lettres minuscules, chiffres et tirets. Utilisé dans le lien.",
+      "slugLatinHint": "Utilisez des lettres latines, des chiffres et des tirets pour l'URL (ex. acme).",
+      "submit": "Créer l'espace",
+      "submitting": "Création…",
+      "invalid": "Vérifiez le nom et l'identifiant.",
+      "slugTaken": "Cet identifiant est déjà pris.",
+      "failed": "Impossible de créer l'espace. Réessayez."
+    },
+    "home": {
+      "loading": "Chargement de l'espace…",
+      "failed": "Impossible de charger cet espace.",
+      "eyebrow": "Espace",
+      "description": "Vous êtes connecté en tant que {role}.",
+      "slug": "Identifiant",
+      "role": "Votre rôle",
+      "status": "Adhésion",
+      "roles": {
+        "Owner": "Propriétaire",
+        "Admin": "Admin",
+        "Member": "Membre"
+      },
+      "statusValues": {
+        "active": "Actif",
+        "deactivated": "Suspendu"
+      },
+      "noAccessTitle": "Accès refusé",
+      "noAccessDescription": "Vous n'êtes pas membre de « {slug} », ou il n'existe pas.",
+      "pausedTitle": "Accès suspendu",
+      "pausedDescription": "Votre accès à « {name} » est suspendu. Demandez à un admin de vous réactiver.",
+      "backToSpaces": "Retour aux espaces",
+      "settings": "Paramètres de l'espace"
+    },
+    "settings": {
+      "loading": "Chargement des paramètres…",
+      "failed": "Impossible de charger les paramètres.",
+      "title": "Paramètres de l'espace",
+      "description": "Gérez l'apparence de cet espace.",
+      "brandingTitle": "Apparence",
+      "brandingDescription": "Logo et couverture affichés sur l'accueil et dans le sélecteur.",
+      "noAccess": "Vous n'êtes pas membre de « {slug} », ou il n'existe pas.",
+      "back": "Retour aux espaces",
+      "backToSpace": "Retour à l'espace"
+    },
+    "branding": {
+      "changeCover": "Changer la couverture",
+      "reposition": "Repositionner",
+      "removeCover": "Supprimer la couverture",
+      "changeLogo": "Modifier",
+      "removeLogo": "Supprimer",
+      "presets": "Couvertures prédéfinies",
+      "positionLabel": "Position verticale",
+      "savePosition": "Enregistrer",
+      "cancel": "Annuler",
+      "uploading": "Envoi…",
+      "presetNames": {
+        "aurora": "Aurore",
+        "dusk": "Crépuscule",
+        "forest": "Forêt",
+        "slate": "Ardoise",
+        "sand": "Sable",
+        "ocean": "Océan",
+        "ember": "Braise",
+        "lilac": "Lilas"
+      },
+      "errors": {
+        "tooLarge": "Cette image est trop volumineuse.",
+        "unsupported": "Utilisez une image PNG, JPEG ou WebP.",
+        "tooSmall": "Cette image est trop petite.",
+        "logoFailed": "Impossible de mettre à jour le logo.",
+        "coverFailed": "Impossible de mettre à jour la couverture."
+      }
     }
   },
   "Validation": {
@@ -242,6 +438,11 @@
     "nameMax": "Le nom est trop long",
     "confirmPassword": "Confirmez votre mot de passe",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
-    "invalidInput": "Saisie invalide"
+    "invalidInput": "Saisie invalide",
+    "spaceNameMin": "Entrez un nom d'espace",
+    "spaceNameMax": "Le nom est trop long",
+    "spaceSlugMin": "L'identifiant doit faire au moins 2 caractères",
+    "spaceSlugMax": "L'identifiant est trop long",
+    "spaceSlugFormat": "Utilisez des lettres minuscules, des chiffres et des tirets"
   }
 }

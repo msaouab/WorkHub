@@ -9,8 +9,57 @@
     "resetPasswordTitle": "Reset password — WorkHub",
     "verifyEmailTitle": "Verify email — WorkHub",
     "verifyEmailDescription": "Confirm your email to activate your WorkHub account.",
-    "appTitle": "Account — WorkHub",
-    "appDescription": "Your WorkHub account."
+    "appTitle": "Your workspaces — WorkHub",
+    "appDescription": "Jump into a workspace or create another.",
+    "spacesTitle": "Your workspaces — WorkHub",
+    "spacesDescription": "Choose a workspace or create a new one.",
+    "spacesNewTitle": "Create a workspace — WorkHub",
+    "spacesNewDescription": "Start a new company space on WorkHub.",
+    "spaceTitle": "{name} — WorkHub",
+    "spaceDescription": "Your WorkHub workspace.",
+    "spaceSettingsTitle": "Workspace settings — WorkHub",
+    "spaceSettingsDescription": "Branding and settings for this workspace.",
+    "spaceMembersTitle": "Members — WorkHub",
+    "spaceMembersDescription": "People in this workspace.",
+    "settingsTitle": "Settings — WorkHub",
+    "settingsDescription": "Manage your WorkHub account."
+  },
+  "Shell": {
+    "skipToContent": "Skip to content",
+    "openMenu": "Open menu",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "workspaceNav": "Workspace",
+    "settingsNavLabel": "Account settings",
+    "accountSettings": "Account settings",
+    "spaceNav": {
+      "home": "Home",
+      "members": "Members",
+      "settings": "Settings",
+      "manage": "Manage",
+      "role": "{role}"
+    },
+    "settingsNav": {
+      "profile": "Profile",
+      "language": "Language",
+      "password": "Password",
+      "backTo": "Back to {name}",
+      "backToDashboard": "Back to dashboard"
+    }
+  },
+  "Dashboard": {
+    "title": "Your workspaces",
+    "description": "Jump into a space, or create another.",
+    "create": "Create workspace",
+    "allSpaces": "All workspaces",
+    "failed": "Couldn't load your workspaces."
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Page not found",
+    "description": "That link doesn't match anything on WorkHub.",
+    "goHome": "Go home",
+    "goDashboard": "Go to dashboard"
   },
   "Common": {
     "loading": "Loading…",
@@ -19,8 +68,53 @@
     "creatingAccount": "Creating account…",
     "sending": "Sending…",
     "language": "Language",
-    "account": "Account",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "saving": "Saving…"
+  },
+  "Account": {
+    "menu": {
+      "open": "Account menu: {name}",
+      "settings": "Settings",
+      "signOut": "Sign out",
+      "signingOut": "Signing out…"
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Your profile, language, and password.",
+      "profileTitle": "Profile",
+      "nameLabel": "Full name",
+      "emailLabel": "Email",
+      "emailHint": "Email changes are not available yet.",
+      "saveProfile": "Save name",
+      "profileSaved": "Name updated.",
+      "languageTitle": "Language",
+      "languageDescription": "Used for the app and emails.",
+      "passwordTitle": "Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "changePassword": "Change password",
+      "passwordChanged": "Password updated. Other sessions were signed out.",
+      "avatar": {
+        "title": "Profile picture",
+        "description": "Shown in the account menu and later in member lists.",
+        "change": "Change picture",
+        "remove": "Remove",
+        "cropTitle": "Crop your picture",
+        "cropHint": "Drag to reposition, zoom to frame your face, then save.",
+        "cropCanvas": "Crop preview",
+        "zoom": "Zoom",
+        "save": "Save picture",
+        "cancel": "Cancel",
+        "uploading": "Uploading…",
+        "errors": {
+          "tooLarge": "That image is too large (max 2 MB).",
+          "unsupported": "Use a PNG, JPEG, or WebP image.",
+          "tooSmall": "That image is too small (min 128×128).",
+          "failed": "Couldn't update your picture."
+        }
+      }
+    }
   },
   "Locale": {
     "en": "English",
@@ -192,6 +286,7 @@
       "INVALID_EMAIL_OR_PASSWORD": "Invalid email or password.",
       "EMAIL_NOT_VERIFIED": "Email not verified.",
       "PASSWORD_TOO_SHORT": "Password is too short.",
+      "INVALID_PASSWORD": "Current password is incorrect.",
       "INVALID_TOKEN": "This link is invalid or has expired.",
       "TOO_MANY_REQUESTS": "Too many attempts. Wait a minute and try again.",
       "fallback": "Something went wrong. Try again."
@@ -217,7 +312,7 @@
     },
     "appShell": {
       "title": "You're signed in",
-      "description": "Spaces and invites come next. For now this confirms your session works.",
+      "description": "Opening your workspace…",
       "signOut": "Sign out",
       "checkingSession": "Checking session…",
       "name": "Name",
@@ -226,6 +321,107 @@
       "emailVerified": "Email verified",
       "yes": "Yes",
       "no": "No"
+    }
+  },
+  "Spaces": {
+    "switcher": {
+      "loading": "Workspaces…",
+      "pick": "Workspaces",
+      "create": "Create workspace",
+      "all": "All workspaces",
+      "dashboard": "Your dashboard"
+    },
+    "members": {
+      "title": "Members",
+      "comingSoon": "Member list for “{name}” is coming soon."
+    },
+    "picker": {
+      "loading": "Loading workspaces…",
+      "failed": "Couldn't load your workspaces.",
+      "title": "Choose a workspace",
+      "description": "Pick where you want to work, or create another space.",
+      "emptyTitle": "Create your first workspace",
+      "emptyDescription": "Workspaces keep leave, holidays, and documents for one company.",
+      "create": "Create a workspace"
+    },
+    "create": {
+      "title": "Create a workspace",
+      "description": "You'll be the owner. You can invite people later.",
+      "nameLabel": "Workspace name",
+      "namePlaceholder": "Acme Corp",
+      "slugLabel": "URL slug",
+      "slugPlaceholder": "acme",
+      "slugHint": "Lowercase letters, numbers, and hyphens. Used in the link.",
+      "slugLatinHint": "Use Latin letters, numbers and hyphens for the URL (e.g. acme).",
+      "submit": "Create workspace",
+      "submitting": "Creating…",
+      "invalid": "Check the name and slug.",
+      "slugTaken": "That slug is already taken.",
+      "failed": "Couldn't create the workspace. Try again."
+    },
+    "home": {
+      "loading": "Loading workspace…",
+      "failed": "Couldn't load this workspace.",
+      "eyebrow": "Workspace",
+      "description": "You're signed in as {role}.",
+      "slug": "Slug",
+      "role": "Your role",
+      "status": "Membership",
+      "roles": {
+        "Owner": "Owner",
+        "Admin": "Admin",
+        "Member": "Member"
+      },
+      "statusValues": {
+        "active": "Active",
+        "deactivated": "Paused"
+      },
+      "noAccessTitle": "No access",
+      "noAccessDescription": "You aren't a member of “{slug}”, or it doesn't exist.",
+      "pausedTitle": "Access paused",
+      "pausedDescription": "Your access to “{name}” is paused. Ask an admin to reactivate you.",
+      "backToSpaces": "Back to workspaces",
+      "settings": "Workspace settings"
+    },
+    "settings": {
+      "loading": "Loading settings…",
+      "failed": "Couldn't load workspace settings.",
+      "title": "Workspace settings",
+      "description": "Manage how this workspace looks.",
+      "brandingTitle": "Branding",
+      "brandingDescription": "Logo and cover shown on the workspace home and in the switcher.",
+      "noAccess": "You aren't a member of “{slug}”, or it doesn't exist.",
+      "back": "Back to workspaces",
+      "backToSpace": "Back to workspace"
+    },
+    "branding": {
+      "changeCover": "Change cover",
+      "reposition": "Reposition",
+      "removeCover": "Remove cover",
+      "changeLogo": "Change",
+      "removeLogo": "Remove",
+      "presets": "Cover presets",
+      "positionLabel": "Vertical position",
+      "savePosition": "Save position",
+      "cancel": "Cancel",
+      "uploading": "Uploading…",
+      "presetNames": {
+        "aurora": "Aurora",
+        "dusk": "Dusk",
+        "forest": "Forest",
+        "slate": "Slate",
+        "sand": "Sand",
+        "ocean": "Ocean",
+        "ember": "Ember",
+        "lilac": "Lilac"
+      },
+      "errors": {
+        "tooLarge": "That image is too large.",
+        "unsupported": "Use a PNG, JPEG, or WebP image.",
+        "tooSmall": "That image is too small.",
+        "logoFailed": "Couldn't update the logo.",
+        "coverFailed": "Couldn't update the cover."
+      }
     }
   },
   "Validation": {
@@ -242,6 +438,11 @@
     "nameMax": "Name is too long",
     "confirmPassword": "Confirm your password",
     "passwordMismatch": "Passwords do not match",
-    "invalidInput": "Invalid input"
+    "invalidInput": "Invalid input",
+    "spaceNameMin": "Enter a workspace name",
+    "spaceNameMax": "Name is too long",
+    "spaceSlugMin": "Slug must be at least 2 characters",
+    "spaceSlugMax": "Slug is too long",
+    "spaceSlugFormat": "Use lowercase letters, numbers, and hyphens"
   }
 }

@@ -8,6 +8,7 @@ import { ProblemDetailsFilter } from '@work-hub/core';
 import { DatabaseModule, PrismaService } from '@work-hub/database';
 import { MailModule, MailService } from '@work-hub/mail';
 import { SpacesModule } from '@work-hub/spaces';
+import { StorageModule } from '@work-hub/storage';
 import { UsersModule } from '@work-hub/users';
 import { randomUUID } from 'node:crypto';
 import { LoggerModule } from 'nestjs-pino';
@@ -29,6 +30,7 @@ import { ObserveModule } from './observe';
       validate: (raw) => toAppConfig(validateEnv(raw)),
     }),
     DatabaseModule,
+    StorageModule,
     MailModule,
     ObserveModule.forRoot({
       appKey: process.env.OBSERVE_APP_KEY ?? '',

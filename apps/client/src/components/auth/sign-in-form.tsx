@@ -1,9 +1,13 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -11,7 +15,10 @@ import { isAppLocale } from '@/i18n/locale';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
+import { ROUTES } from '@/lib/routes';
 import { createSignInSchema } from '@/lib/validators/auth';
+
+type SignInValues = z.infer<ReturnType<typeof createSignInSchema>>;
 
 export function SignInForm() {
   const t = useTranslations('Auth.signIn');
@@ -26,45 +33,40 @@ export function SignInForm() {
   const reset = searchParams.get('reset') === '1';
   const schema = useMemo(() => createSignInSchema(tValidation), [tValidation]);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
+  });
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = schema.safeParse({ email, password });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tValidation('invalidInput'));
-      return;
-    }
-
-    setPending(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (values) => {
     const { data, error: authError } = await authClient.signIn.email({
-      email: parsed.data.email,
-      password: parsed.data.password,
+      email: values.email,
+      password: values.password,
     });
-    setPending(false);
 
     if (authError) {
       if (authError.code === 'EMAIL_NOT_VERIFIED') {
         router.replace(
-          `/verify-email?email=${encodeURIComponent(parsed.data.email)}`,
+          `/verify-email?email=${encodeURIComponent(values.email)}`,
           { locale }
         );
         return;
       }
-      setError(authErrorMessage(authError, tErrors));
+      setError('root', { message: authErrorMessage(authError, tErrors) });
       return;
     }
 
     const savedLocale = data?.user.locale;
-    router.replace('/app', {
+    router.replace(ROUTES.dashboard, {
       locale: savedLocale && isAppLocale(savedLocale) ? savedLocale : locale,
     });
     router.refresh();
-  }
+  });
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
@@ -87,17 +89,26 @@ export function SignInForm() {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="sign-in-email">{tFields('email.label')}</Label>
-        <Input
-          id="sign-in-email"
+        <Controller
           name="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onValueChange={setEmail}
-          placeholder={tFields('email.placeholder')}
-          className="h-10"
-          required
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              id="sign-in-email"
+              type="email"
+              autoComplete="email"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={tFields('email.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+              required
+            />
+          )}
         />
+        <FieldError message={errors.email?.message} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -110,26 +121,31 @@ export function SignInForm() {
             {t('forgotLink')}
           </Link>
         </div>
-        <PasswordInput
-          id="sign-in-password"
+        <Controller
           name="password"
-          autoComplete="current-password"
-          value={password}
-          onValueChange={setPassword}
-          placeholder={tFields('password.placeholder')}
-          className="h-10"
-          required
+          control={control}
+          render={({ field, fieldState }) => (
+            <PasswordInput
+              id="sign-in-password"
+              autoComplete="current-password"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={tFields('password.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+              required
+            />
+          )}
         />
+        <FieldError message={errors.password?.message} />
       </div>
 
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <FieldError message={errors.root?.message} />
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? tCommon('signingIn') : t('submit')}
+      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? tCommon('signingIn') : t('submit')}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

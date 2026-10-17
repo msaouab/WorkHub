@@ -41,13 +41,17 @@ enum MembershipStatus {
 }
 
 model Space {
-  id            String    @id @default(uuid(7)) @db.Uuid
-  name          String
-  slug          String    @unique @db.Citext
-  defaultRoleId String?   @unique @map("default_role_id") @db.Uuid
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id              String    @id @default(uuid(7)) @db.Uuid
+  name            String
+  slug            String    @unique @db.Citext
+  defaultRoleId   String?   @unique @map("default_role_id") @db.Uuid
+  logoKey         String?   @map("logo_key")
+  coverKey        String?   @map("cover_key")
+  coverPreset     String?   @map("cover_preset")
+  coverPositionY  Int       @default(50) @map("cover_position_y") @db.SmallInt
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   defaultRole Role?         @relation("SpaceDefaultRole", fields: [defaultRoleId], references: [id], onDelete: Restrict)
   roles       Role[]        @relation("SpaceRoles")

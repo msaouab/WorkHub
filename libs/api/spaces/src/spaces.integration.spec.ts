@@ -7,6 +7,7 @@ import { Test } from '@nestjs/testing';
 import { SYSTEM_ROLE_NAMES } from '@work-hub/constants';
 import { SpaceGuard } from '@work-hub/access';
 import { DatabaseModule, PrismaService } from '@work-hub/database';
+import { StorageModule } from '@work-hub/storage';
 import { config } from 'dotenv';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -43,10 +44,24 @@ describeDb('SpacesService + SpaceGuard (DB)', () => {
           load: [
             () => ({
               databaseUrl: process.env.DATABASE_URL,
+              storage: {
+                endpoint:
+                  process.env.STORAGE_ENDPOINT ?? 'http://localhost:9000',
+                region: process.env.STORAGE_REGION ?? 'us-east-1',
+                bucket: process.env.STORAGE_BUCKET ?? 'workhub',
+                accessKeyId: process.env.STORAGE_ACCESS_KEY ?? 'workhub',
+                secretAccessKey:
+                  process.env.STORAGE_SECRET_KEY ?? 'workhubsecret',
+                publicBaseUrl:
+                  process.env.STORAGE_PUBLIC_BASE_URL ??
+                  'http://localhost:9000/workhub',
+                forcePathStyle: true,
+              },
             }),
           ],
         }),
         DatabaseModule,
+        StorageModule,
       ],
       providers: [SpacesService, SpaceGuard],
     }).compile();

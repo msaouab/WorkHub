@@ -8,6 +8,7 @@
   },
   "include": [
     "**/*.ts",
+    "**/*.mts",
     "**/*.js",
     "playwright.config.mts",
     "src/**/*.spec.ts",
@@ -22,5 +23,6 @@
     "eslint.config.js",
     "eslint.config.mjs",
     "eslint.config.cjs"
-  ]
+  ],
+  "references": []
 }

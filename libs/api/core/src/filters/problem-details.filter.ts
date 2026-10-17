@@ -162,6 +162,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         return ErrorCode.CONFLICT;
       case HttpStatus.TOO_MANY_REQUESTS:
         return ErrorCode.RATE_LIMITED;
+      case HttpStatus.PAYLOAD_TOO_LARGE:
+        // Multer LIMIT_FILE_SIZE / PayloadTooLargeException on branding & avatar uploads.
+        return ErrorCode.IMAGE_TOO_LARGE;
       case HttpStatus.SERVICE_UNAVAILABLE:
         return ErrorCode.SERVICE_UNAVAILABLE;
       default:

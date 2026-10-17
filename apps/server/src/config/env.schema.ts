@@ -55,6 +55,15 @@ export const envSchema = z.object({
   /** Sender shown to users, e.g. "WorkHub <no-reply@workhub.app>" */
   MAIL_FROM: z.string().trim().min(1),
   BETTER_AUTH_SECRET: z.string().min(32),
+  /** S3-compatible object storage (MinIO locally — WH-047). */
+  STORAGE_ENDPOINT: z.string().url(),
+  STORAGE_REGION: z.string().trim().min(1).default('us-east-1'),
+  STORAGE_BUCKET: z.string().trim().min(1),
+  STORAGE_ACCESS_KEY: z.string().trim().min(1),
+  STORAGE_SECRET_KEY: z.string().trim().min(1),
+  /** Public base for object URLs (e.g. http://localhost:9000/workhub). */
+  STORAGE_PUBLIC_BASE_URL: z.string().url(),
+  STORAGE_FORCE_PATH_STYLE: booleanFlagSchema.default(true),
 }).refine((env) => Boolean(env.SMTP_USER) === Boolean(env.SMTP_PASS), {
   message: 'SMTP_USER and SMTP_PASS must be set together (or both left empty)',
   path: ['SMTP_PASS'],

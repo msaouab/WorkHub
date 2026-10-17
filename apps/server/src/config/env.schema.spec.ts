@@ -10,6 +10,11 @@ const base = {
   SMTP_PORT: '1025',
   MAIL_FROM: 'WorkHub <no-reply@workhub.local>',
   BETTER_AUTH_SECRET: 'x'.repeat(32),
+  STORAGE_ENDPOINT: 'http://localhost:9000',
+  STORAGE_BUCKET: 'workhub',
+  STORAGE_ACCESS_KEY: 'workhub',
+  STORAGE_SECRET_KEY: 'workhubsecret',
+  STORAGE_PUBLIC_BASE_URL: 'http://localhost:9000/workhub',
 };
 
 describe('validateEnv', () => {
@@ -42,6 +47,15 @@ describe('validateEnv', () => {
         baseUrl: 'http://localhost:3333',
         secret: 'x'.repeat(32),
         trustedOrigins: ['http://localhost:3000'],
+      },
+      storage: {
+        endpoint: 'http://localhost:9000',
+        region: 'us-east-1',
+        bucket: 'workhub',
+        accessKeyId: 'workhub',
+        secretAccessKey: 'workhubsecret',
+        publicBaseUrl: 'http://localhost:9000/workhub',
+        forcePathStyle: true,
       },
     });
   });

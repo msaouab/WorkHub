@@ -21,6 +21,7 @@
     { "path": "../../shared/contracts" },
     { "path": "../auth" },
     { "path": "../core" },
-    { "path": "../database" }
+    { "path": "../database" },
+    { "path": "../storage" }
   ]
 }

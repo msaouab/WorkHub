@@ -12,6 +12,7 @@ export default defineConfig({
   ...nxE2EPreset(import.meta.dirname, { testDir: './src' }),
   timeout: 90_000,
   expect: { timeout: 15_000 },
+  globalTeardown: './src/global-teardown.mts',
   use: {
     baseURL,
     trace: 'on-first-retry',

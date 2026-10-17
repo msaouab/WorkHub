@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
 import { appUrl } from '@/lib/env';
+import { ROUTES } from '@/lib/routes';
 
 type VerifyEmailPanelProps = {
   email: string;
@@ -28,7 +29,7 @@ export function VerifyEmailPanel({ email }: VerifyEmailPanelProps) {
     setMessage(null);
     const { error: authError } = await authClient.sendVerificationEmail({
       email,
-      callbackURL: appUrl(`/${locale}/app`),
+      callbackURL: appUrl(`/${locale}${ROUTES.dashboard}`),
     });
     setPending(false);
 

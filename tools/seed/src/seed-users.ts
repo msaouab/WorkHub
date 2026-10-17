@@ -54,3 +54,19 @@ export async function deleteSeedUsers(prisma: PrismaClient): Promise<number> {
   });
   return count;
 }
+
+/**
+ * Deletes users created by Playwright auth e2e (`e2e.<timestamp>@workhub.test`).
+ * Leaves named seed accounts alone.
+ */
+export async function deleteE2eUsers(prisma: PrismaClient): Promise<number> {
+  const { count } = await prisma.user.deleteMany({
+    where: {
+      AND: [
+        { email: { startsWith: 'e2e.' } },
+        { email: { endsWith: SEED_EMAIL_DOMAIN } },
+      ],
+    },
+  });
+  return count;
+}

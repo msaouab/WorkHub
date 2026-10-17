@@ -21,6 +21,7 @@
 	},
 	"dependencies": {
 		"@node-rs/argon2": "2.2.2",
+		"@work-hub/constants": "workspace:^",
 		"@work-hub/database": "workspace:^",
 		"@work-hub/mail": "workspace:^",
 		"better-auth": "1.7.7"

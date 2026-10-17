@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   NotFoundException,
+  PayloadTooLargeException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ThrottlerException } from '@nestjs/throttler';
@@ -109,6 +110,16 @@ describe('ProblemDetailsFilter', () => {
       status: 429,
       detail: 'Too Many Requests',
       code: ErrorCode.RATE_LIMITED,
+    });
+  });
+
+  it('maps PayloadTooLargeException (Multer LIMIT_FILE_SIZE) to IMAGE_TOO_LARGE', () => {
+    filter.catch(new PayloadTooLargeException('File too large'), host as never);
+
+    expect(statusCode).toBe(413);
+    expect(body).toMatchObject({
+      code: ErrorCode.IMAGE_TOO_LARGE,
+      status: 413,
     });
   });
 

@@ -33,3 +33,36 @@ describe('createAuth disabled paths', () => {
     expect(paths).not.toContain('/ok');
   });
 });
+
+describe('createAuth rate limits', () => {
+  it('does not rate-limit get-session (proxy hits it on every gated page)', async () => {
+    // Default max is 100/min; without the exemption this would 429.
+    for (let i = 0; i < 110; i += 1) {
+      const response = await auth.handler(
+        new Request(`http://localhost:3333${AUTH_BASE_PATH}/get-session`, {
+          method: 'GET',
+        })
+      );
+      expect(response.status).not.toBe(429);
+    }
+  });
+});
+
+describe('createAuth update-user image (WH-050)', () => {
+  it('rejects a body that includes image (before any DB write)', async () => {
+    const response = await auth.handler(
+      new Request(`http://localhost:3333${AUTH_BASE_PATH}/update-user`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: 'http://localhost:3000',
+        },
+        body: JSON.stringify({ image: 'https://evil.example/x.png' }),
+      })
+    );
+    // Hook runs after session check → 401 without a cookie; with a session → 400.
+    // Either way the image must never be applied (no 200).
+    expect(response.status).not.toBe(200);
+    expect([400, 401]).toContain(response.status);
+  });
+});

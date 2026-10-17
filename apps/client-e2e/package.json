@@ -2,10 +2,19 @@
   "name": "@work-hub/client-e2e",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "nx": {
     "tags": ["scope:client", "type:e2e"],
     "implicitDependencies": [
       "@work-hub/client"
-    ]
+    ],
+    "targets": {
+      "e2e": {
+        "dependsOn": []
+      },
+      "e2e-ci": {
+        "dependsOn": []
+      }
+    }
   }
 }

@@ -5,7 +5,8 @@ import { PrismaClient } from '@work-hub/database';
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import { assertSafeToSeed } from './guard';
-import { deleteSeedUsers, seedUsers } from './seed-users';
+import { deleteAcmeSpace, seedAcmeSpace } from './seed-acme';
+import { deleteE2eUsers, deleteSeedUsers, seedUsers } from './seed-users';
 
 // Same env files as the server and Prisma CLI.
 const serverDir = resolve(import.meta.dirname, '../../../apps/server');
@@ -32,11 +33,18 @@ async function main() {
   });
 
   try {
+    if (process.argv.includes('--e2e-cleanup')) {
+      console.log(`Removed ${await deleteE2eUsers(prisma)} e2e user(s)`);
+      return;
+    }
     if (process.argv.includes('--reset')) {
+      console.log(`Removed ${await deleteAcmeSpace(prisma)} Acme workspace(s)`);
       console.log(`Removed ${await deleteSeedUsers(prisma)} seed users`);
     }
     const results = await seedUsers(auth, prisma, password);
     console.table(results.map((result) => ({ ...result, password })));
+    const acme = await seedAcmeSpace(prisma);
+    console.log(`Acme workspace: ${acme.status} (${acme.slug})`);
   } finally {
     await prisma.$disconnect();
   }

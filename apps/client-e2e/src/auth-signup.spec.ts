@@ -46,7 +46,7 @@ async function waitForVerifyLink(email: string): Promise<string> {
 }
 
 test.describe('auth sign-up', () => {
-  test('signs up, verifies via Mailpit, and lands signed in on /app', async ({
+  test('signs up, verifies, lands signed in, and signs out via the menu', async ({
     page,
   }) => {
     const email = `e2e.${Date.now()}@workhub.test`;
@@ -64,11 +64,16 @@ test.describe('auth sign-up', () => {
     const verifyUrl = await waitForVerifyLink(email);
     await page.goto(verifyUrl);
 
-    await expect(page).toHaveURL(/\/en\/app/, { timeout: 20_000 });
-    await expect(
-      page.getByRole('heading', { name: "You're signed in" })
-    ).toBeVisible();
-    await expect(page.getByText(name)).toBeVisible();
+    // No workspaces yet → post-auth hub sends new users to create.
+    await expect(page).toHaveURL(/\/en\/(dashboard|spaces\/new)/, {
+      timeout: 20_000,
+    });
+    await expect(page).toHaveURL(/\/en\/spaces\/new/, { timeout: 10_000 });
+
+    await page.getByRole('button', { name: `Account menu: ${name}` }).click();
     await expect(page.getByText(email)).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Sign out' }).click();
+
+    await expect(page).toHaveURL(/\/en\/sign-in/, { timeout: 15_000 });
   });
 });

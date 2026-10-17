@@ -22,6 +22,7 @@
     { "path": "../access" },
     { "path": "../auth" },
     { "path": "../core" },
-    { "path": "../database" }
+    { "path": "../database" },
+    { "path": "../storage" }
   ]
 }

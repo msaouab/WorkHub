@@ -1,37 +1,37 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createContactSchema } from '@/lib/validators/contact';
+
+type ContactValues = z.infer<ReturnType<typeof createContactSchema>>;
 
 export function ContactForm() {
   const t = useTranslations('Contact');
   const tValidation = useTranslations('Validation');
   const schema = useMemo(() => createContactSchema(tValidation), [tValidation]);
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const result = schema.safeParse({ name, email, company, message });
+  const {
+    control,
+    handleSubmit,
+    register,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: '', email: '', company: '', message: '' },
+  });
 
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? tValidation('invalidInput'));
-      setSubmitted(false);
-      return;
-    }
-
-    setError(null);
+  const onSubmit = handleSubmit(() => {
     setSubmitted(true);
-  }
+  });
 
   if (submitted) {
     return (
@@ -51,64 +51,90 @@ export function ContactForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-2">
         <Label htmlFor="contact-name">{t('fields.name.label')}</Label>
-        <Input
-          id="contact-name"
+        <Controller
           name="name"
-          autoComplete="name"
-          value={name}
-          onValueChange={setName}
-          placeholder={t('fields.name.placeholder')}
-          className="h-10"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              id="contact-name"
+              autoComplete="name"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={t('fields.name.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+            />
+          )}
         />
+        <FieldError message={errors.name?.message} />
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="contact-email">{t('fields.email.label')}</Label>
-        <Input
-          id="contact-email"
+        <Controller
           name="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onValueChange={setEmail}
-          placeholder={t('fields.email.placeholder')}
-          className="h-10"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              id="contact-email"
+              type="email"
+              autoComplete="email"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={t('fields.email.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+            />
+          )}
         />
+        <FieldError message={errors.email?.message} />
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="contact-company">{t('fields.company.label')}</Label>
-        <Input
-          id="contact-company"
+        <Controller
           name="company"
-          autoComplete="organization"
-          value={company}
-          onValueChange={setCompany}
-          placeholder={t('fields.company.placeholder')}
-          className="h-10"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              id="contact-company"
+              autoComplete="organization"
+              value={field.value}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              placeholder={t('fields.company.placeholder')}
+              className="h-10"
+              aria-invalid={fieldState.invalid || undefined}
+            />
+          )}
         />
+        <FieldError message={errors.company?.message} />
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="contact-message">{t('fields.message.label')}</Label>
         <textarea
           id="contact-message"
-          name="message"
           rows={5}
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
           placeholder={t('fields.message.placeholder')}
-          className="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          aria-invalid={errors.message ? true : undefined}
+          className="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
+          {...register('message')}
         />
+        <FieldError message={errors.message?.message} />
       </div>
 
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      <Button type="submit" size="lg" className="w-full sm:w-auto sm:self-start">
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full sm:w-auto sm:self-start"
+        disabled={isSubmitting}
+      >
         {t('submit')}
       </Button>
     </form>

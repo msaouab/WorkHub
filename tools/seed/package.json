@@ -23,6 +23,7 @@
     "@work-hub/auth": "workspace:^",
     "@work-hub/constants": "workspace:^",
     "@work-hub/database": "workspace:^",
+    "@work-hub/spaces": "workspace:^",
     "dotenv": "^18.0.7",
     "reflect-metadata": "^0.2.0"
   },

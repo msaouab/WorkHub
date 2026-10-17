@@ -1,6 +1,7 @@
-import type { MailConfig } from '@work-hub/mail';
-import type { Env } from './env.schema';
 import type { AuthConfig } from '@work-hub/auth';
+import type { MailConfig } from '@work-hub/mail';
+import type { StorageConfig } from '@work-hub/storage';
+import type { Env } from './env.schema';
 
 export type AppConfig = {
   nodeEnv: Env['NODE_ENV'];
@@ -14,6 +15,7 @@ export type AppConfig = {
   databaseUrl: string;
   mail: MailConfig;
   auth: AuthConfig;
+  storage: StorageConfig;
 };
 
 export function toAppConfig(env: Env): AppConfig {
@@ -39,6 +41,15 @@ export function toAppConfig(env: Env): AppConfig {
       baseUrl: env.APP_URL,
       secret: env.BETTER_AUTH_SECRET,
       trustedOrigins: env.CORS_ORIGINS,
+    },
+    storage: {
+      endpoint: env.STORAGE_ENDPOINT,
+      region: env.STORAGE_REGION,
+      bucket: env.STORAGE_BUCKET,
+      accessKeyId: env.STORAGE_ACCESS_KEY,
+      secretAccessKey: env.STORAGE_SECRET_KEY,
+      publicBaseUrl: env.STORAGE_PUBLIC_BASE_URL,
+      forcePathStyle: env.STORAGE_FORCE_PATH_STYLE,
     },
   };
 }

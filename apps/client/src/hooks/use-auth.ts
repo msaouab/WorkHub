@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth-client';
+import { ROUTES } from '@/lib/routes';
 
 /** Shared across every `useAuth()` call so sign-out and the auth guard agree. */
 let signingOut = false;
@@ -29,7 +30,7 @@ export function useAuth() {
       }
       queryClient.clear();
       // One destination only — `useRequireAuth` skips its own redirect while this runs.
-      router.replace('/sign-in');
+      router.replace(ROUTES.signIn);
       router.refresh();
     } finally {
       signingOut = false;

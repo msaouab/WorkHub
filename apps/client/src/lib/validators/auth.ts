@@ -46,3 +46,25 @@ export function createResetPasswordSchema(t: Translate) {
       path: ['confirmPassword'],
     });
 }
+
+export function createChangePasswordSchema(t: Translate) {
+  return z
+    .object({
+      currentPassword: z.string().min(1, t('passwordRequired')),
+      password: z
+        .string()
+        .min(PASSWORD_MIN_LENGTH, t('passwordMin', { min: PASSWORD_MIN_LENGTH }))
+        .max(128, t('passwordMax')),
+      confirmPassword: z.string().min(1, t('confirmPassword')),
+    })
+    .refine((value) => value.password === value.confirmPassword, {
+      message: t('passwordMismatch'),
+      path: ['confirmPassword'],
+    });
+}
+
+export function createProfileNameSchema(t: Translate) {
+  return z.object({
+    name: z.string().trim().min(2, t('nameMin')).max(80, t('nameMax')),
+  });
+}

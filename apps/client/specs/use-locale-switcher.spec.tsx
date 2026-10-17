@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('@/i18n/navigation', () => ({
   useRouter: () => mocks.router,
-  usePathname: () => '/app',
+  usePathname: () => '/dashboard',
 }));
 
 vi.mock('@/lib/auth-client', () => ({
@@ -105,7 +105,7 @@ describe('useLocaleSwitcher', () => {
     });
 
     await waitFor(() => {
-      expect(mocks.replace).toHaveBeenCalledWith('/app', { locale: 'ar' });
+      expect(mocks.replace).toHaveBeenCalledWith('/dashboard', { locale: 'ar' });
     });
     expect(mocks.updateMe).not.toHaveBeenCalled();
     expect(result.current.error).toBeNull();

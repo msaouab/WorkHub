@@ -71,6 +71,19 @@ workhub/
 | [Product Requirements (PRD)](docs/WorkHub%20—%20Product%20Requirements%20Document%20(PRD).md) | Vision, personas, features, flows, release plan |
 | [Software Requirements (SRS)](docs/WorkHub%20—%20Software%20Requirements%20Specification%20(SRS).md) | Stack, architecture, FRs, data model, API, NFR |
 
+## Local development
+
+```bash
+# copy apps/server/.env.example → apps/server/.env and apps/client/.env.example → apps/client/.env first
+docker compose --env-file apps/server/.env up -d   # Postgres :5434, Mailpit :8025, Adminer :8083, MinIO :9000 (console :9001)
+pnpm install
+pnpm exec prisma migrate deploy --schema libs/api/database/prisma/schema.prisma
+pnpm db:seed
+pnpm dev                      # web :3000 + API :3333
+```
+
+Object storage (WH-047) uses **pgsty/silo** (S3-compatible; the old `minio/minio` images are no longer public). Root user / password / bucket come from `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `STORAGE_BUCKET` in `apps/server/.env` (defaults: `workhub` / `workhubsecret` / `workhub`, public-read). Console: http://localhost:9001.
+
 ## Status
 
 Greenfield — implementation starts from this repo. Specs in `docs/` are the source of truth for v1.

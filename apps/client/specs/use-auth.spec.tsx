@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('@/i18n/navigation', () => ({
   useRouter: () => mocks.router,
-  usePathname: () => '/app',
+  usePathname: () => '/dashboard',
 }));
 
 vi.mock('@/lib/auth-client', () => ({

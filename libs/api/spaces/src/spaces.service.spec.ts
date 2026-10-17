@@ -1,11 +1,17 @@
 import { ConflictException } from '@nestjs/common';
-import {
-  SYSTEM_ROLE_NAMES,
-  SYSTEM_ROLE_PERMISSIONS,
-} from '@work-hub/constants';
+import { SYSTEM_ROLE_NAMES } from '@work-hub/constants';
 import { Prisma, type PrismaService } from '@work-hub/database';
+import type { StorageService } from '@work-hub/storage';
 import { describe, expect, it, vi } from 'vitest';
 import { SpacesService } from './spaces.service';
+
+function mockStorage(): StorageService {
+  return {
+    put: vi.fn(),
+    delete: vi.fn(),
+    publicUrl: (key: string) => `http://storage.test/${key}`,
+  } as unknown as StorageService;
+}
 
 describe('SpacesService.create', () => {
   it('creates system roles, defaults Member, and makes the creator Owner', async () => {
@@ -13,32 +19,14 @@ describe('SpacesService.create', () => {
       id: '01936b3c-0000-7000-8000-000000000001',
       name: 'Acme',
       slug: 'acme',
-    };
-    const ownerRole = {
-      id: 'role-owner',
-      name: SYSTEM_ROLE_NAMES.OWNER,
-      permissions: [...SYSTEM_ROLE_PERMISSIONS.Owner],
-    };
-    const memberRole = {
-      id: 'role-member',
-      name: SYSTEM_ROLE_NAMES.MEMBER,
-      permissions: [...SYSTEM_ROLE_PERMISSIONS.Member],
+      logoKey: null,
+      coverKey: null,
+      coverPreset: 'aurora',
+      coverPositionY: 50,
     };
 
     const spaceCreate = vi.fn().mockResolvedValue(space);
-    const roleCreate = vi
-      .fn()
-      .mockResolvedValueOnce(ownerRole)
-      .mockResolvedValueOnce({
-        id: 'role-admin',
-        name: SYSTEM_ROLE_NAMES.ADMIN,
-        permissions: [...SYSTEM_ROLE_PERMISSIONS.Admin],
-      })
-      .mockResolvedValueOnce(memberRole);
-    const spaceUpdate = vi.fn().mockResolvedValue({
-      ...space,
-      defaultRoleId: memberRole.id,
-    });
+    const spaceUpdate = vi.fn().mockResolvedValue(space);
     const membershipCreate = vi.fn().mockResolvedValue({
       id: 'mem-1',
       status: 'active',
@@ -52,7 +40,6 @@ describe('SpacesService.create', () => {
             create: ReturnType<typeof vi.fn>;
             update: ReturnType<typeof vi.fn>;
           };
-          role: { create: ReturnType<typeof vi.fn> };
           membership: { create: ReturnType<typeof vi.fn> };
         }) => Promise<unknown>
       ) =>
@@ -61,12 +48,14 @@ describe('SpacesService.create', () => {
             create: spaceCreate,
             update: spaceUpdate,
           },
-          role: { create: roleCreate },
           membership: { create: membershipCreate },
         })
     );
 
-    const service = new SpacesService({ withTenant } as unknown as PrismaService);
+    const service = new SpacesService(
+      { withTenant } as unknown as PrismaService,
+      mockStorage()
+    );
     const result = await service.create('user-1', {
       name: 'Acme',
       slug: 'acme',
@@ -85,19 +74,38 @@ describe('SpacesService.create', () => {
         id: tenantCtx.spaceId,
         name: 'Acme',
         slug: 'acme',
+        coverPreset: expect.any(String),
+        roles: {
+          create: expect.arrayContaining([
+            expect.objectContaining({
+              name: SYSTEM_ROLE_NAMES.OWNER,
+              isSystem: true,
+            }),
+            expect.objectContaining({
+              name: SYSTEM_ROLE_NAMES.ADMIN,
+              isSystem: true,
+            }),
+            expect.objectContaining({
+              name: SYSTEM_ROLE_NAMES.MEMBER,
+              isSystem: true,
+            }),
+          ]),
+        },
       },
     });
     expect(result.role.name).toBe(SYSTEM_ROLE_NAMES.OWNER);
     expect(result.membershipStatus).toBe('active');
+    expect(result.cover?.kind).toBe('preset');
+    expect(result.coverPositionY).toBe(50);
     expect(spaceUpdate).toHaveBeenCalledWith({
       where: { id: space.id },
-      data: { defaultRoleId: 'role-member' },
+      data: { defaultRoleId: expect.any(String) },
     });
     expect(membershipCreate).toHaveBeenCalledWith({
       data: {
         spaceId: space.id,
         userId: 'user-1',
-        roleId: 'role-owner',
+        roleId: expect.any(String),
         status: 'active',
       },
     });
@@ -110,7 +118,10 @@ describe('SpacesService.create', () => {
         clientVersion: 'test',
       })
     );
-    const service = new SpacesService({ withTenant } as unknown as PrismaService);
+    const service = new SpacesService(
+      { withTenant } as unknown as PrismaService,
+      mockStorage()
+    );
 
     await expect(
       service.create('user-1', { name: 'Acme', slug: 'acme' })

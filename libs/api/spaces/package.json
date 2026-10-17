@@ -11,12 +11,22 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./system-roles": {
+      "@work-hub/source": "./src/system-roles.ts",
+      "types": "./src/system-roles.ts",
+      "import": "./src/system-roles.ts",
+      "default": "./src/system-roles.ts"
     }
   },
   "nx": {
-    "tags": ["scope:api", "type:feature"]
+    "tags": [
+      "scope:api",
+      "type:feature"
+    ]
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.901.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^12.0.1",
     "@nestjs/swagger": "^11.4.7",
@@ -27,10 +37,17 @@
     "@work-hub/contracts": "workspace:^",
     "@work-hub/core": "workspace:^",
     "@work-hub/database": "workspace:^",
-    "nestjs-zod": "^5.5.0"
+    "@work-hub/storage": "workspace:^",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/throttler": "^6.7.1",
+    "multer": "^2.0.2",
+    "nestjs-zod": "^5.5.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.0.0",
     "dotenv": "^18.0.7",
     "vitest": "~5.0.1"
   }

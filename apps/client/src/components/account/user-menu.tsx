@@ -73,6 +73,13 @@ export function UserMenu({ tone = 'default' }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => {
+            router.push(ROUTES.dashboard);
+          }}
+        >
+          {t('dashboard')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
             router.push(ROUTES.settings);
           }}
         >

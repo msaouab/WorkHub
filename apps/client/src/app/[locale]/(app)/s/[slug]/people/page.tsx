@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { PERMISSIONS } from '@work-hub/constants';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { SpaceFeaturePage } from '@/components/shell/space-feature-page';
+import { PeopleMembers } from '@/components/people/people-members';
+import { RequireSpacePermission } from '@/components/shell/require-space-permission';
 
 type PageProps = {
   params: Promise<{ locale: string; slug: string }>;
@@ -21,10 +22,8 @@ export default async function Page({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   return (
-    <SpaceFeaturePage
-      feature="people"
-      icon="users"
-      permission={PERMISSIONS.MEMBERS_READ}
-    />
+    <RequireSpacePermission permission={PERMISSIONS.MEMBERS_READ}>
+      <PeopleMembers />
+    </RequireSpacePermission>
   );
 }

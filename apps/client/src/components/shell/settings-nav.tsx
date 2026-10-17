@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ArrowLeftIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
-import { useSpaces } from '@/hooks/use-spaces';
 import {
   SETTINGS_NAV_ITEMS,
   activeSettingsNavId,
 } from '@/lib/nav/settings-nav';
-import { getLastSpaceSlug } from '@/lib/last-space';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button-variants';
 
 type SettingsNavProps = {
   onNavigate?: () => void;
@@ -22,24 +21,6 @@ export function SettingsNav({ onNavigate, className }: SettingsNavProps) {
   const tShell = useTranslations('Shell');
   const pathname = usePathname();
   const activeId = activeSettingsNavId(SETTINGS_NAV_ITEMS, pathname);
-  const { data: spaces } = useSpaces();
-  const [backHref, setBackHref] = useState<string>(ROUTES.dashboard);
-  const [backName, setBackName] = useState<string | null>(null);
-
-  useEffect(() => {
-    const last = getLastSpaceSlug();
-    const match = last ? spaces?.find((s) => s.slug === last) : undefined;
-    if (match) {
-      setBackHref(`${ROUTES.space}/${match.slug}`);
-      setBackName(match.name);
-    } else if (spaces?.[0]) {
-      setBackHref(`${ROUTES.space}/${spaces[0].slug}`);
-      setBackName(spaces[0].name);
-    } else {
-      setBackHref(ROUTES.dashboard);
-      setBackName(null);
-    }
-  }, [spaces]);
 
   return (
     <aside
@@ -48,15 +29,21 @@ export function SettingsNav({ onNavigate, className }: SettingsNavProps) {
         className
       )}
     >
-      <div className="shrink-0 border-b border-border/60 p-3">
+      <div className="shrink-0 border-b border-border/60 p-2">
         <Link
-          href={backHref}
+          href={ROUTES.dashboard}
           onClick={onNavigate}
-          className="block rounded-lg px-2.5 py-2 text-sm text-muted-foreground outline-none hover:bg-accent/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className={cn(
+            buttonVariants({ variant: 'ghost', size: 'sm' }),
+            'w-full justify-start text-muted-foreground'
+          )}
         >
-          {backName
-            ? t('backTo', { name: backName })
-            : t('backToDashboard')}
+          <ArrowLeftIcon
+            data-icon="inline-start"
+            className="rtl:rotate-180"
+            aria-hidden
+          />
+          {t('backToDashboard')}
         </Link>
       </div>
       <nav

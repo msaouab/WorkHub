@@ -71,7 +71,6 @@
       "sessions": "Sessions",
       "notifications": "Notifications",
       "deleteAccount": "Delete account",
-      "backTo": "Back to {name}",
       "backToDashboard": "Back to dashboard"
     },
     "soon": "Soon",
@@ -113,6 +112,7 @@
   "Account": {
     "menu": {
       "open": "Account menu: {name}",
+      "dashboard": "Dashboard",
       "settings": "Settings",
       "signOut": "Sign out",
       "signingOut": "Signing out…"
@@ -386,8 +386,44 @@
       "dashboard": "Your dashboard"
     },
     "members": {
-      "title": "Members",
-      "comingSoon": "Member list for “{name}” is coming soon."
+      "title": "People",
+      "description": "Members of this workspace and their roles.",
+      "searchPlaceholder": "Search by name or email",
+      "loading": "Loading people…",
+      "loadingMore": "Loading…",
+      "loadMore": "Load more",
+      "empty": "No members match that search.",
+      "failed": "Couldn't load people. Try again.",
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": "Member actions",
+      "you": "you",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "remove": "Remove",
+      "leave": "Leave workspace",
+      "cancel": "Cancel",
+      "working": "Working…",
+      "actionFailed": "That action failed. Try again.",
+      "confirmDeactivateTitle": "Deactivate member?",
+      "confirmDeactivateDescription": "“{name}” will lose access until reactivated.",
+      "confirmReactivateTitle": "Reactivate member?",
+      "confirmReactivateDescription": "Restore access for “{name}”.",
+      "confirmRemoveTitle": "Remove member?",
+      "confirmRemoveDescription": "“{name}” will be removed from this workspace.",
+      "confirmLeaveTitle": "Leave this workspace?",
+      "confirmLeaveDescription": "You'll lose access until someone invites you again.",
+      "errors": {
+        "CANNOT_MODIFY_OWNER": "Owners can't be changed this way.",
+        "CANNOT_DEACTIVATE_SELF": "You can't deactivate yourself.",
+        "CANNOT_REMOVE_SELF": "Use leave to remove yourself.",
+        "LAST_OWNER": "Transfer ownership before leaving as the last owner."
+      }
     },
     "picker": {
       "loading": "Loading workspaces…",

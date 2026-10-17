@@ -84,7 +84,7 @@ export const SPACE_NAV_ITEMS: readonly SpaceNavItem[] = [
     icon: 'users',
     labelKey: 'people',
     section: 'main',
-    status: 'soon',
+    status: 'ready',
     permission: PERMISSIONS.MEMBERS_READ,
   },
   {

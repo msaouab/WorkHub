@@ -87,6 +87,14 @@ describe('activeSpaceNavId', () => {
   });
 });
 
+describe('SPACE_NAV_ITEMS readiness', () => {
+  it('marks People as ready', () => {
+    expect(SPACE_NAV_ITEMS.find((i) => i.id === 'people')?.status).toBe(
+      'ready'
+    );
+  });
+});
+
 describe('activeSettingsNavId', () => {
   it('matches new settings routes', () => {
     expect(activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings')).toBe('profile');

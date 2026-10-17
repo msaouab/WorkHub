@@ -4,6 +4,7 @@ export {
   type ProblemDetails,
 } from './problem-details';
 export {
+  cursorPageSchema,
   cursorPaginationQuerySchema,
   type CursorPaginationQuery,
 } from './pagination';
@@ -14,6 +15,16 @@ export {
   type MeResponse,
   type UpdateMe,
 } from './me';
+export {
+  listSpaceMembersQuerySchema,
+  listSpaceMembersResponseSchema,
+  spaceMemberRoleSchema,
+  spaceMemberSchema,
+  type ListSpaceMembersQuery,
+  type ListSpaceMembersResponse,
+  type SpaceMember,
+  type SpaceMemberRole,
+} from './members';
 export {
   createSpaceSchema,
   membershipStatusSchema,

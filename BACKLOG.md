@@ -33,7 +33,7 @@ start ──▶ in progress ──▶ under-review ──▶ done  (ticket delet
 
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also catches format mistakes: unknown or `done` status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-072**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-073**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -92,28 +92,11 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 | Ticket | Under review since | Last review | Result | Open feedback |
 |---|---|---|---|---|
+| WH-046 | 2026-10-17 | 2026-10-17 | ready | commit |
 
 ## Tickets
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
-
-### WH-046 · Members API: list, deactivate, remove, leave
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api
-- **Why:** nothing on the API side lists or manages a workspace's members yet. WH-016 (`useMembers`) has no endpoint to call, and invites (WH-010) and role changes (WH-011) both need a member list to show their results.
-- **Scope** (in `libs/api/spaces`, or a new `libs/api/members` if it grows):
-  - `GET /api/v1/spaces/{spaceId}/members?cursor=&limit=&q=`: cursor pagination (`cursorPaginationQuerySchema`), search by name/email, and each member's role and status. Needs `members.read`.
-  - `POST /api/v1/spaces/{spaceId}/members/{membershipId}/deactivate` and `/reactivate`: needs `members.write`.
-  - `DELETE /api/v1/spaces/{spaceId}/members/{membershipId}`: remove a member. Needs `members.write`.
-  - `DELETE /api/v1/spaces/{spaceId}/members/me`: leave a workspace.
-  - **Safety rules:**
-    - nobody can deactivate or remove an Owner;
-    - the last Owner can't leave (transfer ownership first, in WH-011);
-    - you can't deactivate yourself.
-  - Request and response shapes in `libs/shared/contracts`.
-- **Acceptance criteria:**
-  - [ ] The member list pages correctly (cursor) and search narrows it. A `member` role without `members.read` gets 403.
-  - [ ] A deactivated member gets 403 on that workspace's routes, on the next request (the role is loaded per request).
-  - [ ] Each safety rule is covered by a test; a cross-tenant integration test shows workspace A's admin can't touch workspace B's members (404).
 
 ### WH-010 · Invites by email and by link
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -123,7 +106,7 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - invite links: maximum number of uses, expiry, can be revoked;
   - only a hash of each token is stored;
   - accept flow `/{locale}/invite/{token}` (sign in or sign up first, then join);
-  - hooks WH-016, WH-017, WH-018.
+  - hooks WH-017 (list/search hooks shipped with WH-046).
 - **Depends on:** WH-009 (done in `d39d25a`).
 - **Plan (2026-10-17):** too big for one ticket. Split it like WH-009 when it starts:
   1. database: `invites` table (`token_hash`, `email` or link, `role_id`, `expires_at`, `max_uses`/`uses`, `revoked_at`), with RLS;
@@ -164,11 +147,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Why:** verification and reset emails are English only, even for Arabic users (NFR-10).
 - **Scope:** `MailService` templates per locale (`en`, `fr`, `ar`, with RTL in the HTML for Arabic). The user's `locale` picks the template. Includes the verification email language AC moved from WH-032.
 
-### WH-016 · `useMembers(spaceId)`: members of a workspace
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client
-- **What:** paginated member list (cursor pagination, as the API conventions require), with an optional search term.
-- **Done when:** the list pages correctly and search works with WH-018.
-
 ### WH-017 · `useInviteMember()` and `useAcceptInvite()`
 - **Blocked by:** WH-010
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client
@@ -176,12 +154,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - `useInviteMember()`: mutation that sends an invite and refreshes the pending-invites list;
   - `useAcceptInvite(token)`: accepts an invite and refreshes `useSpaces`.
 - **Done when:** expired, revoked and "wrong email" invites each show a clear translated message.
-
-### WH-018 · `useDebouncedValue(value, ms)`: wait until typing stops
-- **Blocked by:** WH-016
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client
-- **What:** returns the value only after it stopped changing for `ms` milliseconds (default 300). Used by the member search.
-- **Done when:** typing "mohammed" in member search sends 1 request, not 8 (unit test with fake timers).
 
 ### WH-055 · Error pages: `error.tsx` and `global-error.tsx`
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client
@@ -236,7 +208,9 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - an insufficient balance warns, or blocks when the type disallows negative;
   - cancelling a pending request; cancelling an approved one needs approval;
   - "My leave" replaces its placeholder.
+  - **From WH-046:** `DELETE …/members/:id` hard-deletes the membership. Once leave or document history references memberships (FR-MEM-05), removal must keep history — soft-remove or `ON DELETE RESTRICT`, not a hard delete.
 - **Done when:** the day count matches FR-LVR-02 for a range spanning a weekend and a holiday; overlap and negative-balance cases are tested.
+- **Constraint (from WH-046):** `DELETE /spaces/{id}/members/{membershipId}` hard-deletes the membership today. Before leave requests reference memberships, switch removal to keep history (FR-MEM-05): a soft `removed` status, or `ON DELETE RESTRICT` with a clear 409.
 
 ### WH-062 · Approvals inbox, comments and audit log
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
@@ -287,6 +261,62 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - Playwright e2e against built apps, with Mailpit + MinIO services;
   - `pnpm backlog` must print ✓.
 - **Done when:** a PR that breaks lint, a test or an RLS integration test shows a red check.
+
+### WH-072 · E2E stability: sign in once per role, not through the form in every test
+- **Type:** tech-debt · **Priority:** P2 · **Status:** start · **Area:** tooling (e2e)
+- **Why:** found while reviewing WH-053 (2026-10-17). Three runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev` gave three different results: 5 passed / 2 failed (`toHaveURL` after sign-in, `ERR_ABORTED`), then 3 passed / 4 timed out, then the API on `:3333` was down. Causes:
+  - **Sign-in rate limit.** `app-shell.spec.ts` signs in through the form in each test (owner, member, admin), and the sign-up test adds more. Better Auth allows **5 sign-ins per minute**, and on localhost every request shares one key (`no-trusted-ip`), so a full run (plus any manual sign-in) hits 429 and `signIn()` never reaches `/dashboard`.
+  - **Load.** Playwright runs tests in parallel against a single `next dev`; with compiles on first visit, `page.goto` exceeded 90 s at load average about 18.
+- **Scope:**
+  - [ ] A Playwright **setup project** signs in once per seed role (owner, admin, member) through the API (`POST /api/auth/sign-in/email`) and saves `storageState` to `playwright/.auth/{role}.json` (gitignored). Tests use `test.use({ storageState })` instead of `signIn()`. One test still covers the real sign-in form.
+  - [ ] `workers: 1` when `reuseExistingServer` hits a dev server (keep parallel in CI against built apps, WH-069).
+  - [ ] When the API isn't reachable, fail fast with a clear message ("start `pnpm dev` first") instead of trying to launch a second `nx serve server` next to `pnpm dev`.
+- **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
+
+### WH-046 · Members API: list, deactivate, remove, leave
+- **Type:** feature · **Priority:** P2 · **Status:** under-review · **Area:** api + client
+- **Why:** nothing on the API side lists or manages a workspace's members yet. Invites (WH-010) and role changes (WH-011) both need a member list to show their results.
+- **Scope** (in `libs/api/spaces`, or a new `libs/api/members` if it grows):
+  - `GET /api/v1/spaces/{spaceId}/members?cursor=&limit=&q=`: cursor pagination (`cursorPaginationQuerySchema`), search by name/email, and each member's role and status. Needs `members.read`.
+  - `POST /api/v1/spaces/{spaceId}/members/{membershipId}/deactivate` and `/reactivate`: needs `members.write`.
+  - `DELETE /api/v1/spaces/{spaceId}/members/{membershipId}`: remove a member. Needs `members.write`.
+  - `DELETE /api/v1/spaces/{spaceId}/members/me`: leave a workspace.
+  - **Safety rules:**
+    - nobody can deactivate or remove an Owner;
+    - the last Owner can't leave (transfer ownership first, in WH-011);
+    - you can't deactivate yourself.
+  - Request and response shapes in `libs/shared/contracts`.
+  - Client: People page (`/s/[slug]/people`) with `useMembers` + debounced search + deactivate/reactivate/remove/leave.
+- **Acceptance criteria:**
+  - [x] The member list pages correctly (cursor) and search narrows it. A `member` role without `members.read` gets 403.
+  - [x] A deactivated member gets 403 on that workspace's routes, on the next request (the role is loaded per request).
+  - [x] Each safety rule is covered by a test; a cross-tenant integration test shows workspace A's admin can't touch workspace B's members (404).
+- **Progress (2026-10-17):** API + People UI. Contracts, `MembersService`, `SpaceMembersController`, client `useMembers` / `useDebouncedValue` / `useMemberActions`, People page with search and gated actions. WH-016 and WH-018 closed into this.
+- **Review (2026-10-17):** 🔁 small fixes, then commit. Works end to end:
+  - all 16 projects pass, including `members.integration.spec.ts` (6) and `members.service.spec.ts` (9);
+  - **live API:** list 200 for every role; cursor paging (`limit=1` → page 2 via `nextCursor`); `q=adm` → admin only; bad cursor and `limit=500` → 400; Member deactivating → 403 `FORBIDDEN`;
+  - **safety rules live:** Admin → Owner `CANNOT_MODIFY_OWNER` (deactivate and remove); Admin on self `CANNOT_DEACTIVATE_SELF` / `CANNOT_REMOVE_SELF`; last Owner leaving `LAST_OWNER`; unknown or non-UUID id → 404;
+  - **deactivation takes effect on the next request:** the deactivated Member gets 403 on the workspace and the list, then 200 after reactivation;
+  - **People page in `ar`:** RTL, translated roles and statuses, a "(you)" marker, per-row actions (Leave on your row; Deactivate and Remove on others) with a confirm dialog, translated API errors; the sidebar item is no longer "Soon"; Members without `members.write` see no admin actions.
+  - [x] **`cursorPageSchema()` registers the same schema id on every call** — removed inner `.meta({ id: 'CursorPage' })`; callers keep their own ids.
+  - [x] **Search treats `%` and `_` as wildcards** — `escapeIlikePattern` before `contains`; unit test covers `%_\\`.
+  - [x] **Deactivate and reactivate answer 201** — `@HttpCode(HttpStatus.OK)` on both POSTs.
+  - [x] **`error-codes.ts` comments** — trailing noise removed; real one-liners above the WH-046 codes only.
+  - [x] **Still from WH-053:** unused `Shell.settingsNav.backTo` removed from en/fr/ar.
+  - [x] Nice to have: hide "Leave workspace" on your own row when you're the last Owner (full unfiltered list loaded).
+  - [x] Follow-up note for WH-061: hard-delete vs history (FR-MEM-05) recorded on WH-061.
+  - [x] Commit (WH-016 and WH-018 were merged into this ticket and deleted, so the commit closes all three).
+- **Progress (2026-10-17):** Review fixes landed — cursor page schema id, ILIKE escape, HTTP 200 on deactivate/reactivate, error-code comments, unused `backTo` key, hide Leave for last Owner, WH-061 hard-delete note.
+- **Re-check (2026-10-17, 2nd pass):** ✅ all feedback fixed:
+  - `cursorPageSchema()` no longer sets an id (callers name it);
+  - `escapeIlikePattern()` + a unit test, **verified against Postgres through Prisma**: raw `%` matched all 7 users (Prisma doesn't escape), escaped `%` / `_` → 0, `adm` / `.test` still match;
+  - `@HttpCode(200)` on deactivate/reactivate;
+  - `error-codes.ts` comments are real one-liners above the new codes;
+  - `backTo` removed from all 3 message files;
+  - the history note moved to WH-061.
+  - All 16 projects pass (members contracts 5, integration 6, service 10). The live API is still the 22:26 build (the watcher didn't pick up the lib changes), so the 200 status will show after a `pnpm dev` restart.
+  - Optional, not blocking: hide "Leave workspace" for the last Owner.
+  - **Ready to commit.**
 
 ### WH-043 · Remove the unused `JoinPreview` scaffold (and Zustand)
 - **Type:** tech-debt · **Priority:** P3 · **Status:** start · **Area:** client

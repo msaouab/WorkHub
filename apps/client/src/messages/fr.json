@@ -71,7 +71,6 @@
       "sessions": "Sessions",
       "notifications": "Notifications",
       "deleteAccount": "Supprimer le compte",
-      "backTo": "Retour à {name}",
       "backToDashboard": "Retour au tableau de bord"
     },
     "soon": "Bientôt",
@@ -113,6 +112,7 @@
   "Account": {
     "menu": {
       "open": "Menu compte : {name}",
+      "dashboard": "Tableau de bord",
       "settings": "Paramètres",
       "signOut": "Se déconnecter",
       "signingOut": "Déconnexion…"
@@ -386,8 +386,44 @@
       "dashboard": "Votre tableau de bord"
     },
     "members": {
-      "title": "Membres",
-      "comingSoon": "La liste des membres de « {name} » arrive bientôt."
+      "title": "Personnes",
+      "description": "Membres de cet espace et leurs rôles.",
+      "searchPlaceholder": "Rechercher par nom ou e-mail",
+      "loading": "Chargement des personnes…",
+      "loadingMore": "Chargement…",
+      "loadMore": "Charger plus",
+      "empty": "Aucun membre ne correspond à cette recherche.",
+      "failed": "Impossible de charger les personnes. Réessayez.",
+      "columns": {
+        "member": "Membre",
+        "email": "E-mail",
+        "role": "Rôle",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "actions": "Actions du membre",
+      "you": "vous",
+      "deactivate": "Désactiver",
+      "reactivate": "Réactiver",
+      "remove": "Retirer",
+      "leave": "Quitter l'espace",
+      "cancel": "Annuler",
+      "working": "En cours…",
+      "actionFailed": "Cette action a échoué. Réessayez.",
+      "confirmDeactivateTitle": "Désactiver le membre ?",
+      "confirmDeactivateDescription": "« {name} » perdra l'accès jusqu'à réactivation.",
+      "confirmReactivateTitle": "Réactiver le membre ?",
+      "confirmReactivateDescription": "Rétablir l'accès pour « {name} ».",
+      "confirmRemoveTitle": "Retirer le membre ?",
+      "confirmRemoveDescription": "« {name} » sera retiré de cet espace.",
+      "confirmLeaveTitle": "Quitter cet espace ?",
+      "confirmLeaveDescription": "Vous perdrez l'accès jusqu'à une nouvelle invitation.",
+      "errors": {
+        "CANNOT_MODIFY_OWNER": "Les propriétaires ne peuvent pas être modifiés ainsi.",
+        "CANNOT_DEACTIVATE_SELF": "Vous ne pouvez pas vous désactiver.",
+        "CANNOT_REMOVE_SELF": "Utilisez « quitter » pour vous retirer.",
+        "LAST_OWNER": "Transférez la propriété avant de quitter en tant que dernier propriétaire."
+      }
     },
     "picker": {
       "loading": "Chargement des espaces…",

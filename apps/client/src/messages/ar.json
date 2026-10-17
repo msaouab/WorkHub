@@ -71,7 +71,6 @@
       "sessions": "الجلسات",
       "notifications": "الإشعارات",
       "deleteAccount": "حذف الحساب",
-      "backTo": "العودة إلى {name}",
       "backToDashboard": "العودة إلى لوحة التحكم"
     },
     "soon": "قريبًا",
@@ -113,6 +112,7 @@
   "Account": {
     "menu": {
       "open": "قائمة الحساب: {name}",
+      "dashboard": "لوحة التحكم",
       "settings": "الإعدادات",
       "signOut": "تسجيل الخروج",
       "signingOut": "جارٍ تسجيل الخروج…"
@@ -386,8 +386,44 @@
       "dashboard": "لوحة التحكم"
     },
     "members": {
-      "title": "الأعضاء",
-      "comingSoon": "قائمة أعضاء «{name}» قادمة قريبًا."
+      "title": "الأشخاص",
+      "description": "أعضاء مساحة العمل هذه وأدوارهم.",
+      "searchPlaceholder": "ابحث بالاسم أو البريد",
+      "loading": "جارٍ تحميل الأشخاص…",
+      "loadingMore": "جارٍ التحميل…",
+      "loadMore": "تحميل المزيد",
+      "empty": "لا يوجد أعضاء يطابقون هذا البحث.",
+      "failed": "تعذّر تحميل الأشخاص. حاول مجددًا.",
+      "columns": {
+        "member": "العضو",
+        "email": "البريد",
+        "role": "الدور",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "actions": "إجراءات العضو",
+      "you": "أنت",
+      "deactivate": "إيقاف",
+      "reactivate": "إعادة تفعيل",
+      "remove": "إزالة",
+      "leave": "مغادرة المساحة",
+      "cancel": "إلغاء",
+      "working": "جارٍ العمل…",
+      "actionFailed": "فشلت هذه العملية. حاول مجددًا.",
+      "confirmDeactivateTitle": "إيقاف العضو؟",
+      "confirmDeactivateDescription": "سيفقد «{name}» الوصول حتى إعادة التفعيل.",
+      "confirmReactivateTitle": "إعادة تفعيل العضو؟",
+      "confirmReactivateDescription": "استعادة وصول «{name}».",
+      "confirmRemoveTitle": "إزالة العضو؟",
+      "confirmRemoveDescription": "ستتم إزالة «{name}» من مساحة العمل هذه.",
+      "confirmLeaveTitle": "مغادرة مساحة العمل هذه؟",
+      "confirmLeaveDescription": "ستفقد الوصول حتى يدعوك أحد مجددًا.",
+      "errors": {
+        "CANNOT_MODIFY_OWNER": "لا يمكن تغيير المالكين بهذه الطريقة.",
+        "CANNOT_DEACTIVATE_SELF": "لا يمكنك إيقاف نفسك.",
+        "CANNOT_REMOVE_SELF": "استخدم المغادرة لإزالة نفسك.",
+        "LAST_OWNER": "انقل الملكية قبل المغادرة كآخر مالك."
+      }
     },
     "picker": {
       "loading": "جارٍ تحميل المساحات…",

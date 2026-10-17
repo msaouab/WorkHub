@@ -4,28 +4,75 @@ import {
   SPACE_NAV_ITEMS,
   activeSpaceNavId,
   filterSpaceNav,
+  hasNavPermission,
 } from '../src/lib/nav/space-nav';
 import {
   SETTINGS_NAV_ITEMS,
   activeSettingsNavId,
 } from '../src/lib/nav/settings-nav';
 
+describe('hasNavPermission', () => {
+  it('treats permission arrays as any-of', () => {
+    expect(
+      hasNavPermission([PERMISSIONS.LEAVE_APPROVE], [
+        PERMISSIONS.LEAVE_APPROVE,
+        PERMISSIONS.DOCUMENTS_FULFIL,
+      ])
+    ).toBe(true);
+    expect(
+      hasNavPermission([PERMISSIONS.MEMBERS_READ], [
+        PERMISSIONS.LEAVE_APPROVE,
+        PERMISSIONS.DOCUMENTS_FULFIL,
+      ])
+    ).toBe(false);
+  });
+});
+
 describe('filterSpaceNav', () => {
-  it('shows Manage → Settings for Owner and hides Manage for Member', () => {
+  it('lists main + Manage for Owner, main only for Member', () => {
     const owner = filterSpaceNav(
       SPACE_NAV_ITEMS,
       SYSTEM_ROLE_PERMISSIONS.Owner
     );
-    expect(owner.map((i) => i.id)).toEqual(['home', 'settings']);
+    expect(owner.map((i) => i.id)).toEqual([
+      'home',
+      'leave',
+      'calendar',
+      'holidays',
+      'documents',
+      'people',
+      'approvals',
+      'invites',
+      'roles',
+      'teams',
+      'leavePolicies',
+      'settings',
+    ]);
+    expect(owner.some((i) => i.section === 'manage')).toBe(true);
 
     const member = filterSpaceNav(
       SPACE_NAV_ITEMS,
       SYSTEM_ROLE_PERMISSIONS.Member
     );
-    expect(member.map((i) => i.id)).toEqual(['home']);
-    expect(
-      member.some((i) => i.permission === PERMISSIONS.SPACE_SETTINGS_WRITE)
-    ).toBe(false);
+    expect(member.map((i) => i.id)).toEqual([
+      'home',
+      'leave',
+      'calendar',
+      'holidays',
+      'documents',
+      'people',
+    ]);
+    expect(member.every((i) => i.section === 'main')).toBe(true);
+  });
+
+  it('hides Settings for Admin but keeps other Manage items', () => {
+    const admin = filterSpaceNav(
+      SPACE_NAV_ITEMS,
+      SYSTEM_ROLE_PERMISSIONS.Admin
+    );
+    expect(admin.map((i) => i.id)).toContain('approvals');
+    expect(admin.map((i) => i.id)).toContain('roles');
+    expect(admin.map((i) => i.id)).not.toContain('settings');
   });
 });
 
@@ -36,17 +83,21 @@ describe('activeSpaceNavId', () => {
   it('highlights Home only on the workspace root', () => {
     expect(activeSpaceNavId(items, slug, '/s/acme')).toBe('home');
     expect(activeSpaceNavId(items, slug, '/s/acme/settings')).toBe('settings');
+    expect(activeSpaceNavId(items, slug, '/s/acme/people')).toBe('people');
   });
 });
 
 describe('activeSettingsNavId', () => {
-  it('prefers the longer settings path', () => {
+  it('matches new settings routes', () => {
     expect(activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings')).toBe('profile');
     expect(activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings/language')).toBe(
       'language'
     );
-    expect(activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings/password')).toBe(
-      'password'
-    );
+    expect(
+      activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings/sign-in-methods')
+    ).toBe('signInMethods');
+    expect(
+      activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings/delete-account')
+    ).toBe('deleteAccount');
   });
 });

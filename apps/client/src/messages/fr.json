@@ -19,10 +19,25 @@
     "spaceDescription": "Votre espace WorkHub.",
     "spaceSettingsTitle": "Paramètres de l'espace — WorkHub",
     "spaceSettingsDescription": "Apparence et paramètres de cet espace.",
-    "spaceMembersTitle": "Membres — WorkHub",
+    "spaceMembersTitle": "Personnes — WorkHub",
     "spaceMembersDescription": "Les personnes de cet espace.",
     "settingsTitle": "Paramètres — WorkHub",
-    "settingsDescription": "Gérez votre compte WorkHub."
+    "settingsDescription": "Gérez votre compte WorkHub.",
+    "spaceLeaveTitle": "Mes congés — WorkHub",
+    "spaceCalendarTitle": "Calendrier d’équipe — WorkHub",
+    "spaceHolidaysTitle": "Jours fériés — WorkHub",
+    "spaceDocumentsTitle": "Documents — WorkHub",
+    "spacePeopleTitle": "Personnes — WorkHub",
+    "spaceApprovalsTitle": "Approbations — WorkHub",
+    "spaceInvitesTitle": "Invitations — WorkHub",
+    "spaceRolesTitle": "Rôles — WorkHub",
+    "spaceTeamsTitle": "Équipes — WorkHub",
+    "spaceLeavePoliciesTitle": "Politiques de congés — WorkHub",
+    "settingsSignInTitle": "Méthodes de connexion — WorkHub",
+    "settingsSessionsTitle": "Sessions — WorkHub",
+    "settingsNotificationsTitle": "Notifications — WorkHub",
+    "settingsDeleteTitle": "Supprimer le compte — WorkHub",
+    "notificationsTitle": "Notifications — WorkHub"
   },
   "Shell": {
     "skipToContent": "Aller au contenu",
@@ -34,7 +49,16 @@
     "accountSettings": "Paramètres du compte",
     "spaceNav": {
       "home": "Accueil",
-      "members": "Membres",
+      "leave": "Mes congés",
+      "calendar": "Calendrier d’équipe",
+      "holidays": "Jours fériés",
+      "documents": "Documents",
+      "people": "Personnes",
+      "approvals": "Approbations",
+      "invites": "Invitations",
+      "roles": "Rôles et permissions",
+      "teams": "Équipes",
+      "leavePolicies": "Politiques de congés",
       "settings": "Paramètres",
       "manage": "Gérer",
       "role": "{role}"
@@ -43,8 +67,20 @@
       "profile": "Profil",
       "language": "Langue",
       "password": "Mot de passe",
+      "signInMethods": "Méthodes de connexion",
+      "sessions": "Sessions",
+      "notifications": "Notifications",
+      "deleteAccount": "Supprimer le compte",
       "backTo": "Retour à {name}",
       "backToDashboard": "Retour au tableau de bord"
+    },
+    "soon": "Bientôt",
+    "soonTitle": "{label} (bientôt)",
+    "help": "Aide et retours",
+    "topBar": {
+      "searchPlaceholder": "Rechercher dans {name}…",
+      "searchSoon": "La recherche arrive bientôt",
+      "notifications": "Notifications"
     }
   },
   "Dashboard": {
@@ -52,7 +88,10 @@
     "description": "Ouvrez un espace, ou créez-en un autre.",
     "create": "Créer un espace",
     "allSpaces": "Tous les espaces",
-    "failed": "Impossible de charger vos espaces."
+    "failed": "Impossible de charger vos espaces.",
+    "requestsTitle": "Vos demandes, partout",
+    "requestsDescription": "Les demandes de congés et de documents de tous vos espaces apparaîtront ici.",
+    "requestsSoon": "Nous construisons cette page. Elle sera bientôt prête."
   },
   "NotFound": {
     "code": "404",
@@ -226,9 +265,18 @@
     "title": "Nous contacter",
     "description": "Parlez-nous de votre équipe. Nous verrons si WorkHub convient à vos congés et documents RH.",
     "fields": {
-      "name": { "label": "Nom complet", "placeholder": "Alex Morgan" },
-      "email": { "label": "E-mail professionnel", "placeholder": "alex@entreprise.com" },
-      "company": { "label": "Entreprise", "placeholder": "Acme SARL" },
+      "name": {
+        "label": "Nom complet",
+        "placeholder": "Alex Morgan"
+      },
+      "email": {
+        "label": "E-mail professionnel",
+        "placeholder": "alex@entreprise.com"
+      },
+      "company": {
+        "label": "Entreprise",
+        "placeholder": "Acme SARL"
+      },
       "message": {
         "label": "Comment pouvons-nous vous aider ?",
         "placeholder": "Taille d'équipe, processus actuel, besoins…"
@@ -293,8 +341,14 @@
     },
     "mailpitHint": "En local, ouvrez Mailpit sur http://localhost:8025 pour lire le message.",
     "fields": {
-      "name": { "label": "Nom", "placeholder": "Sara Benali" },
-      "email": { "label": "E-mail", "placeholder": "vous@entreprise.com" },
+      "name": {
+        "label": "Nom",
+        "placeholder": "Sara Benali"
+      },
+      "email": {
+        "label": "E-mail",
+        "placeholder": "vous@entreprise.com"
+      },
       "password": {
         "label": "Mot de passe",
         "placeholder": "Au moins 10 caractères",
@@ -340,6 +394,7 @@
       "failed": "Impossible de charger vos espaces.",
       "title": "Choisir un espace",
       "description": "Choisissez où travailler, ou créez un autre espace.",
+      "backToDashboard": "Retour au tableau de bord",
       "emptyTitle": "Créez votre premier espace",
       "emptyDescription": "Un espace regroupe congés, jours fériés et documents pour une entreprise.",
       "create": "Créer un espace"
@@ -347,6 +402,12 @@
     "create": {
       "title": "Créer un espace",
       "description": "Vous en serez le propriétaire. Vous pourrez inviter des personnes ensuite.",
+      "backToDashboard": "Retour au tableau de bord",
+      "logoLabel": "Logo",
+      "logoHint": "Facultatif. PNG, JPEG ou WebP jusqu'à 2 Mo.",
+      "addLogo": "Ajouter un logo",
+      "changeLogo": "Modifier",
+      "removeLogo": "Supprimer",
       "nameLabel": "Nom de l'espace",
       "namePlaceholder": "Acme Corp",
       "slugLabel": "Identifiant d'URL",
@@ -357,7 +418,11 @@
       "submitting": "Création…",
       "invalid": "Vérifiez le nom et l'identifiant.",
       "slugTaken": "Cet identifiant est déjà pris.",
-      "failed": "Impossible de créer l'espace. Réessayez."
+      "failed": "Impossible de créer l'espace. Réessayez.",
+      "errors": {
+        "tooLarge": "Cette image est trop volumineuse.",
+        "unsupported": "Utilisez une image PNG, JPEG ou WebP."
+      }
     },
     "home": {
       "loading": "Chargement de l'espace…",
@@ -392,7 +457,19 @@
       "brandingDescription": "Logo et couverture affichés sur l'accueil et dans le sélecteur.",
       "noAccess": "Vous n'êtes pas membre de « {slug} », ou il n'existe pas.",
       "back": "Retour aux espaces",
-      "backToSpace": "Retour à l'espace"
+      "backToSpace": "Retour à l'espace",
+      "sectionNav": "Sections des paramètres",
+      "sections": {
+        "general": "Général",
+        "branding": "Apparence",
+        "billing": "Facturation",
+        "danger": "Zone dangereuse"
+      },
+      "nameLabel": "Nom",
+      "slugLabel": "Identifiant",
+      "generalSoon": "La modification du nom et de l’identifiant arrivera bientôt.",
+      "billingSoon": "La facturation de cet espace arrive bientôt.",
+      "dangerSoon": "La suppression d’un espace arrivera bientôt."
     },
     "branding": {
       "changeCover": "Changer la couverture",
@@ -444,5 +521,29 @@
     "spaceSlugMin": "L'identifiant doit faire au moins 2 caractères",
     "spaceSlugMax": "L'identifiant est trop long",
     "spaceSlugFormat": "Utilisez des lettres minuscules, des chiffres et des tirets"
+  },
+  "ComingSoon": {
+    "description": "Nous construisons cette page. Elle sera bientôt prête.",
+    "backToHome": "Retour à l’accueil de l’espace",
+    "backToProfile": "Retour au profil",
+    "backToDashboard": "Retour au tableau de bord",
+    "features": {
+      "leave": "Mes congés",
+      "calendar": "Calendrier d’équipe",
+      "holidays": "Jours fériés",
+      "documents": "Documents",
+      "people": "Personnes",
+      "approvals": "Approbations",
+      "invites": "Invitations",
+      "roles": "Rôles et permissions",
+      "teams": "Équipes",
+      "leavePolicies": "Politiques de congés",
+      "signInMethods": "Méthodes de connexion",
+      "sessions": "Sessions",
+      "notifications": "Notifications",
+      "deleteAccount": "Supprimer le compte",
+      "search": "Recherche",
+      "dashboardRequests": "Vos demandes"
+    }
   }
 }

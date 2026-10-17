@@ -35,6 +35,17 @@ const nextConfig = {
         destination: '/:locale/dashboard/:path*',
         permanent: true,
       },
+      // WH-053: People directory replaces /members
+      {
+        source: '/:locale/s/:slug/members',
+        destination: '/:locale/s/:slug/people',
+        permanent: true,
+      },
+      {
+        source: '/:locale/s/:slug/members/:path*',
+        destination: '/:locale/s/:slug/people/:path*',
+        permanent: true,
+      },
     ];
   },
 };

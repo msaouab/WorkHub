@@ -8,6 +8,7 @@ type AppFrameProps = {
   children: ReactNode;
   onOpenMobileNav?: () => void;
   breadcrumb?: string;
+  searchWorkspaceName?: string;
   /** Wider content for dashboard cards. */
   wide?: boolean;
 };
@@ -17,24 +18,26 @@ export function AppFrame({
   children,
   onOpenMobileNav,
   breadcrumb,
-  wide = false,
+  searchWorkspaceName,
 }: AppFrameProps) {
   const t = useTranslations('Shell');
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex h-svh flex-col overflow-hidden">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:inset-s-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-background focus:px-3 focus:py-2 focus:shadow focus:ring-2 focus:ring-ring"
       >
         {t('skipToContent')}
       </a>
-      <TopBar onOpenMobileNav={onOpenMobileNav} breadcrumb={breadcrumb} />
-      <div id="main-content" className="flex min-h-0 flex-1">
+      <TopBar
+        onOpenMobileNav={onOpenMobileNav}
+        breadcrumb={breadcrumb}
+        searchWorkspaceName={searchWorkspaceName}
+      />
+      <div id="main-content" className="flex min-h-0 flex-1 overflow-hidden">
         {children}
       </div>
-      {/* wide hint reserved for layouts that center content */}
-      {wide ? null : null}
     </div>
   );
 }

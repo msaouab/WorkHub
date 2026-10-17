@@ -6,6 +6,7 @@ export const ROUTES = {
   spacesNew: '/spaces/new',
   /** Prefix for `/{locale}/s/{slug}` workspace pages. */
   space: '/s',
+  notifications: '/notifications',
   signIn: '/sign-in',
   signUp: '/sign-up',
   forgotPassword: '/forgot-password',

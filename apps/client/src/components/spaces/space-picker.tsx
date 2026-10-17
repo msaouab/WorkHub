@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowLeftIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { LogoLoader } from '@/components/brand/logo-loader';
 import { buttonVariants } from '@/components/ui/button-variants';
@@ -26,9 +27,12 @@ export function SpacePicker() {
 
   if (isError) {
     return (
-      <p className="text-sm text-destructive" role="alert">
-        {t('failed')}
-      </p>
+      <div className="flex flex-col gap-6">
+        <BackToDashboard label={t('backToDashboard')} />
+        <p className="text-sm text-destructive" role="alert">
+          {t('failed')}
+        </p>
+      </div>
     );
   }
 
@@ -36,6 +40,7 @@ export function SpacePicker() {
     return (
       <div className="flex flex-col gap-6">
         <div>
+          <BackToDashboard label={t('backToDashboard')} />
           <h1 className="font-display text-3xl font-semibold tracking-tight">
             {t('emptyTitle')}
           </h1>
@@ -57,6 +62,7 @@ export function SpacePicker() {
   return (
     <div className="flex flex-col gap-6">
       <div>
+        <BackToDashboard label={t('backToDashboard')} />
         <h1 className="font-display text-3xl font-semibold tracking-tight">
           {t('title')}
         </h1>
@@ -98,5 +104,24 @@ export function SpacePicker() {
         {t('create')}
       </Link>
     </div>
+  );
+}
+
+function BackToDashboard({ label }: { label: string }) {
+  return (
+    <Link
+      href={ROUTES.dashboard}
+      className={cn(
+        buttonVariants({ variant: 'ghost', size: 'sm' }),
+        '-ms-2 mb-2 text-muted-foreground'
+      )}
+    >
+      <ArrowLeftIcon
+        data-icon="inline-start"
+        className="rtl:rotate-180"
+        aria-hidden
+      />
+      {label}
+    </Link>
   );
 }

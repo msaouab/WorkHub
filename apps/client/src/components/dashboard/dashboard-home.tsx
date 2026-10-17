@@ -6,9 +6,11 @@ import { useTranslations } from 'next-intl';
 import { COVER_PRESET_STYLES } from '@/lib/cover-presets';
 import { LogoLoader } from '@/components/brand/logo-loader';
 import { PostAuthRedirect } from '@/components/dashboard/post-auth-redirect';
+import { PageHeader } from '@/components/shell/page-header';
 import { SpaceLogo } from '@/components/spaces/space-logo';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { useRoleLabel } from '@/hooks/use-role-label';
 import { useSpaces } from '@/hooks/use-spaces';
 import { Link } from '@/i18n/navigation';
 import { setLastSpaceSlug } from '@/lib/last-space';
@@ -35,14 +37,9 @@ export function DashboardHome() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <PostAuthRedirect />
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {t('title')}
-        </h1>
-        <p className="mt-2 text-muted-foreground">{t('description')}</p>
-      </div>
+      <PageHeader title={t('title')} description={t('description')} />
 
       {isError ? (
         <p className="text-sm text-destructive" role="alert">
@@ -52,34 +49,7 @@ export function DashboardHome() {
         <ul className="grid gap-4 sm:grid-cols-2">
           {(spaces ?? []).map((space) => (
             <li key={space.id}>
-              <Link
-                href={`${ROUTES.space}/${space.slug}`}
-                onClick={() => setLastSpaceSlug(space.slug)}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-background/90 transition-colors hover:border-foreground/25"
-              >
-                <div
-                  className="h-24 w-full bg-muted"
-                  style={coverStyle(space)}
-                  aria-hidden
-                />
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <SpaceLogo
-                    name={space.name}
-                    spaceId={space.id}
-                    logo={space.logo}
-                    size="md"
-                    className="-mt-8 ring-2 ring-background"
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">
-                      {space.name}
-                    </p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {space.roleName}
-                    </p>
-                  </div>
-                </div>
-              </Link>
+              <SpaceCard space={space} />
             </li>
           ))}
           <li>
@@ -106,7 +76,45 @@ export function DashboardHome() {
           {t('allSpaces')}
         </Link>
       ) : null}
+
+      <section className="flex flex-col gap-3 border-t border-border/60 pt-8">
+        <h2 className="font-display text-xl font-semibold tracking-tight">
+          {t('requestsTitle')}
+        </h2>
+        <p className="text-sm text-muted-foreground">{t('requestsDescription')}</p>
+        <p className="text-sm text-muted-foreground">{t('requestsSoon')}</p>
+      </section>
     </div>
+  );
+}
+
+function SpaceCard({ space }: { space: MeSpace }) {
+  const roleLabel = useRoleLabel(space.roleName);
+  return (
+    <Link
+      href={`${ROUTES.space}/${space.slug}`}
+      onClick={() => setLastSpaceSlug(space.slug)}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-background/90 transition-colors hover:border-foreground/25"
+    >
+      <div
+        className="h-24 w-full bg-muted"
+        style={coverStyle(space)}
+        aria-hidden
+      />
+      <div className="flex items-center gap-3 px-4 py-3">
+        <SpaceLogo
+          name={space.name}
+          spaceId={space.id}
+          logo={space.logo}
+          size="md"
+          className="-mt-8 ring-2 ring-background"
+        />
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">{space.name}</p>
+          <p className="truncate text-sm text-muted-foreground">{roleLabel}</p>
+        </div>
+      </div>
+    </Link>
   );
 }
 

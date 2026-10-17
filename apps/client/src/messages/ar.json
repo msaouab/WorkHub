@@ -19,10 +19,25 @@
     "spaceDescription": "مساحة عمل WorkHub الخاصة بك.",
     "spaceSettingsTitle": "إعدادات المساحة — WorkHub",
     "spaceSettingsDescription": "المظهر والإعدادات لهذه المساحة.",
-    "spaceMembersTitle": "الأعضاء — WorkHub",
+    "spaceMembersTitle": "الأشخاص — WorkHub",
     "spaceMembersDescription": "الأشخاص في مساحة العمل هذه.",
     "settingsTitle": "الإعدادات — WorkHub",
-    "settingsDescription": "إدارة حساب WorkHub الخاص بك."
+    "settingsDescription": "إدارة حساب WorkHub الخاص بك.",
+    "spaceLeaveTitle": "إجازاتي — WorkHub",
+    "spaceCalendarTitle": "تقويم الفريق — WorkHub",
+    "spaceHolidaysTitle": "العطل — WorkHub",
+    "spaceDocumentsTitle": "الوثائق — WorkHub",
+    "spacePeopleTitle": "الأشخاص — WorkHub",
+    "spaceApprovalsTitle": "الموافقات — WorkHub",
+    "spaceInvitesTitle": "الدعوات — WorkHub",
+    "spaceRolesTitle": "الأدوار — WorkHub",
+    "spaceTeamsTitle": "الفرق — WorkHub",
+    "spaceLeavePoliciesTitle": "سياسات الإجازة — WorkHub",
+    "settingsSignInTitle": "طرق تسجيل الدخول — WorkHub",
+    "settingsSessionsTitle": "الجلسات — WorkHub",
+    "settingsNotificationsTitle": "إعدادات الإشعارات — WorkHub",
+    "settingsDeleteTitle": "حذف الحساب — WorkHub",
+    "notificationsTitle": "الإشعارات — WorkHub"
   },
   "Shell": {
     "skipToContent": "تخطَّ إلى المحتوى",
@@ -34,7 +49,16 @@
     "accountSettings": "إعدادات الحساب",
     "spaceNav": {
       "home": "الرئيسية",
-      "members": "الأعضاء",
+      "leave": "إجازاتي",
+      "calendar": "تقويم الفريق",
+      "holidays": "العطل",
+      "documents": "الوثائق",
+      "people": "الأشخاص",
+      "approvals": "الموافقات",
+      "invites": "الدعوات",
+      "roles": "الأدوار والصلاحيات",
+      "teams": "الفرق",
+      "leavePolicies": "سياسات الإجازة",
       "settings": "الإعدادات",
       "manage": "إدارة",
       "role": "{role}"
@@ -43,8 +67,20 @@
       "profile": "الملف الشخصي",
       "language": "اللغة",
       "password": "كلمة المرور",
+      "signInMethods": "طرق تسجيل الدخول",
+      "sessions": "الجلسات",
+      "notifications": "الإشعارات",
+      "deleteAccount": "حذف الحساب",
       "backTo": "العودة إلى {name}",
       "backToDashboard": "العودة إلى لوحة التحكم"
+    },
+    "soon": "قريبًا",
+    "soonTitle": "{label} (قريبًا)",
+    "help": "المساعدة والملاحظات",
+    "topBar": {
+      "searchPlaceholder": "ابحث في {name}…",
+      "searchSoon": "البحث قادم قريبًا",
+      "notifications": "الإشعارات"
     }
   },
   "Dashboard": {
@@ -52,7 +88,10 @@
     "description": "ادخل إلى مساحة، أو أنشئ واحدة جديدة.",
     "create": "إنشاء مساحة",
     "allSpaces": "كل المساحات",
-    "failed": "تعذّر تحميل مساحاتك."
+    "failed": "تعذّر تحميل مساحاتك.",
+    "requestsTitle": "طلباتك في كل مكان",
+    "requestsDescription": "ستظهر هنا طلبات الإجازة والوثائق من كل مساحاتك.",
+    "requestsSoon": "نحن نبني هذه الصفحة. ستكون جاهزة قريبًا."
   },
   "NotFound": {
     "code": "404",
@@ -226,9 +265,18 @@
     "title": "تواصل معنا",
     "description": "أخبرنا عن فريقك. سنساعدك لمعرفة إن كان WorkHub يناسب إجازاتكم ووثائق الموارد البشرية.",
     "fields": {
-      "name": { "label": "الاسم الكامل", "placeholder": "سارة بنعلي" },
-      "email": { "label": "البريد المهني", "placeholder": "alex@company.com" },
-      "company": { "label": "الشركة", "placeholder": "شركة أكمي" },
+      "name": {
+        "label": "الاسم الكامل",
+        "placeholder": "سارة بنعلي"
+      },
+      "email": {
+        "label": "البريد المهني",
+        "placeholder": "alex@company.com"
+      },
+      "company": {
+        "label": "الشركة",
+        "placeholder": "شركة أكمي"
+      },
       "message": {
         "label": "كيف يمكننا المساعدة؟",
         "placeholder": "حجم الفريق، عملية الإجازات الحالية، ما تحتاجه…"
@@ -293,8 +341,14 @@
     },
     "mailpitHint": "محليًا، افتح Mailpit على http://localhost:8025 لقراءة الرسالة.",
     "fields": {
-      "name": { "label": "الاسم", "placeholder": "سارة بنعلي" },
-      "email": { "label": "البريد", "placeholder": "you@company.com" },
+      "name": {
+        "label": "الاسم",
+        "placeholder": "سارة بنعلي"
+      },
+      "email": {
+        "label": "البريد",
+        "placeholder": "you@company.com"
+      },
       "password": {
         "label": "كلمة المرور",
         "placeholder": "10 أحرف على الأقل",
@@ -340,6 +394,7 @@
       "failed": "تعذّر تحميل مساحاتك.",
       "title": "اختر مساحة عمل",
       "description": "اختر أين تريد العمل، أو أنشئ مساحة أخرى.",
+      "backToDashboard": "العودة إلى لوحة التحكم",
       "emptyTitle": "أنشئ مساحتك الأولى",
       "emptyDescription": "المساحة تجمع الإجازات والعطل والوثائق لشركة واحدة.",
       "create": "إنشاء مساحة"
@@ -347,6 +402,12 @@
     "create": {
       "title": "إنشاء مساحة",
       "description": "ستكون المالك. يمكنك دعوة الآخرين لاحقًا.",
+      "backToDashboard": "العودة إلى لوحة التحكم",
+      "logoLabel": "الشعار",
+      "logoHint": "اختياري. PNG أو JPEG أو WebP حتى 2 ميغابايت.",
+      "addLogo": "إضافة شعار",
+      "changeLogo": "تغيير",
+      "removeLogo": "إزالة",
       "nameLabel": "اسم المساحة",
       "namePlaceholder": "Acme Corp",
       "slugLabel": "معرّف الرابط",
@@ -357,7 +418,11 @@
       "submitting": "جارٍ الإنشاء…",
       "invalid": "تحقق من الاسم والمعرّف.",
       "slugTaken": "هذا المعرّف مستخدم بالفعل.",
-      "failed": "تعذّر إنشاء المساحة. حاول مرة أخرى."
+      "failed": "تعذّر إنشاء المساحة. حاول مرة أخرى.",
+      "errors": {
+        "tooLarge": "هذه الصورة كبيرة جدًا.",
+        "unsupported": "استخدم صورة PNG أو JPEG أو WebP."
+      }
     },
     "home": {
       "loading": "جارٍ تحميل المساحة…",
@@ -392,7 +457,19 @@
       "brandingDescription": "الشعار والغلاف الظاهران في الصفحة الرئيسية وفي المبدّل.",
       "noAccess": "لست عضوًا في «{slug}»، أو أنها غير موجودة.",
       "back": "العودة إلى المساحات",
-      "backToSpace": "العودة إلى المساحة"
+      "backToSpace": "العودة إلى المساحة",
+      "sectionNav": "أقسام الإعدادات",
+      "sections": {
+        "general": "عام",
+        "branding": "المظهر",
+        "billing": "الفوترة",
+        "danger": "منطقة الخطر"
+      },
+      "nameLabel": "الاسم",
+      "slugLabel": "المعرّف",
+      "generalSoon": "تعديل الاسم والمعرّف قادم قريبًا.",
+      "billingSoon": "فوترة مساحة العمل هذه قادمة قريبًا.",
+      "dangerSoon": "حذف مساحة العمل قادم قريبًا."
     },
     "branding": {
       "changeCover": "تغيير الغلاف",
@@ -444,5 +521,29 @@
     "spaceSlugMin": "يجب أن يكون المعرّف حرفين على الأقل",
     "spaceSlugMax": "المعرّف طويل جدًا",
     "spaceSlugFormat": "استخدم أحرفًا صغيرة وأرقامًا وشرطات"
+  },
+  "ComingSoon": {
+    "description": "نحن نبني هذه الصفحة. ستكون جاهزة قريبًا.",
+    "backToHome": "العودة إلى الرئيسية",
+    "backToProfile": "العودة إلى الملف الشخصي",
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "features": {
+      "leave": "إجازاتي",
+      "calendar": "تقويم الفريق",
+      "holidays": "العطل",
+      "documents": "الوثائق",
+      "people": "الأشخاص",
+      "approvals": "الموافقات",
+      "invites": "الدعوات",
+      "roles": "الأدوار والصلاحيات",
+      "teams": "الفرق",
+      "leavePolicies": "سياسات الإجازة",
+      "signInMethods": "طرق تسجيل الدخول",
+      "sessions": "الجلسات",
+      "notifications": "الإشعارات",
+      "deleteAccount": "حذف الحساب",
+      "search": "البحث",
+      "dashboardRequests": "طلباتك"
+    }
   }
 }

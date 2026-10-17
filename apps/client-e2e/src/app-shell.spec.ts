@@ -10,62 +10,70 @@ async function signIn(
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Seeded member's saved locale is `ar` — land=1 may send them through dashboard first.
   await expect(page).toHaveURL(/\/(en|ar|fr)\/(dashboard|s\/|spaces)/, {
     timeout: 20_000,
   });
 }
 
-test.describe('app shell (WH-052)', () => {
-  test('member sees workspace sidebar without Manage; drawer works on phone', async ({
-    page,
-  }) => {
-    await signIn(page, 'member@workhub.test');
-    // Force English labels for the assertions below.
+test.describe('app shell (WH-053)', () => {
+  test('owner sees full nav; member has no Manage', async ({ page }) => {
+    await signIn(page, 'owner@workhub.test');
     await page.goto('/en/s/acme');
 
-    // Desktop sidebar only (drawer keeps a second nav in the DOM while closed).
-    const nav = page
-      .getByRole('navigation', { name: 'Workspace' })
-      .filter({ visible: true });
-    await expect(nav).toBeVisible();
+    // Desktop sidebar only (drawer keeps a duplicate nav in the DOM).
+    const desktop = page.locator('div.hidden.lg\\:flex');
+    const nav = desktop.getByRole('navigation', { name: 'Workspace' });
     await expect(nav.getByRole('link', { name: 'Home' })).toBeVisible();
-    // Members stays out of the nav until WH-046; Manage (Settings) is Owner-only.
-    await expect(nav.getByRole('link', { name: 'Members' })).toHaveCount(0);
-    await expect(nav.getByRole('link', { name: 'Settings' })).toHaveCount(0);
-    await expect(page.getByText('Manage', { exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: /My leave/ })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /People/ })).toBeVisible();
+    await expect(desktop.getByText('Manage', { exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /Settings/ })).toBeVisible();
 
-    await page.setViewportSize({ width: 375, height: 812 });
-    await expect(nav).toBeHidden();
-
-    await page.getByRole('button', { name: 'Open menu' }).click();
-    const drawer = page.getByRole('dialog');
+    await nav.getByRole('link', { name: /My leave/ }).click();
+    await expect(page).toHaveURL(/\/en\/s\/acme\/leave/);
     await expect(
-      drawer.getByRole('navigation', { name: 'Workspace' })
+      page.getByRole('heading', { name: 'My leave' })
     ).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(drawer).toBeHidden();
+    await expect(
+      page.getByText("We're building this. It'll be ready soon.")
+    ).toBeVisible();
   });
 
-  test('dashboard has no sidebar; settings shows account nav', async ({
-    page,
-  }) => {
+  test('member has no Manage; roles URL is no access', async ({ page }) => {
     await signIn(page, 'member@workhub.test');
+    await page.goto('/en/s/acme');
 
-    await page.goto('/en/dashboard');
+    const nav = page
+      .locator('div.hidden.lg\\:flex')
+      .getByRole('navigation', { name: 'Workspace' });
+    await expect(nav.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /People/ })).toBeVisible();
     await expect(
-      page.getByRole('navigation', { name: 'Workspace' })
+      page.locator('div.hidden.lg\\:flex').getByText('Manage', { exact: true })
     ).toHaveCount(0);
-    await expect(
-      page.getByRole('heading', { name: 'Your workspaces' })
-    ).toBeVisible();
+    await expect(nav.getByRole('link', { name: /Settings/ })).toHaveCount(0);
 
+    await page.goto('/en/s/acme/roles');
+    await expect(
+      page.getByRole('heading', { name: 'No access' })
+    ).toBeVisible();
+  });
+
+  test('members redirects to people; settings lists coming-soon items', async ({
+    page,
+    request,
+  }) => {
+    const res = await request.get('/en/s/acme/members', { maxRedirects: 0 });
+    expect([301, 308]).toContain(res.status());
+    expect(res.headers()['location'] ?? '').toMatch(/\/en\/s\/acme\/people$/);
+
+    await signIn(page, 'member@workhub.test');
     await page.goto('/en/settings');
     await expect(
-      page.getByRole('navigation', { name: 'Account settings' })
+      page.getByRole('link', { name: /Sign-in methods/ })
     ).toBeVisible();
     await expect(
-      page.getByRole('link', { name: 'Profile' })
-    ).toHaveAttribute('aria-current', 'page');
+      page.getByRole('link', { name: /Delete account/ })
+    ).toBeVisible();
   });
 });

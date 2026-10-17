@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
+import { useSpaces } from '@/hooks/use-spaces';
 import {
   SETTINGS_NAV_ITEMS,
   activeSettingsNavId,
@@ -9,8 +11,6 @@ import {
 import { getLastSpaceSlug } from '@/lib/last-space';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-import { useSpaces } from '@/hooks/use-spaces';
-import { useEffect, useState } from 'react';
 
 type SettingsNavProps = {
   onNavigate?: () => void;
@@ -44,11 +44,11 @@ export function SettingsNav({ onNavigate, className }: SettingsNavProps) {
   return (
     <aside
       className={cn(
-        'flex h-full w-56 flex-col border-e border-border/80 bg-background',
+        'flex h-full min-h-0 w-56 flex-col overflow-hidden border-e border-border/80 bg-background',
         className
       )}
     >
-      <div className="border-b border-border/60 p-3">
+      <div className="shrink-0 border-b border-border/60 p-3">
         <Link
           href={backHref}
           onClick={onNavigate}
@@ -61,22 +61,41 @@ export function SettingsNav({ onNavigate, className }: SettingsNavProps) {
       </div>
       <nav
         aria-label={tShell('settingsNavLabel')}
-        className="flex flex-col gap-0.5 p-2"
+        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-2"
       >
         {SETTINGS_NAV_ITEMS.map((item) => (
           <Link
             key={item.id}
             href={item.href}
             aria-current={activeId === item.id ? 'page' : undefined}
+            title={
+              item.status === 'soon'
+                ? tShell('soonTitle', { label: t(item.labelKey as 'profile') })
+                : undefined
+            }
             onClick={onNavigate}
             className={cn(
-              'rounded-lg px-2.5 py-2 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              item.danger && !activeId
+                ? 'text-destructive hover:bg-destructive/10'
+                : null,
               activeId === item.id
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                ? item.danger
+                  ? 'bg-destructive/15 text-destructive'
+                  : 'bg-accent text-accent-foreground'
+                : item.danger
+                  ? null
+                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
             )}
           >
-            {t(item.labelKey as 'profile')}
+            <span className="min-w-0 flex-1 truncate">
+              {t(item.labelKey as 'profile')}
+            </span>
+            {item.status === 'soon' ? (
+              <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+                {tShell('soon')}
+              </span>
+            ) : null}
           </Link>
         ))}
       </nav>

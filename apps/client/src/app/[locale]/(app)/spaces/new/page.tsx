@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
+import { ArrowLeftIcon } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PlainAppShell } from '@/components/shell/plain-app-shell';
 import { CreateSpaceForm } from '@/components/spaces/create-space-form';
+import { buttonVariants } from '@/components/ui/button-variants';
+import { Link } from '@/i18n/navigation';
+import { ROUTES } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -25,6 +30,20 @@ export default async function NewSpacePage({ params }: PageProps) {
     <PlainAppShell>
       <div className="flex flex-col gap-6">
         <div>
+          <Link
+            href={ROUTES.dashboard}
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'sm' }),
+              '-ms-2 mb-2 text-muted-foreground'
+            )}
+          >
+            <ArrowLeftIcon
+              data-icon="inline-start"
+              className="rtl:rotate-180"
+              aria-hidden
+            />
+            {t('backToDashboard')}
+          </Link>
           <h1 className="font-display text-3xl font-semibold tracking-tight">
             {t('title')}
           </h1>

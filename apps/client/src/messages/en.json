@@ -19,10 +19,25 @@
     "spaceDescription": "Your WorkHub workspace.",
     "spaceSettingsTitle": "Workspace settings — WorkHub",
     "spaceSettingsDescription": "Branding and settings for this workspace.",
-    "spaceMembersTitle": "Members — WorkHub",
+    "spaceMembersTitle": "People — WorkHub",
     "spaceMembersDescription": "People in this workspace.",
     "settingsTitle": "Settings — WorkHub",
-    "settingsDescription": "Manage your WorkHub account."
+    "settingsDescription": "Manage your WorkHub account.",
+    "spaceLeaveTitle": "My leave — WorkHub",
+    "spaceCalendarTitle": "Team calendar — WorkHub",
+    "spaceHolidaysTitle": "Holidays — WorkHub",
+    "spaceDocumentsTitle": "Documents — WorkHub",
+    "spacePeopleTitle": "People — WorkHub",
+    "spaceApprovalsTitle": "Approvals — WorkHub",
+    "spaceInvitesTitle": "Invites — WorkHub",
+    "spaceRolesTitle": "Roles — WorkHub",
+    "spaceTeamsTitle": "Teams — WorkHub",
+    "spaceLeavePoliciesTitle": "Leave policies — WorkHub",
+    "settingsSignInTitle": "Sign-in methods — WorkHub",
+    "settingsSessionsTitle": "Sessions — WorkHub",
+    "settingsNotificationsTitle": "Notification settings — WorkHub",
+    "settingsDeleteTitle": "Delete account — WorkHub",
+    "notificationsTitle": "Notifications — WorkHub"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -34,7 +49,16 @@
     "accountSettings": "Account settings",
     "spaceNav": {
       "home": "Home",
-      "members": "Members",
+      "leave": "My leave",
+      "calendar": "Team calendar",
+      "holidays": "Holidays",
+      "documents": "Documents",
+      "people": "People",
+      "approvals": "Approvals",
+      "invites": "Invites",
+      "roles": "Roles and permissions",
+      "teams": "Teams",
+      "leavePolicies": "Leave policies",
       "settings": "Settings",
       "manage": "Manage",
       "role": "{role}"
@@ -43,8 +67,20 @@
       "profile": "Profile",
       "language": "Language",
       "password": "Password",
+      "signInMethods": "Sign-in methods",
+      "sessions": "Sessions",
+      "notifications": "Notifications",
+      "deleteAccount": "Delete account",
       "backTo": "Back to {name}",
       "backToDashboard": "Back to dashboard"
+    },
+    "soon": "Soon",
+    "soonTitle": "{label} (coming soon)",
+    "help": "Help and feedback",
+    "topBar": {
+      "searchPlaceholder": "Search {name}…",
+      "searchSoon": "Search is coming soon",
+      "notifications": "Notifications"
     }
   },
   "Dashboard": {
@@ -52,7 +88,10 @@
     "description": "Jump into a space, or create another.",
     "create": "Create workspace",
     "allSpaces": "All workspaces",
-    "failed": "Couldn't load your workspaces."
+    "failed": "Couldn't load your workspaces.",
+    "requestsTitle": "Your requests, everywhere",
+    "requestsDescription": "Leave and document requests across your workspaces will show up here.",
+    "requestsSoon": "We're building this. It'll be ready soon."
   },
   "NotFound": {
     "code": "404",
@@ -226,9 +265,18 @@
     "title": "Talk to us",
     "description": "Tell us about your team. We'll help you see if WorkHub fits leave and HR document workflows.",
     "fields": {
-      "name": { "label": "Full name", "placeholder": "Alex Morgan" },
-      "email": { "label": "Work email", "placeholder": "alex@company.com" },
-      "company": { "label": "Company", "placeholder": "Acme Ltd" },
+      "name": {
+        "label": "Full name",
+        "placeholder": "Alex Morgan"
+      },
+      "email": {
+        "label": "Work email",
+        "placeholder": "alex@company.com"
+      },
+      "company": {
+        "label": "Company",
+        "placeholder": "Acme Ltd"
+      },
       "message": {
         "label": "How can we help?",
         "placeholder": "Team size, current leave process, what you need…"
@@ -293,8 +341,14 @@
     },
     "mailpitHint": "Locally, open Mailpit at http://localhost:8025 to read the message.",
     "fields": {
-      "name": { "label": "Name", "placeholder": "Sara Benali" },
-      "email": { "label": "Email", "placeholder": "you@company.com" },
+      "name": {
+        "label": "Name",
+        "placeholder": "Sara Benali"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "you@company.com"
+      },
       "password": {
         "label": "Password",
         "placeholder": "At least 10 characters",
@@ -340,6 +394,7 @@
       "failed": "Couldn't load your workspaces.",
       "title": "Choose a workspace",
       "description": "Pick where you want to work, or create another space.",
+      "backToDashboard": "Back to dashboard",
       "emptyTitle": "Create your first workspace",
       "emptyDescription": "Workspaces keep leave, holidays, and documents for one company.",
       "create": "Create a workspace"
@@ -347,6 +402,12 @@
     "create": {
       "title": "Create a workspace",
       "description": "You'll be the owner. You can invite people later.",
+      "backToDashboard": "Back to dashboard",
+      "logoLabel": "Logo",
+      "logoHint": "Optional. PNG, JPEG, or WebP up to 2 MB.",
+      "addLogo": "Add logo",
+      "changeLogo": "Change",
+      "removeLogo": "Remove",
       "nameLabel": "Workspace name",
       "namePlaceholder": "Acme Corp",
       "slugLabel": "URL slug",
@@ -357,7 +418,11 @@
       "submitting": "Creating…",
       "invalid": "Check the name and slug.",
       "slugTaken": "That slug is already taken.",
-      "failed": "Couldn't create the workspace. Try again."
+      "failed": "Couldn't create the workspace. Try again.",
+      "errors": {
+        "tooLarge": "That image is too large.",
+        "unsupported": "Use a PNG, JPEG, or WebP image."
+      }
     },
     "home": {
       "loading": "Loading workspace…",
@@ -392,7 +457,19 @@
       "brandingDescription": "Logo and cover shown on the workspace home and in the switcher.",
       "noAccess": "You aren't a member of “{slug}”, or it doesn't exist.",
       "back": "Back to workspaces",
-      "backToSpace": "Back to workspace"
+      "backToSpace": "Back to workspace",
+      "sectionNav": "Settings sections",
+      "sections": {
+        "general": "General",
+        "branding": "Branding",
+        "billing": "Billing",
+        "danger": "Danger zone"
+      },
+      "nameLabel": "Name",
+      "slugLabel": "Slug",
+      "generalSoon": "Editing the name and slug will be available soon.",
+      "billingSoon": "Billing for this workspace is coming soon.",
+      "dangerSoon": "Deleting a workspace will be available soon."
     },
     "branding": {
       "changeCover": "Change cover",
@@ -444,5 +521,29 @@
     "spaceSlugMin": "Slug must be at least 2 characters",
     "spaceSlugMax": "Slug is too long",
     "spaceSlugFormat": "Use lowercase letters, numbers, and hyphens"
+  },
+  "ComingSoon": {
+    "description": "We're building this. It'll be ready soon.",
+    "backToHome": "Back to workspace home",
+    "backToProfile": "Back to profile",
+    "backToDashboard": "Back to dashboard",
+    "features": {
+      "leave": "My leave",
+      "calendar": "Team calendar",
+      "holidays": "Holidays",
+      "documents": "Documents",
+      "people": "People",
+      "approvals": "Approvals",
+      "invites": "Invites",
+      "roles": "Roles and permissions",
+      "teams": "Teams",
+      "leavePolicies": "Leave policies",
+      "signInMethods": "Sign-in methods",
+      "sessions": "Sessions",
+      "notifications": "Notifications",
+      "deleteAccount": "Delete account",
+      "search": "Search",
+      "dashboardRequests": "Your requests"
+    }
   }
 }

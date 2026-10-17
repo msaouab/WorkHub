@@ -13,6 +13,7 @@ describe('parseLocalizedPath', () => {
     expect(parseLocalizedPath('/en/spaces')?.kind).toBe('protected');
     expect(parseLocalizedPath('/fr/spaces/new')?.kind).toBe('protected');
     expect(parseLocalizedPath('/en/settings')?.kind).toBe('protected');
+    expect(parseLocalizedPath('/en/notifications')?.kind).toBe('protected');
     expect(parseLocalizedPath('/en/reset-password')?.kind).toBe('public');
     expect(parseLocalizedPath('/en/verify-email')?.kind).toBe('public');
     expect(parseLocalizedPath('/en')?.kind).toBe('public');

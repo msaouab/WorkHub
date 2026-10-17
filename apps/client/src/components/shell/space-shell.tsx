@@ -112,8 +112,12 @@ export function SpaceShell({ children, initialCollapsed }: SpaceShellProps) {
   }
 
   return (
-    <AppFrame onOpenMobileNav={() => setDrawerOpen(true)}>
-      <div className="hidden lg:flex">
+    <AppFrame
+      breadcrumb={space.name}
+      searchWorkspaceName={space.name}
+      onOpenMobileNav={() => setDrawerOpen(true)}
+    >
+      <div className="hidden min-h-0 shrink-0 lg:flex">
         <SpaceSidebar
           space={space}
           collapsed={collapsed}

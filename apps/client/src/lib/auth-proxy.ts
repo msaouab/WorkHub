@@ -22,6 +22,7 @@ const PROTECTED_ROOTS = new Set<string>([
   ROUTES.settings.slice(1),
   ROUTES.spaces.slice(1),
   ROUTES.space.slice(1), // /s/{slug}
+  ROUTES.notifications.slice(1),
 ]);
 
 /** Parse `/{locale}/…` and classify the route for auth gating. */

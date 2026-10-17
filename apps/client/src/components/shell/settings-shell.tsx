@@ -31,7 +31,7 @@ export function SettingsShell({ children }: { children: ReactNode }) {
       breadcrumb={t('accountSettings')}
       onOpenMobileNav={() => setDrawerOpen(true)}
     >
-      <div className="hidden lg:flex">
+      <div className="hidden min-h-0 shrink-0 lg:flex">
         <SettingsNav />
       </div>
       <MobileNavDrawer

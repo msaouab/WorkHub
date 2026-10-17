@@ -1,22 +1,59 @@
 import { ROUTES } from '@/lib/routes';
 
+export type SettingsNavStatus = 'ready' | 'soon';
+
 export type SettingsNavItem = {
   id: string;
   href: string;
   labelKey: string;
+  status: SettingsNavStatus;
+  /** Render the label in a danger style (delete account). */
+  danger?: boolean;
 };
 
 export const SETTINGS_NAV_ITEMS: readonly SettingsNavItem[] = [
-  { id: 'profile', href: ROUTES.settings, labelKey: 'profile' },
+  {
+    id: 'profile',
+    href: ROUTES.settings,
+    labelKey: 'profile',
+    status: 'ready',
+  },
   {
     id: 'language',
     href: `${ROUTES.settings}/language`,
     labelKey: 'language',
+    status: 'ready',
   },
   {
     id: 'password',
     href: `${ROUTES.settings}/password`,
     labelKey: 'password',
+    status: 'ready',
+  },
+  {
+    id: 'signInMethods',
+    href: `${ROUTES.settings}/sign-in-methods`,
+    labelKey: 'signInMethods',
+    status: 'soon',
+  },
+  {
+    id: 'sessions',
+    href: `${ROUTES.settings}/sessions`,
+    labelKey: 'sessions',
+    status: 'soon',
+  },
+  {
+    id: 'notifications',
+    href: `${ROUTES.settings}/notifications`,
+    labelKey: 'notifications',
+    status: 'soon',
+  },
+  {
+    id: 'deleteAccount',
+    href: `${ROUTES.settings}/delete-account`,
+    labelKey: 'deleteAccount',
+    status: 'soon',
+    danger: true,
   },
 ] as const;
 

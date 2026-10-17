@@ -2,10 +2,12 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { SpaceLogo } from '@/components/spaces/space-logo';
 import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +17,11 @@ import { ApiError } from '@/lib/api/fetch';
 import { setLastSpaceSlug } from '@/lib/last-space';
 import { ROUTES } from '@/lib/routes';
 import { suggestSpaceSlug } from '@/lib/space-slug';
+import { cn } from '@/lib/utils';
 import { createSpaceFormSchema } from '@/lib/validators/space';
+
+const LOGO_MAX = 2 * 1024 * 1024;
+const ACCEPTED = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 type CreateSpaceValues = z.infer<ReturnType<typeof createSpaceFormSchema>>;
 
@@ -25,6 +31,10 @@ export function CreateSpaceForm() {
   const router = useRouter();
   const create = useCreateSpace();
   const slugTouched = useRef(false);
+  const logoInput = useRef<HTMLInputElement>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const schema = useMemo(
     () => createSpaceFormSchema(tValidation),
     [tValidation]
@@ -42,12 +52,42 @@ export function CreateSpaceForm() {
     defaultValues: { name: '', slug: '' },
   });
 
+  const name = watch('name');
   const slug = watch('slug');
   const suggestedEmpty = Boolean(slug === '' && !slugTouched.current);
 
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(logoFile);
+    setLogoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [logoFile]);
+
+  function onLogoPick(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+    if (!ACCEPTED.has(file.type)) {
+      setLogoError(t('errors.unsupported'));
+      return;
+    }
+    if (file.size > LOGO_MAX) {
+      setLogoError(t('errors.tooLarge'));
+      return;
+    }
+    setLogoError(null);
+    setLogoFile(file);
+  }
+
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const space = await create.mutateAsync(values);
+      const space = await create.mutateAsync({
+        ...values,
+        logo: logoFile ?? undefined,
+      });
       setLastSpaceSlug(space.slug);
       router.replace(`${ROUTES.space}/${space.slug}`);
     } catch (err) {
@@ -59,8 +99,65 @@ export function CreateSpaceForm() {
     }
   });
 
+  const previewLogo = logoPreview
+    ? { url64: logoPreview, url256: logoPreview }
+    : null;
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
+      <div className="flex flex-col gap-3">
+        <div>
+          <Label>{t('logoLabel')}</Label>
+          <p className="mt-1 text-xs text-muted-foreground">{t('logoHint')}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <SpaceLogo
+            name={name.trim() || 'W'}
+            spaceId="new"
+            logo={previewLogo}
+            size="lg"
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={cn(buttonVariants({ size: 'sm' }))}
+              disabled={isSubmitting || create.isPending}
+              onClick={() => logoInput.current?.click()}
+            >
+              {logoFile ? t('changeLogo') : t('addLogo')}
+            </button>
+            {logoFile ? (
+              <button
+                type="button"
+                className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
+                disabled={isSubmitting || create.isPending}
+                onClick={() => {
+                  setLogoFile(null);
+                  setLogoError(null);
+                }}
+              >
+                {t('removeLogo')}
+              </button>
+            ) : null}
+          </div>
+        </div>
+        {logoError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {logoError}
+          </p>
+        ) : null}
+        <input
+          ref={logoInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="sr-only"
+          onChange={(e) => {
+            onLogoPick(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+      </div>
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="space-name">{t('nameLabel')}</Label>
         <Controller

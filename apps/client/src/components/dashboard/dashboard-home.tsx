@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
  */
 export function DashboardHome() {
   const t = useTranslations('Dashboard');
+  const tShell = useTranslations('Shell');
   const tAuth = useTranslations('Auth.appShell');
   const { isPending: authPending, isSignedIn } = useRequireAuth();
   const { data: spaces, isPending, isError } = useSpaces();
@@ -37,53 +38,64 @@ export function DashboardHome() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex min-h-full flex-col gap-10">
       <PostAuthRedirect />
-      <PageHeader title={t('title')} description={t('description')} />
+      <div className="flex flex-col gap-10">
+        <PageHeader title={t('title')} description={t('description')} />
 
-      {isError ? (
-        <p className="text-sm text-destructive" role="alert">
-          {t('failed')}
-        </p>
-      ) : (
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {(spaces ?? []).map((space) => (
-            <li key={space.id}>
-              <SpaceCard space={space} />
+        {isError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {t('failed')}
+          </p>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {(spaces ?? []).map((space) => (
+              <li key={space.id}>
+                <SpaceCard space={space} />
+              </li>
+            ))}
+            <li>
+              <Link
+                href={ROUTES.spacesNew}
+                className={cn(
+                  'flex h-full min-h-36 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border/80 px-4 py-8 text-sm text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-accent/30 hover:text-foreground'
+                )}
+              >
+                <span className="text-2xl font-light" aria-hidden>
+                  +
+                </span>
+                {t('create')}
+              </Link>
             </li>
-          ))}
-          <li>
-            <Link
-              href={ROUTES.spacesNew}
-              className={cn(
-                'flex h-full min-h-36 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border/80 px-4 py-8 text-sm text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-accent/30 hover:text-foreground'
-              )}
-            >
-              <span className="text-2xl font-light" aria-hidden>
-                +
-              </span>
-              {t('create')}
-            </Link>
-          </li>
-        </ul>
-      )}
+          </ul>
+        )}
 
-      {(spaces?.length ?? 0) > 0 ? (
-        <Link
-          href={ROUTES.spaces}
-          className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'self-start')}
-        >
-          {t('allSpaces')}
-        </Link>
-      ) : null}
+        {(spaces?.length ?? 0) > 0 ? (
+          <Link
+            href={ROUTES.spaces}
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'self-start'
+            )}
+          >
+            {t('allSpaces')}
+          </Link>
+        ) : null}
+      </div>
 
-      <section className="flex flex-col gap-3 border-t border-border/60 pt-8">
-        <h2 className="font-display text-xl font-semibold tracking-tight">
-          {t('requestsTitle')}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t('requestsDescription')}</p>
-        <p className="text-sm text-muted-foreground">{t('requestsSoon')}</p>
-      </section>
+      <footer className="mt-auto border-t border-border/60 pt-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground">
+            {t('requestsTitle')}
+          </h2>
+          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+            {tShell('soon')}
+          </span>
+        </div>
+        <p className="mt-1.5 max-w-lg text-sm text-muted-foreground">
+          {t('requestsDescription')}
+        </p>
+      </footer>
     </div>
   );
 }

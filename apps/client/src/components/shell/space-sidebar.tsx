@@ -10,7 +10,6 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { WorkspaceSwitcher } from '@/components/spaces/workspace-switcher';
 import { SidebarItem } from '@/components/shell/sidebar-item';
 import { buttonVariants } from '@/components/ui/button-variants';
-import { useRoleLabel } from '@/hooks/use-role-label';
 import {
   SPACE_NAV_ITEMS,
   activeSpaceNavId,
@@ -39,7 +38,6 @@ export function SpaceSidebar({
 }: SpaceSidebarProps) {
   const t = useTranslations('Shell.spaceNav');
   const tShell = useTranslations('Shell');
-  const roleLabel = useRoleLabel(space.roleName);
   const pathname = usePathname();
   const items = filterSpaceNav(SPACE_NAV_ITEMS, space.permissions);
   const activeId = activeSpaceNavId(items, space.slug, pathname);
@@ -62,22 +60,15 @@ export function SpaceSidebar({
     >
       <div
         className={cn(
-          'shrink-0 border-b border-border/60 p-3',
-          collapsed && 'px-2'
+          'shrink-0 border-b border-border/60 p-2',
+          collapsed && 'flex justify-center px-2 py-2.5'
         )}
       >
         {collapsed ? (
-          <div className="flex justify-center py-1">
-            <WorkspaceSwitcher compact />
-          </div>
+          <WorkspaceSwitcher compact space={space} />
         ) : (
-          <WorkspaceSwitcher />
+          <WorkspaceSwitcher space={space} />
         )}
-        {!collapsed ? (
-          <p className="mt-2 truncate px-1 text-xs text-muted-foreground">
-            {t('role', { role: roleLabel })}
-          </p>
-        ) : null}
       </div>
 
       <nav

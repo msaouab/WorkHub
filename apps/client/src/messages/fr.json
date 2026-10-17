@@ -443,9 +443,12 @@
       },
       "noAccessTitle": "Accès refusé",
       "noAccessDescription": "Vous n'êtes pas membre de « {slug} », ou il n'existe pas.",
+      "forbiddenTitle": "Accès refusé",
+      "forbiddenDescription": "Vous n'avez pas accès à cette page.",
       "pausedTitle": "Accès suspendu",
       "pausedDescription": "Votre accès à « {name} » est suspendu. Demandez à un admin de vous réactiver.",
       "backToSpaces": "Retour aux espaces",
+      "backToHome": "Retour à l’accueil de l’espace",
       "settings": "Paramètres de l'espace"
     },
     "settings": {

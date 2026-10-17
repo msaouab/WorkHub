@@ -55,16 +55,14 @@ export function AppMain({
     <main
       className={
         className ??
-        `relative flex-1 overflow-y-auto px-4 py-8 sm:px-6 sm:py-10 ${
-          wide ? '' : ''
-        }`
+        'relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-8 sm:px-6 sm:py-10'
       }
     >
       <div
         className={
           wide
-            ? 'mx-auto w-full max-w-5xl'
-            : 'mx-auto w-full max-w-xl'
+            ? 'mx-auto flex min-h-full w-full max-w-5xl flex-col'
+            : 'mx-auto flex min-h-full w-full max-w-xl flex-col'
         }
       >
         {children}

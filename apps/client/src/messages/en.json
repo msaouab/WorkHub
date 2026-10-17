@@ -443,9 +443,12 @@
       },
       "noAccessTitle": "No access",
       "noAccessDescription": "You aren't a member of “{slug}”, or it doesn't exist.",
+      "forbiddenTitle": "No access",
+      "forbiddenDescription": "You don't have access to this page.",
       "pausedTitle": "Access paused",
       "pausedDescription": "Your access to “{name}” is paused. Ask an admin to reactivate you.",
       "backToSpaces": "Back to workspaces",
+      "backToHome": "Back to workspace home",
       "settings": "Workspace settings"
     },
     "settings": {

@@ -443,9 +443,12 @@
       },
       "noAccessTitle": "لا يوجد وصول",
       "noAccessDescription": "لست عضوًا في «{slug}»، أو أنها غير موجودة.",
+      "forbiddenTitle": "لا يوجد وصول",
+      "forbiddenDescription": "ليس لديك صلاحية للوصول إلى هذه الصفحة.",
       "pausedTitle": "الوصول موقوف",
       "pausedDescription": "وصولك إلى «{name}» موقوف. اطلب من مشرف إعادة تفعيل حسابك.",
       "backToSpaces": "العودة إلى المساحات",
+      "backToHome": "العودة إلى الرئيسية",
       "settings": "إعدادات المساحة"
     },
     "settings": {

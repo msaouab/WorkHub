@@ -25,11 +25,7 @@ export function SidebarItem({
   onNavigate,
 }: SidebarItemProps) {
   const t = useTranslations('Shell');
-  const title = soon
-    ? t('soonTitle', { label })
-    : collapsed
-      ? label
-      : undefined;
+  const title = soon ? t('soonTitle', { label }) : label;
 
   return (
     <Link
@@ -38,22 +34,24 @@ export function SidebarItem({
       title={title}
       onClick={onNavigate}
       className={cn(
-        'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium outline-none transition-colors',
+        'group flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium outline-none transition-colors',
         'focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'bg-accent text-accent-foreground'
           : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
-        collapsed && 'justify-center px-2'
+        collapsed && 'items-center justify-center px-2'
       )}
     >
-      <Icon className="size-4 shrink-0" aria-hidden />
+      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       {collapsed ? (
         <span className="sr-only">{label}</span>
       ) : (
-        <span className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate">{label}</span>
+        <span className="flex min-w-0 flex-1 items-start gap-2">
+          <span className="min-w-0 flex-1 whitespace-normal text-pretty leading-snug">
+            {label}
+          </span>
           {soon ? (
-            <span className="ms-auto shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="mt-0.5 shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
               {t('soon')}
             </span>
           ) : null}

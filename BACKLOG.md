@@ -33,7 +33,7 @@ start ──▶ in progress ──▶ under-review ──▶ done  (ticket delet
 
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also catches format mistakes: unknown or `done` status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-055**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-072**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -92,13 +92,14 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 | Ticket | Under review since | Last review | Result | Open feedback |
 |---|---|---|---|---|
+| WH-053 | 2026-10-17 | — | — | — |
 
 ## Tickets
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
 
 ### WH-053 · Finish the app layout: every sidebar item, its page, and "coming soon" placeholders
-- **Type:** feature · **Priority:** P1 · **Status:** in progress · **Area:** client
+- **Type:** feature · **Priority:** P1 · **Status:** under-review · **Area:** client
 - **Why:** WH-052 (`d39d25a`) shipped the shell: top bar, workspace sidebar, settings nav, phone drawer, collapse. But the sidebars only list the 2–3 pages that exist today, so the product's shape (leave, calendar, holidays, documents, approvals…) is invisible and every new feature has to touch the layout again. This ticket **completes the layout from the mockups**: every item, in its final place, with its route, its permission, and a page. Features that aren't built yet show a translated **"coming soon"** page, so later tickets only replace a placeholder.
 - **Today:**
   - `lib/nav/space-nav.ts` lists Home + Settings (Members is hidden until WH-046);
@@ -184,18 +185,20 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - The "Soon" badge has text (not just colour); disabled-looking items are **not** disabled: they're real links to the placeholder page.
 
 #### Acceptance criteria
-- [ ] As **Owner** in Acme: main = Home, My leave, Team calendar, Holidays, Documents, People; *Manage* = Approvals, Invites, Roles and permissions, Teams, Leave policies, Settings. Every item opens its route; coming-soon items show the badge and the shared placeholder page.
-- [ ] As **Member**: main shows Home, My leave, Team calendar, Holidays, Documents, People; **no *Manage* section**. Opening `/en/s/acme/roles` directly shows "no access", not the placeholder.
-- [ ] As **Admin**: *Manage* without Settings (Owner-only), and Settings' Billing and Danger zone sections hidden.
-- [ ] `/en/s/acme/members` → 308 → `/en/s/acme/people`.
-- [ ] Settings nav lists Profile, Language, Password, Sign-in methods, Sessions, Notifications, Delete account; the last four show "coming soon".
-- [ ] The dashboard shows the "Your requests, everywhere" coming-soon section; the bell opens `/en/notifications` (coming soon); the search field shows its "coming soon" hint.
-- [ ] The top bar shows the context label (workspace name / "Account settings").
-- [ ] Works in `en`, `fr` and `ar` (RTL), collapsed and expanded, and in the phone drawer; every item reachable by keyboard, with `aria-current` on the active one.
-- [ ] Unit tests: nav filtering for Owner/Admin/Member including "any of" permissions; settings-nav active matching for the new items; `ComingSoon` renders the translated feature name. An e2e test clicks through every workspace item as Owner and checks Member doesn't see *Manage*.
-- [ ] No new page shows a raw English string or a ticket ID.
+- [x] As **Owner** in Acme: main = Home, My leave, Team calendar, Holidays, Documents, People; *Manage* = Approvals, Invites, Roles and permissions, Teams, Leave policies, Settings. Every item opens its route; coming-soon items show the badge and the shared placeholder page.
+- [x] As **Member**: main shows Home, My leave, Team calendar, Holidays, Documents, People; **no *Manage* section**. Opening `/en/s/acme/roles` directly shows "no access", not the placeholder.
+- [x] As **Admin**: *Manage* without Settings (Owner-only), and Settings' Billing and Danger zone sections hidden.
+- [x] `/en/s/acme/members` → 308 → `/en/s/acme/people`.
+- [x] Settings nav lists Profile, Language, Password, Sign-in methods, Sessions, Notifications, Delete account; the last four show "coming soon".
+- [x] The dashboard shows the "Your requests, everywhere" coming-soon section; the bell opens `/en/notifications` (coming soon); the search field shows its "coming soon" hint.
+- [x] The top bar shows the context label (workspace name / "Account settings").
+- [x] Works in `en`, `fr` and `ar` (RTL), collapsed and expanded, and in the phone drawer; every item reachable by keyboard, with `aria-current` on the active one.
+- [x] Unit tests: nav filtering for Owner/Admin/Member including "any of" permissions; settings-nav active matching for the new items; `ComingSoon` renders the translated feature name. An e2e test clicks through every workspace item as Owner and checks Member doesn't see *Manage*.
+- [x] No new page shows a raw English string or a ticket ID.
 - **Follows:** WH-052 (shell), WH-047 (branding in Settings), WH-049/WH-050 (account pages). **Each later feature replaces one placeholder:** WH-046/WH-016 (People), WH-010 (Invites), WH-011 (Roles), WH-012 (Sign-in methods), WH-025 (Delete account), plus the leave, calendar, holidays, documents, approvals, teams and notifications features.
-- **Progress (2026-10-17):** started. Full `space-nav` / `settings-nav` with `status` + any-of permissions; `ComingSoon`, `RequireSpacePermission`, `PageHeader`; routes for every sidebar item + account soon pages + `/notifications`; `/members` → 308 `/people`; top bar context/search/bell; workspace settings sections; dashboard "Your requests"; en/fr/ar keys; unit + e2e tests.
+- **Progress (2026-10-17):** layout + polish. Full nav/routes/coming-soon; scrollable sidebar; workspace switcher (logo + name + role); settings section nav; dashboard requests footer; create-workspace logo + back links; permission-denied copy vs non-member; settings gated by `space.settings.write`; sidebar labels wrap; `app-shell` e2e green.
+- **Review (2026-10-17):** 🔁 changes requested (wrong forbidden copy; settings not gated; truncated Roles label; polish uncommitted). Fixed in this pass → **under-review**.
+
 
 ### WH-046 · Members API: list, deactivate, remove, leave
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api
@@ -232,6 +235,8 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   4. the accept page.
   - **Accepting needs a return URL:** a signed-out invitee goes to sign-in or sign-up, then comes **back** to `/{locale}/invite/{token}`. The WH-045 proxy and sign-in form need a safe `?next=` parameter (same-origin paths only, never a full URL).
   - **Depends on:** WH-046 (members) and WH-045 (proxy + `next`).
+- **UI rule (from WH-019, hook done in `d395684`):** "Invite" buttons render only when `useCan(PERMISSIONS.INVITES_WRITE)`; the API still returns 403.
+
 
 ### WH-011 · Permissions management
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -243,6 +248,8 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - UI: members and roles settings;
   - hook WH-019.
 - **Depends on:** WH-009 (done in `d39d25a`).
+- **UI rule (from WH-019, hook done in `d395684`):** "Change role" / role editing render only when `useCan(PERMISSIONS.ROLES_WRITE)`; the API still returns 403.
+
 
 ### WH-012 · Sign in with Google, GitHub, Microsoft and GitLab
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -279,11 +286,110 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **What:** returns the value only after it stopped changing for `ms` milliseconds (default 300). Used by the member search.
 - **Done when:** typing "mohammed" in member search sends 1 request, not 8 (unit test with fake timers).
 
-### WH-019 · `useCan(permission)`: hide actions you're not allowed to do
-- **Blocked by:** WH-011
+### WH-055 · Error pages: `error.tsx` and `global-error.tsx`
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client
-- **What:** `true`/`false` for a permission in the current workspace, using the same permission names as the API (shared constants).
-- **Done when:** a member doesn't see "Invite" or "Change role" buttons; an admin does. The API still returns 403 if someone calls it anyway.
+- **Why:** a rendering crash today shows Next's default error screen (English, unstyled). WH-051 left this out of scope.
+- **Scope:**
+  - `app/[locale]/error.tsx` (client): a translated "Something went wrong" inside the shell, with "Try again" (`reset()`) and "Go to dashboard"; log the error digest;
+  - `app/global-error.tsx`: its own `<html><body>`, minimal, for errors in the root layout;
+  - the same look as the 404 page (shared empty-state component).
+- **Done when:** a test page that throws shows the translated error page in `en`, `fr` and `ar`; "Try again" re-renders; no stack traces are shown to users.
+
+### WH-056 · Workspace setup: country, timezone, work week; edit name and slug
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
+- **Why:** FR-SPC-01 requires a workspace to have a **country, timezone and work week**. Leave days (FR-LVR-02), accruals (FR-LVB-03) and public holidays (FR-HOL-01) all depend on them, and today a workspace only has a name and slug. The settings page also says "editing the name and slug will be available soon".
+- **Scope:**
+  - columns `country` (ISO 3166-1 alpha-2), `timezone` (IANA), `work_week` (e.g. `{mon..fri}`), with a migration and defaults for existing rows;
+  - the create form asks for country (prefilled from the browser locale) and timezone (prefilled from `Intl`), plus the work-week preset;
+  - `PATCH /api/v1/spaces/{spaceId}` (`space.settings.write`) for name, slug (409 on a taken slug; the old slug doesn't redirect, so warn), country, timezone and work week;
+  - the "General" settings section becomes editable.
+- **Done when:** a new workspace stores all three; the Owner can edit them; Admin and Member get 403; the slug change moves the URL.
+
+### WH-058 · Teams and the Manager role
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
+- **Why:** the PRD has four roles (Owner, Admin/HR, **Manager**, Employee) and FR-MEM-05/06 need teams with one or more managers who approve their team's leave. The code only has Owner, Admin and Member presets and no teams. Approvals (WH-062) can't route without this.
+- **Scope:**
+  - a `Manager` system role preset (`leave.approve`, optional `documents.fulfil`, `calendar.read`, …);
+  - `teams` + `team_members` + `team_managers` tables with RLS;
+  - CRUD under `teams.write`;
+  - assign a member's team and manager (FR-MEM-05);
+  - the "Teams" page replaces its placeholder.
+- **Done when:** an Admin creates a team, adds members and managers; a manager sees only their teams' requests (once WH-062 exists).
+
+### WH-060 · Leave types and the balance ledger
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database + worker
+- **Why:** FR-LVB-01..05 + FR-SPC-03. Balances are the base of every leave screen. Split into DB / API / UI / worker tickets when it starts.
+- **Scope:**
+  - leave types: name, colour, paid/unpaid, yearly allowance, accrual (upfront/monthly), carry-over, allow-negative;
+  - default types seeded when a workspace is created;
+  - balances as an **append-only ledger** (`balance_entries`), where balance = sum;
+  - adjustments with a mandatory reason (`balances.adjust`);
+  - a worker for monthly accrual and year-end carry-over in the workspace timezone (WH-056);
+  - "Leave policies" replaces its placeholder.
+- **Done when:** a member's allowance, taken, pending and remaining per type match the ledger; an adjustment without a reason gets 400.
+
+### WH-061 · Leave requests
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
+- **Blocked by:** WH-060, WH-056, WH-063
+- **Why:** FR-LVR-01..05, the core flow of the product.
+- **Scope:**
+  - request: type, start/end, half days, reason, optional attachment (private storage, see WH-065);
+  - working days exclude weekends (work week) and holidays;
+  - overlaps are blocked;
+  - an insufficient balance warns, or blocks when the type disallows negative;
+  - cancelling a pending request; cancelling an approved one needs approval;
+  - "My leave" replaces its placeholder.
+- **Done when:** the day count matches FR-LVR-02 for a range spanning a weekend and a holiday; overlap and negative-balance cases are tested.
+
+### WH-062 · Approvals inbox, comments and audit log
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
+- **Blocked by:** WH-061, WH-058
+- **Why:** FR-APR-01..06.
+- **Scope:**
+  - an inbox filterable by team, type and date (`leave.approve` / `documents.fulfil`);
+  - approve or deny, with a comment required on denial;
+  - you can't approve your own request; managers' requests fall back to Owner/Admin;
+  - a comment thread on each request;
+  - an **immutable audit log** (actor, time, from → to);
+  - approval writes the ledger deduction **in the same transaction**;
+  - "Approvals" replaces its placeholder.
+- **Done when:** the median path request → decision works end to end; the audit log can't be updated or deleted by the app role (DB grant + test).
+
+### WH-063 · Public and company holidays
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
+- **Blocked by:** WH-056
+- **Why:** FR-HOL-01/02 + FR-SPC-03 (seed the country's holidays at creation).
+- **Scope:** import public holidays by country and year (pick a data source: a bundled dataset or an API, recorded here); custom company holidays (`holidays.write`); list and calendar views; "Holidays" replaces its placeholder.
+- **Done when:** a Moroccan workspace gets its 2026 public holidays on creation; an Admin adds a company day; both count in WH-061's day calculation.
+
+### WH-064 · Team calendar and leave bank
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client + api
+- **Blocked by:** WH-061
+- **Why:** FR-LVB-06: everyone sees who is off, with the exact leave type ("Team leave bank and calendar" for all roles in the PRD).
+- **Scope:** month/week calendar of approved (and optionally pending) leave plus holidays, filterable by team; the team leave-bank table; "Team calendar" replaces its placeholder; RTL-correct calendar.
+- **Done when:** two members' approved leave appears on the right days, in all 3 languages.
+
+### WH-065 · Document requests ("papers")
+- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database + infra
+- **Why:** FR-DOC-01..04.
+- **Scope:**
+  - document types (name, description, turnaround, fulfilment role);
+  - a member's request (purpose, language, delivery);
+  - HR moves it through Pending → In progress → Ready (file uploaded) / Rejected (comment required);
+  - download through a **signed URL valid 10 minutes**.
+  - ⚠️ These files are **private**: use a **separate private bucket** (or a private prefix with no anonymous policy), never the public-read branding bucket from WH-047.
+  - "Documents" replaces its placeholder.
+- **Done when:** a ready document downloads with a signed URL that expires after 10 min; anonymous access to the private bucket → 403.
+
+### WH-069 · CI: run the checks on every push and pull request
+- **Type:** chore · **Priority:** P2 · **Status:** start · **Area:** tooling
+- **Why:** there is **no `.github/` folder**: nothing runs `typecheck/lint/test`, the integration tests or e2e except by hand (SRS §9). Reviews have caught lint failures that a pipeline would have blocked.
+- **Scope:** GitHub Actions on Node 22 + pnpm cache:
+  - `pnpm nx affected -t typecheck lint test` (with a `nx sync:check` step);
+  - a Postgres 16 service for the `*.integration.spec.ts` files (migrate deploy first);
+  - Playwright e2e against built apps, with Mailpit + MinIO services;
+  - `pnpm backlog` must print ✓.
+- **Done when:** a PR that breaks lint, a test or an RLS integration test shows a red check.
 
 ### WH-043 · Remove the unused `JoinPreview` scaffold (and Zustand)
 - **Type:** tech-debt · **Priority:** P3 · **Status:** start · **Area:** client
@@ -345,6 +451,13 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Type:** chore · **Priority:** P3 · **Status:** start · **Area:** docs
 - **Why:** a new developer needs: Node 22 (`nvm use`, `nvm alias default 22`), `docker compose up -d`, `pnpm db:seed`, the test accounts, Mailpit at `localhost:8025`, Swagger at `localhost:3333/docs`.
 - **Done when:** a fresh clone can follow the README to a signed-in `/app` without asking anyone.
+- **Re-check (2026-10-17):** partly done. README "Local development" now has `docker compose --env-file … up -d`, `pnpm install`, `migrate deploy`, `pnpm db:seed`, `pnpm dev`, and the MinIO notes. Still missing:
+  - [ ] Node 22 (`nvm use`, `nvm alias default 22`; the hooks and pnpm still run on Node 20 by default);
+  - [ ] the seed accounts (`owner@`/`admin@`/`member@`/`unverified@workhub.test`, password from the seed) and the Acme workspace;
+  - [ ] URLs: Mailpit `:8025`, Swagger `:3333/docs`, Adminer `:8083`, MinIO console `:9001`;
+  - [ ] `pnpm dev:reset`, `pnpm backlog`, `pnpm nx e2e @work-hub/client-e2e`, `pnpm db:seed -- --reset`;
+  - [ ] the stale sections: "Stack (planned)", "Planned monorepo layout" (point to `docs/architecture.md`), and "Status: Greenfield".
+
 
 ### WH-054 · Upload follow-ups (from the WH-047/WH-050 reviews)
 - **Type:** tech-debt · **Priority:** P3 · **Status:** start · **Area:** api + infra
@@ -353,3 +466,44 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - [ ] Delete `libs/api/auth/src/strip-client-image.ts`, its spec, and the `databaseHooks.user.update.before` that uses it. It can't work: Better Auth merges hook results (`{...actualData, ...result.data}`), so omitting `image` changes nothing. The route-level `hooks.before` on `/update-user` (400 when `image` is sent) is the real guard and has its own test.
   - [ ] A pixel-bomb upload answers 415 `IMAGE_UNSUPPORTED_TYPE`. Map sharp's "exceeds pixel limit" error to 413 `IMAGE_TOO_LARGE` (or a new `IMAGE_DIMENSIONS_TOO_LARGE`) so the client can show "image too large".
   - [ ] The bucket name `workhub` is hard-coded in `docker-compose.yml` and `docker/minio/anonymous-get-object.json`, while the API reads `STORAGE_BUCKET`. Either derive both from `STORAGE_BUCKET` (render the policy with `sed` in `minio-init`) or document that they must match.
+
+### WH-057 · Transfer ownership, archive and delete a workspace
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client
+- **Why:** FR-SPC-04. The settings "Danger zone" is a placeholder.
+- **Scope:** transfer to another active member (both confirm); archive (read-only); delete = soft delete (`deleted_at`), with a purge after 30 days by a worker; confirmation by typing the slug; storage files deleted on purge.
+- **Done when:** each action is Owner-only, audited, and reversible where the SRS says so.
+
+### WH-059 · Join by verified company email domain
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client
+- **Why:** FR-MEM-03/04 + FR-AUTH-02, the third way to join in the PRD.
+- **Scope:** Admins add a domain and verify it by DNS TXT or an admin-mailbox code; verified sign-ups from that domain join with the default role; public domains (gmail.com…) are rejected.
+- **Done when:** a verified `@acme.test` sign-up lands in Acme as Member; `@gmail.com` can't be added.
+
+### WH-066 · Notifications (in-app + email) and preferences
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client + worker
+- **Why:** FR-NTF-01/02. The bell and `/settings/notifications` are placeholders.
+- **Scope:** events (invite, new request → approvers, decision, comment, document ready); an in-app list with an unread badge on the bell; email through the mail lib in the user's language (WH-013); per-event/channel preferences.
+- **Done when:** a decision on a request notifies the requester in-app and by email, respecting preferences.
+
+### WH-067 · Employee profiles
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client + database
+- **Why:** FR-PRF-01..03 ("Profiles" in the PRD scope).
+- **Scope:** personal fields (member-editable) and employment fields (admin-editable) per workspace; restricted fields (national ID, salary-related) visible only to the member, admins and owner; request history; export personal data as JSON; the profile page reachable from People.
+- **Done when:** a member can't read another member's restricted fields (API test); export returns the member's data only.
+
+### WH-068 · Sessions page: see and sign out other devices
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** client
+- **Why:** `/settings/sessions` is a placeholder; Better Auth already has `listSessions`, `revokeSession` and `revokeOtherSessions`.
+- **Scope:** list the current user's sessions (device/browser from the user agent, IP, last active, "this device"); revoke one, or all others.
+- **Done when:** revoking another session signs that browser out on its next request.
+
+### WH-070 · Optional two-factor authentication (TOTP)
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client
+- **Why:** FR-AUTH-04 ("should"). Better Auth has a `twoFactor` plugin.
+- **Scope:** enable/disable with a QR code + backup codes in settings; a TOTP step at sign-in; recovery with a backup code.
+- **Done when:** a user with 2FA can't sign in without the code, and can with a backup code once.
+
+### WH-071 · Billing per workspace (deferred)
+- **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client
+- **Why:** FR-BIL-01/02: monthly price from active memberships, prorated; only the Owner manages it. Deferred with deployment (WH-026); the settings "Billing" section is a placeholder.
+- **Done when:** decided and specified (provider, plans) before any implementation.

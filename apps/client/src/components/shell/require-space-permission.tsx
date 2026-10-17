@@ -18,7 +18,7 @@ type RequireSpacePermissionProps = {
 
 /**
  * Gate a workspace page by permission (WH-053).
- * Missing access shows the same "no access" state as an unknown slug — not a fake coming-soon.
+ * Unknown / non-member → "not a member"; member without the permission → page forbidden.
  */
 export function RequireSpacePermission({
   permission,
@@ -43,12 +43,7 @@ export function RequireSpacePermission({
     );
   }
 
-  const denied =
-    isForbidden ||
-    !space ||
-    !hasNavPermission(space.permissions, permission);
-
-  if (denied) {
+  if (isForbidden || !space) {
     return (
       <div className="flex flex-col gap-6">
         <div>
@@ -67,6 +62,29 @@ export function RequireSpacePermission({
           )}
         >
           {t('backToSpaces')}
+        </Link>
+      </div>
+    );
+  }
+
+  if (!hasNavPermission(space.permissions, permission)) {
+    const homeHref = slug ? `${ROUTES.space}/${slug}` : ROUTES.dashboard;
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">
+            {t('forbiddenTitle')}
+          </h1>
+          <p className="mt-3 text-muted-foreground">{t('forbiddenDescription')}</p>
+        </div>
+        <Link
+          href={homeHref}
+          className={cn(
+            buttonVariants({ variant: 'outline' }),
+            'w-full sm:w-auto sm:self-start'
+          )}
+        >
+          {t('backToHome')}
         </Link>
       </div>
     );

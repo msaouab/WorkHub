@@ -57,6 +57,12 @@ test.describe('app shell (WH-053)', () => {
     await expect(
       page.getByRole('heading', { name: 'No access' })
     ).toBeVisible();
+    await expect(
+      page.getByText("You don't have access to this page.")
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Back to workspace home' })
+    ).toBeVisible();
   });
 
   test('members redirects to people; settings lists coming-soon items', async ({

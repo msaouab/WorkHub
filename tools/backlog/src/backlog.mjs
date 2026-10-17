@@ -1,16 +1,23 @@
 /**
- * Parses and checks BACKLOG.md: ticket statuses, section placement, priority order,
- * and the review tracker. Pure functions (no file access) so they are easy to test.
+ * Parses and checks BACKLOG.md: one `## Tickets` list sorted by priority, valid statuses,
+ * and a review tracker that matches the tickets under review. Also decides which
+ * `under-review` tickets need (re)review. Pure functions (no file or git access) so they
+ * are easy to test.
  */
+import { createHash } from 'node:crypto';
 
-export const STATUSES = ['start', 'in progress', 'under-review', 'done'];
+/**
+ * Statuses a ticket can have while it is in the file, in list order: within a priority,
+ * tickets are sorted start → in progress → under-review. `done` tickets are deleted.
+ */
+export const ACTIVE_STATUSES = ['start', 'in progress', 'under-review'];
 
-/** Which `## Section` each active status must live in. `done` tickets live in the Done table only. */
-export const SECTION_FOR_STATUS = {
-  'under-review': 'Under review',
-  'in progress': 'In progress',
-  start: 'Start',
-};
+/** Negative when `a` must come before `b`: priority first (P0 first), then status. */
+export function compareOrder(a, b) {
+  return a.priority - b.priority || ACTIVE_STATUSES.indexOf(a.status) - ACTIVE_STATUSES.indexOf(b.status);
+}
+
+export const TICKETS_SECTION = 'Tickets';
 
 /** Split the markdown into tickets, remembering the `## Section` each one sits in. */
 export function parseTickets(markdown) {
@@ -42,6 +49,7 @@ export function parseTickets(markdown) {
     const meta = /\*\*Type:\*\* ([^·\n]+)·\s*\*\*Priority:\*\* P(\d)[^·\n]*·\s*\*\*Status:\*\* ([^·\n]+)/.exec(text);
     return {
       ...ticket,
+      text,
       type: meta?.[1].trim() ?? null,
       priority: meta ? Number(meta[2]) : null,
       status: meta?.[3].trim() ?? null,
@@ -60,18 +68,10 @@ export function parseReviewTracker(markdown) {
   return [...table.matchAll(/^\| (WH-\d+)/gm)].map((match) => match[1]);
 }
 
-/** Ticket IDs already recorded as done in the "Done" table. */
-export function parseDoneTable(markdown) {
-  const start = markdown.indexOf('## Done');
-  if (start === -1) return [];
-  return [...markdown.slice(start).matchAll(/^\| (WH-\d+)/gm)].map((match) => match[1]);
-}
-
-/** Every rule the workflow depends on. Returns a list of human-readable problems (empty = valid). */
+/** Every rule the workflow depends on. Returns human-readable problems (empty = valid). */
 export function validate(markdown) {
   const problems = [];
   const tickets = parseTickets(markdown);
-  const done = new Set(parseDoneTable(markdown));
   const seen = new Set();
 
   for (const ticket of tickets) {
@@ -79,31 +79,36 @@ export function validate(markdown) {
     if (seen.has(ticket.id)) problems.push(`${label}: duplicate ticket ID`);
     seen.add(ticket.id);
 
-    if (!STATUSES.includes(ticket.status)) {
-      problems.push(`${label}: unknown status "${ticket.status}" (use: ${STATUSES.join(', ')})`);
+    if (ticket.section !== TICKETS_SECTION) {
+      problems.push(`${label}: must be under "## ${TICKETS_SECTION}", found under "## ${ticket.section}"`);
+    }
+    if (ticket.priority === null) {
+      problems.push(`${label}: missing Type/Priority/Status line`);
       continue;
     }
     if (ticket.status === 'done') {
-      problems.push(`${label}: status is done; remove the ticket and add a row to the Done table`);
-      continue;
+      problems.push(`${label}: status is done, so delete the ticket (its history lives in git)`);
+    } else if (!ACTIVE_STATUSES.includes(ticket.status)) {
+      problems.push(`${label}: unknown status "${ticket.status}" (use: ${ACTIVE_STATUSES.join(', ')})`);
     }
-    if (done.has(ticket.id)) {
-      problems.push(`${label}: listed in the Done table but still active`);
-    }
-    const expected = SECTION_FOR_STATUS[ticket.status];
-    if (ticket.section !== expected) {
-      problems.push(`${label}: status "${ticket.status}" belongs in "## ${expected}", found in "## ${ticket.section}"`);
-    }
-    if (ticket.priority === null) problems.push(`${label}: missing Type/Priority/Status line`);
   }
 
-  for (const section of Object.values(SECTION_FOR_STATUS)) {
-    const priorities = tickets.filter((t) => t.section === section).map((t) => t.priority);
-    priorities.forEach((priority, i) => {
-      if (i > 0 && priority < priorities[i - 1]) {
-        problems.push(`"## ${section}" is not ordered by priority (P${priority} after P${priorities[i - 1]})`);
-      }
-    });
+  const listed = tickets.filter(
+    (t) => t.section === TICKETS_SECTION && t.priority !== null && ACTIVE_STATUSES.includes(t.status)
+  );
+  listed.forEach((ticket, i) => {
+    const previous = listed[i - 1];
+    if (previous && compareOrder(ticket, previous) < 0) {
+      problems.push(
+        `${ticket.id} (P${ticket.priority}, ${ticket.status}) comes after ${previous.id} (P${previous.priority}, ${previous.status}): sort by priority, then status (${ACTIVE_STATUSES.join(' → ')})`
+      );
+    }
+  });
+
+  const nextFree = /next free is WH-(\d+)/.exec(markdown);
+  const highest = Math.max(0, ...tickets.map((t) => Number(t.id.slice(3))));
+  if (nextFree && Number(nextFree[1]) <= highest) {
+    problems.push(`"next free is WH-${nextFree[1]}" is already used (highest ID is WH-${String(highest).padStart(3, '0')}): bump it`);
   }
 
   const underReview = tickets.filter((t) => t.status === 'under-review').map((t) => t.id).sort();
@@ -112,8 +117,79 @@ export function validate(markdown) {
     if (!tracked.includes(id)) problems.push(`${id}: under-review but missing from the Review tracker`);
   }
   for (const id of tracked) {
-    if (!underReview.includes(id)) problems.push(`${id}: in the Review tracker but not under-review`);
+    if (!underReview.includes(id)) problems.push(`${id}: in the Review tracker but not under-review (delete its row)`);
   }
 
   return [...new Set(problems)];
+}
+
+/**
+ * What a review of `ticket` was based on: its text plus the commit it was reviewed at.
+ * A ticket needs review again when either changes: the user edited it (moved it to
+ * under-review, ticked items, added notes), or new work was committed. Only committed
+ * work can become `done`, so uncommitted edits alone don't re-trigger a review.
+ */
+export function ticketFingerprint(ticket, head) {
+  // Ignore whitespace-only differences (blank lines, trailing spaces), so re-sorting or
+  // reformatting the file doesn't look like a change to the ticket.
+  const content = ticket.text.split('\n').map((line) => line.trimEnd()).filter(Boolean).join('\n');
+  return createHash('sha256').update(`${head}\n${ticket.id}\n${content}`).digest('hex').slice(0, 16);
+}
+
+/**
+ * `under-review` tickets whose fingerprint differs from the last recorded review.
+ * `state.reviewed` maps ticket ID → { fingerprint, at }.
+ */
+export function pendingReviews(tickets, head, state = {}) {
+  const reviewed = state.reviewed ?? {};
+  return tickets
+    .filter((t) => t.status === 'under-review')
+    .flatMap((t) => {
+      const last = reviewed[t.id];
+      if (!last) return [{ ticket: t, reason: 'never reviewed' }];
+      if (last.fingerprint !== ticketFingerprint(t, head)) {
+        return [{ ticket: t, reason: `changed since review on ${last.at}` }];
+      }
+      return [];
+    });
+}
+
+/** Record that `ids` were reviewed at `head`. Returns a new state object. */
+export function markReviewed(state, tickets, ids, head, at) {
+  const reviewed = { ...(state.reviewed ?? {}) };
+  for (const t of tickets) {
+    if (ids.includes(t.id)) reviewed[t.id] = { fingerprint: ticketFingerprint(t, head), at };
+  }
+  // Forget tickets that are no longer under review (done = deleted, or sent back).
+  const active = new Set(tickets.filter((t) => t.status === 'under-review').map((t) => t.id));
+  for (const id of Object.keys(reviewed)) if (!active.has(id)) delete reviewed[id];
+  return { ...state, reviewed };
+}
+
+/**
+ * Text injected into Claude's context by the Claude Code hooks, or null when there's
+ * nothing to say (so `prompt` hooks stay silent on most turns).
+ */
+export function hookContext({ event, tickets, problems, pending }) {
+  const queue = tickets.filter((t) => t.status === 'under-review');
+  if (event === 'prompt' && pending.length === 0 && problems.length === 0) return null;
+  if (event === 'session-start' && queue.length === 0 && problems.length === 0) return null;
+
+  const lines = ['[WorkHub backlog tracker]'];
+  if (pending.length) {
+    lines.push(`${pending.length} under-review ticket(s) need review per BACKLOG.md "Review rules":`);
+    for (const { ticket, reason } of pending) lines.push(`- ${ticket.id} (P${ticket.priority}) ${ticket.title}: ${reason}`);
+    lines.push(
+      'For each: check acceptance criteria + Definition of Done (code, `pnpm nx run-many -t typecheck lint test`, running app).',
+      'Committed and passing → delete the ticket + its Review tracker row. Otherwise → dated 🔁 Review entry + tracker row.',
+      'Then run `pnpm backlog --mark-reviewed <IDs>` and `pnpm backlog` (must print ✓). Tell the user what you found.'
+    );
+  } else if (event === 'session-start' && queue.length) {
+    lines.push(`${queue.length} ticket(s) under review, all reviewed since their last change: ${queue.map((t) => t.id).join(', ')}.`);
+  }
+  if (problems.length) {
+    lines.push(`BACKLOG.md breaks ${problems.length} workflow rule(s); fix them:`);
+    for (const problem of problems) lines.push(`- ${problem}`);
+  }
+  return lines.join('\n');
 }

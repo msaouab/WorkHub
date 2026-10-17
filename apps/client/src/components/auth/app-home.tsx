@@ -1,48 +1,32 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { LogoLoader } from '@/components/brand/logo-loader';
 import { Button } from '@/components/ui/button';
 import { LocaleSwitcher } from '@/components/i18n/locale-switcher';
 import { useMe } from '@/hooks/use-me';
-import { useRouter } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth-client';
+import { useRequireAuth } from '@/hooks/use-require-auth';
 
 export function AppHome() {
   const t = useTranslations('Auth.appShell');
   const tCommon = useTranslations('Common');
-  const router = useRouter();
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { user: sessionUser, isPending, isSignedIn, isSigningOut, signOut } =
+    useRequireAuth();
   const { data: me, isPending: mePending, isError } = useMe();
-  const [signingOut, setSigningOut] = useState(false);
 
-  useEffect(() => {
-    if (!sessionPending && !session?.user) {
-      router.replace('/sign-in');
-    }
-  }, [session, sessionPending, router]);
-
-  async function onSignOut() {
-    setSigningOut(true);
-    await authClient.signOut();
-    setSigningOut(false);
-    router.replace('/');
-    router.refresh();
-  }
-
-  if (sessionPending || !session?.user) {
+  if (isPending || !isSignedIn || !sessionUser) {
     return (
-      <p className="text-sm text-muted-foreground" role="status">
-        {t('checkingSession')}
-      </p>
+      <div className="flex justify-center py-12">
+        <LogoLoader size="lg" showLabel label={t('checkingSession')} />
+      </div>
     );
   }
 
   const user = me ?? {
-    name: session.user.name,
-    email: session.user.email,
+    name: sessionUser.name,
+    email: sessionUser.email,
     locale: '…',
-    emailVerified: session.user.emailVerified,
+    emailVerified: sessionUser.emailVerified,
   };
 
   return (
@@ -88,10 +72,12 @@ export function AppHome() {
         type="button"
         variant="outline"
         className="w-full sm:w-auto sm:self-start"
-        disabled={signingOut}
-        onClick={onSignOut}
+        disabled={isSigningOut}
+        onClick={() => {
+          void signOut();
+        }}
       >
-        {signingOut ? tCommon('signingOut') : t('signOut')}
+        {isSigningOut ? tCommon('signingOut') : t('signOut')}
       </Button>
     </div>
   );

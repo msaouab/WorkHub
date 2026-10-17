@@ -64,3 +64,4 @@ vitest.config.*.timestamp*
 
 # Prisma generated client
 libs/api/database/src/generated/
+.claude/backlog-review-state.json

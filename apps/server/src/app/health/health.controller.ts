@@ -11,6 +11,24 @@ import { PrismaService } from '@work-hub/database';
 import { PROBLEM_DETAILS_REF } from '../../common/swagger/build-openapi-document';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
+/** Give up on a hanging database instead of blocking readiness forever. */
+const DATABASE_CHECK_TIMEOUT_MS = 1_000;
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error('Database readiness check timed out'));
+    }, ms);
+  });
+  // A slow query can still reject after the timeout won the race.
+  work.catch(() => undefined);
+
+  return Promise.race([work, timeout]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+}
+
 /**
  * Liveness and readiness probes (outside the API prefix).
  * Readiness pings Postgres via Prisma; Redis check lands with the cache module.
@@ -54,7 +72,10 @@ export class HealthController {
   private async checkDatabase() {
     const indicator = this.healthIndicator.check('database');
     try {
-      await this.prisma.$queryRawUnsafe('SELECT 1');
+      await withTimeout(
+        this.prisma.$queryRaw`SELECT 1`,
+        DATABASE_CHECK_TIMEOUT_MS
+      );
       return indicator.up();
     } catch (error) {
       this.logger.error(

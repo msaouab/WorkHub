@@ -3,17 +3,17 @@
 import type { Locale } from '@work-hub/constants';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 import { useUpdateMe } from '@/hooks/use-update-me';
 import { isAppLocale } from '@/i18n/locale';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth-client';
 
 export function useLocaleSwitcher() {
   const t = useTranslations('Locale');
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
+  const { isSignedIn } = useAuth();
   const updateMe = useUpdateMe();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function useLocaleSwitcher() {
     }
 
     const nextLocale: Locale = next;
-    const signedIn = Boolean(session?.user);
+    const signedIn = isSignedIn;
 
     startTransition(async () => {
       setError(null);

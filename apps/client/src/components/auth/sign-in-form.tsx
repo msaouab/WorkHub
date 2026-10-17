@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
+import { isAppLocale } from '@/i18n/locale';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
@@ -40,7 +41,7 @@ export function SignInForm() {
 
     setPending(true);
     setError(null);
-    const { error: authError } = await authClient.signIn.email({
+    const { data, error: authError } = await authClient.signIn.email({
       email: parsed.data.email,
       password: parsed.data.password,
     });
@@ -58,7 +59,10 @@ export function SignInForm() {
       return;
     }
 
-    router.replace('/app', { locale });
+    const savedLocale = data?.user.locale;
+    router.replace('/app', {
+      locale: savedLocale && isAppLocale(savedLocale) ? savedLocale : locale,
+    });
     router.refresh();
   }
 

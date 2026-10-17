@@ -11,8 +11,8 @@ import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  const queryRawUnsafe = vi.fn(async () => [{ '?column?': 1 }]);
-  const prisma = { $queryRawUnsafe: queryRawUnsafe };
+  const queryRaw = vi.fn(async () => [{ '?column?': 1 }]);
+  const prisma = { $queryRaw: queryRaw };
   const check = vi.fn(async (indicators: Array<() => unknown>) => {
     for (const indicator of indicators) {
       await indicator();
@@ -47,7 +47,7 @@ describe('HealthController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    queryRawUnsafe.mockResolvedValue([{ '?column?': 1 }]);
+    queryRaw.mockResolvedValue([{ '?column?': 1 }]);
     healthIndicator.check.mockReturnValue(indicatorSession);
     indicatorSession.up.mockReturnValue({ database: { status: 'up' } });
     indicatorSession.down.mockImplementation((data?: { message?: string }) => ({
@@ -60,7 +60,7 @@ describe('HealthController', () => {
       status: 'ok',
     });
     expect(check).toHaveBeenCalledWith([]);
-    expect(queryRawUnsafe).not.toHaveBeenCalled();
+    expect(queryRaw).not.toHaveBeenCalled();
   });
 
   it('runs memory and database checks for readiness', async () => {
@@ -68,14 +68,16 @@ describe('HealthController', () => {
       status: 'ok',
     });
     expect(checkHeap).toHaveBeenCalledOnce();
-    expect(queryRawUnsafe).toHaveBeenCalledOnce();
+    expect(queryRaw).toHaveBeenCalledOnce();
     expect(indicatorSession.up).toHaveBeenCalledOnce();
   });
 
   it('fails readiness with a generic message when the database is down', async () => {
-    queryRawUnsafe.mockRejectedValueOnce(
-      new Error('Invalid prisma.$queryRawUnsafe() invocation')
-    );
+    const logError = vi
+      .spyOn(controller['logger'], 'error')
+      .mockImplementation(() => undefined);
+    const failure = new Error('Invalid prisma.$queryRaw() invocation');
+    queryRaw.mockRejectedValueOnce(failure);
 
     await controller.checkReady();
 
@@ -88,6 +90,29 @@ describe('HealthController', () => {
     expect(
       JSON.stringify(indicatorSession.down.mock.results[0]?.value)
     ).not.toContain('prisma');
+    expect(logError).toHaveBeenCalledOnce();
+    expect(logError.mock.calls[0]?.[1]).toContain('prisma');
+  });
+
+  it('reports unreachable when the database check exceeds 1s', async () => {
+    vi.useFakeTimers();
+    const logError = vi
+      .spyOn(controller['logger'], 'error')
+      .mockImplementation(() => undefined);
+    queryRaw.mockImplementation(() => new Promise(() => undefined));
+
+    const pending = controller.checkReady();
+    await vi.advanceTimersByTimeAsync(1_000);
+    await pending;
+
+    expect(indicatorSession.down).toHaveBeenCalledWith({
+      message: 'unreachable',
+    });
+    expect(String(logError.mock.calls[0]?.[1])).toContain('timed out');
+    expect(
+      JSON.stringify(indicatorSession.down.mock.results[0]?.value)
+    ).not.toContain('timed out');
+    vi.useRealTimers();
   });
 });
 

@@ -1,11 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
-import { Link, useRouter } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth-client';
+import { useAuth } from '@/hooks/use-auth';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 type AuthNavProps = {
@@ -15,24 +14,14 @@ type AuthNavProps = {
 export function AuthNav({ tone = 'default' }: AuthNavProps) {
   const t = useTranslations('Site.nav');
   const tCommon = useTranslations('Common');
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
-  const [signingOut, setSigningOut] = useState(false);
+  const { user, isPending, isSigningOut, signOut } = useAuth();
   const inverse = tone === 'inverse';
-
-  async function onSignOut() {
-    setSigningOut(true);
-    await authClient.signOut();
-    setSigningOut(false);
-    router.replace('/');
-    router.refresh();
-  }
 
   if (isPending) {
     return <div className="h-9 w-24 animate-pulse rounded-lg bg-muted/40" aria-hidden />;
   }
 
-  if (session?.user) {
+  if (user) {
     return (
       <div className="flex items-center gap-2">
         <Link
@@ -48,11 +37,13 @@ export function AuthNav({ tone = 'default' }: AuthNavProps) {
           type="button"
           variant={inverse ? 'secondary' : 'outline'}
           size="sm"
-          disabled={signingOut}
-          onClick={onSignOut}
+          disabled={isSigningOut}
+          onClick={() => {
+            void signOut();
+          }}
           className={cn(inverse && 'border-white/30 bg-white/10 text-white hover:bg-white/20')}
         >
-          {signingOut ? tCommon('signingOut') : t('signOut')}
+          {isSigningOut ? tCommon('signingOut') : t('signOut')}
         </Button>
       </div>
     );

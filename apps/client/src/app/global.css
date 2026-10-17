@@ -15,6 +15,13 @@
     --animate-fade: fade 1.1s ease both;
     --animate-ken: ken 18s ease-out both;
     --animate-marquee: marquee 32s linear infinite;
+    /* Logo loader: one 2.4s loop — the W draws, nodes pop in as the line reaches them, then it fades. */
+    --animate-logo-draw: logo-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    --animate-logo-node-1: logo-node-1 2.4s ease-out infinite;
+    --animate-logo-node-2: logo-node-2 2.4s ease-out infinite;
+    --animate-logo-node-3: logo-node-3 2.4s ease-out infinite;
+    --animate-logo-breathe: logo-breathe 1.6s ease-in-out infinite;
+    --animate-logo-appear: fade 0.2s ease-out 150ms both;
     --color-brand: var(--brand);
     --color-brand-ink: var(--brand-ink);
     --color-brand-node: var(--brand-node);
@@ -94,6 +101,114 @@
   }
   to {
     transform: scale(1);
+  }
+}
+
+/* Logo loader. The path uses pathLength="100"; nodes pop at 0%, ~22% and 45%,
+   when the line reaches the start, middle and end of the W. */
+@keyframes logo-draw {
+  0% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+  45%,
+  78% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  92% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  100% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+}
+
+@keyframes logo-node-1 {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  5% {
+    transform: scale(1.3);
+  }
+  11%,
+  78% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  92% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes logo-node-2 {
+  0%,
+  20% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  26% {
+    transform: scale(1.3);
+  }
+  32%,
+  78% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  92% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes logo-node-3 {
+  0%,
+  42% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  48% {
+    transform: scale(1.3);
+  }
+  54%,
+  78% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  92% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* Reduced-motion fallback: no drawing or scaling, just a slow fade of the whole mark. */
+@keyframes logo-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }
 

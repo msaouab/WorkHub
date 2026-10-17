@@ -6,6 +6,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
@@ -14,6 +15,7 @@ import { createSignInSchema } from '@/lib/validators/auth';
 export function SignInForm() {
   const t = useTranslations('Auth.signIn');
   const tFields = useTranslations('Auth.fields');
+  const tErrors = useTranslations('Auth.errors');
   const tValidation = useTranslations('Validation');
   const tCommon = useTranslations('Common');
   const locale = useLocale();
@@ -45,7 +47,14 @@ export function SignInForm() {
     setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError));
+      if (authError.code === 'EMAIL_NOT_VERIFIED') {
+        router.replace(
+          `/verify-email?email=${encodeURIComponent(parsed.data.email)}`,
+          { locale }
+        );
+        return;
+      }
+      setError(authErrorMessage(authError, tErrors));
       return;
     }
 
@@ -97,10 +106,9 @@ export function SignInForm() {
             {t('forgotLink')}
           </Link>
         </div>
-        <Input
+        <PasswordInput
           id="sign-in-password"
           name="password"
-          type="password"
           autoComplete="current-password"
           value={password}
           onValueChange={setPassword}

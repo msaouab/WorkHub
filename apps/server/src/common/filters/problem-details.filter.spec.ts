@@ -128,6 +128,7 @@ describe('ProblemDetailsFilter', () => {
       type: 'https://workhub.app/problems/service-unavailable',
       title: 'Service Unavailable',
       detail: 'One or more readiness checks failed.',
+      code: ErrorCode.SERVICE_UNAVAILABLE,
       details: healthPayload,
     });
     expect(logError).toHaveBeenCalledOnce();

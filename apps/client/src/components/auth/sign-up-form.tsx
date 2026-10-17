@@ -5,6 +5,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
@@ -14,6 +15,7 @@ import { createSignUpSchema } from '@/lib/validators/auth';
 export function SignUpForm() {
   const t = useTranslations('Auth.signUp');
   const tFields = useTranslations('Auth.fields');
+  const tErrors = useTranslations('Auth.errors');
   const tValidation = useTranslations('Validation');
   const tCommon = useTranslations('Common');
   const locale = useLocale();
@@ -45,7 +47,7 @@ export function SignUpForm() {
     setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError));
+      setError(authErrorMessage(authError, tErrors));
       return;
     }
 
@@ -88,10 +90,9 @@ export function SignUpForm() {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="sign-up-password">{tFields('password.label')}</Label>
-        <Input
+        <PasswordInput
           id="sign-up-password"
           name="password"
-          type="password"
           autoComplete="new-password"
           value={password}
           onValueChange={setPassword}

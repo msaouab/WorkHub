@@ -13,8 +13,8 @@ export const SESSION_SECURITY = 'session';
  * Adds Better Auth's routes to the Nest Swagger document:
  * - prefixes paths with the auth base path (Better Auth lists "/sign-in/email"),
  * - groups every operation under one "auth" tag,
- * - points protected operations at our session-cookie scheme instead of Better
- *   Auth's own `bearerAuth`, which this document does not declare.
+ * - drops Better Auth's security markers: it marks every route as protected,
+ *   including public ones, which would put a lock on sign-up in Swagger.
  */
 export function mergeAuthOpenApi(
   document: OpenAPIObject,

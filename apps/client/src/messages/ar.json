@@ -25,7 +25,8 @@
   "Locale": {
     "en": "English",
     "fr": "Français",
-    "ar": "العربية"
+    "ar": "العربية",
+    "saveFailed": "تعذّر حفظ اللغة. حاول مرة أخرى."
   },
   "Site": {
     "brand": "WorkHub",
@@ -166,7 +167,7 @@
       "description": "أدخل بريدك وسنرسل رابط إعادة التعيين إن وُجد حساب.",
       "submit": "إرسال رابط إعادة التعيين",
       "successTitle": "تحقق من بريدك",
-      "successBody": "إذا وُجد حساب لـ {email}، أرسلنا رابطًا لإعادة تعيين كلمة المرور. ينتهي الرابط خلال 30 دقيقة.",
+      "successBody": "إذا وُجد حساب لـ <email></email>، أرسلنا رابطًا لإعادة تعيين كلمة المرور. ينتهي الرابط خلال 30 دقيقة.",
       "backToSignIn": "العودة لتسجيل الدخول"
     },
     "resetPassword": {
@@ -181,17 +182,31 @@
     },
     "verifyEmail": {
       "title": "تحقق من بريدك",
-      "description": "أرسلنا رابط تأكيد إلى {email}. افتحه لتفعيل حسابك.",
+      "description": "أرسلنا رابط تأكيد إلى <email></email>. افتحه لتفعيل حسابك.",
       "resend": "إعادة إرسال بريد التأكيد",
       "resent": "أُعيد إرسال بريد التأكيد.",
       "backToSignIn": "العودة لتسجيل الدخول",
       "missingEmail": "البريد مفقود. ابدأ من <link>إنشاء حساب</link>."
     },
+    "errors": {
+      "INVALID_EMAIL_OR_PASSWORD": "البريد أو كلمة المرور غير صحيحة.",
+      "EMAIL_NOT_VERIFIED": "البريد غير مؤكَّد.",
+      "USER_ALREADY_EXISTS": "يوجد حساب بهذا البريد بالفعل.",
+      "PASSWORD_TOO_SHORT": "كلمة المرور قصيرة جدًا.",
+      "INVALID_TOKEN": "هذا الرابط غير صالح أو منتهي.",
+      "TOO_MANY_REQUESTS": "محاولات كثيرة. انتظر دقيقة ثم أعد المحاولة.",
+      "fallback": "حدث خطأ. حاول مرة أخرى."
+    },
     "mailpitHint": "محليًا، افتح Mailpit على http://localhost:8025 لقراءة الرسالة.",
     "fields": {
       "name": { "label": "الاسم", "placeholder": "سارة بنعلي" },
       "email": { "label": "البريد", "placeholder": "you@company.com" },
-      "password": { "label": "كلمة المرور", "placeholder": "10 أحرف على الأقل" },
+      "password": {
+        "label": "كلمة المرور",
+        "placeholder": "10 أحرف على الأقل",
+        "show": "إظهار كلمة المرور",
+        "hide": "إخفاء كلمة المرور"
+      },
       "confirmPassword": {
         "label": "تأكيد كلمة المرور",
         "placeholder": "أعد كلمة المرور الجديدة"

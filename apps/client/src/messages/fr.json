@@ -7,7 +7,7 @@
     "signUpTitle": "Inscription — WorkHub",
     "forgotPasswordTitle": "Mot de passe oublié — WorkHub",
     "resetPasswordTitle": "Réinitialiser le mot de passe — WorkHub",
-    "verifyEmailTitle": "Vérifier l’e-mail — WorkHub",
+    "verifyEmailTitle": "Vérifier l'e-mail — WorkHub",
     "verifyEmailDescription": "Confirmez votre e-mail pour activer votre compte WorkHub.",
     "appTitle": "Compte — WorkHub",
     "appDescription": "Votre compte WorkHub."
@@ -25,7 +25,8 @@
   "Locale": {
     "en": "English",
     "fr": "Français",
-    "ar": "العربية"
+    "ar": "العربية",
+    "saveFailed": "Impossible d'enregistrer la langue. Réessayez."
   },
   "Site": {
     "brand": "WorkHub",
@@ -67,9 +68,9 @@
     },
     "stats": {
       "title": "Construit autour de résultats clairs",
-      "description": "Objectifs et capacité v1 — dimensionnés pour les petites équipes, pas pour l’entreprise géante.",
+      "description": "Objectifs et capacité v1 — dimensionnés pour les petites équipes, pas pour l'entreprise géante.",
       "items": {
-        "onboard": "pour onboarder une entreprise d’environ 20 personnes",
+        "onboard": "pour onboarder une entreprise d'environ 20 personnes",
         "decision": "délai médian cible demande → décision",
         "members": "membres supportés par espace entreprise",
         "roles": "rôles — propriétaire, admin, manager, employé",
@@ -91,11 +92,11 @@
       "pillars": {
         "leave-bank": {
           "title": "Banque de congés",
-          "description": "Soldes par type de congé, avec visibilité d’équipe pour planifier honnêtement."
+          "description": "Soldes par type de congé, avec visibilité d'équipe pour planifier honnêtement."
         },
         "approvals": {
           "title": "Validations avec contexte",
-          "description": "Les managers décident avec des commentaires et une piste d’audit complète."
+          "description": "Les managers décident avec des commentaires et une piste d'audit complète."
         },
         "documents": {
           "title": "Documents RH",
@@ -104,11 +105,11 @@
       }
     },
     "path": {
-      "title": "De l’invitation à la décision, sans relance",
+      "title": "De l'invitation à la décision, sans relance",
       "steps": {
         "join": {
           "title": "Rejoignez votre espace",
-          "description": "Lien d’invitation, invitation e-mail, ou domaine d’entreprise vérifié."
+          "description": "Lien d'invitation, invitation e-mail, ou domaine d'entreprise vérifié."
         },
         "request": {
           "title": "Demandez en un clic",
@@ -136,7 +137,7 @@
       "company": { "label": "Entreprise", "placeholder": "Acme SARL" },
       "message": {
         "label": "Comment pouvons-nous vous aider ?",
-        "placeholder": "Taille d’équipe, processus actuel, besoins…"
+        "placeholder": "Taille d'équipe, processus actuel, besoins…"
       }
     },
     "submit": "Envoyer le message",
@@ -166,7 +167,7 @@
       "description": "Entrez votre e-mail : nous enverrons un lien si un compte existe.",
       "submit": "Envoyer le lien",
       "successTitle": "Vérifiez votre e-mail",
-      "successBody": "Si un compte existe pour {email}, nous avons envoyé un lien pour réinitialiser le mot de passe. Le lien expire dans 30 minutes.",
+      "successBody": "Si un compte existe pour <email></email>, nous avons envoyé un lien pour réinitialiser le mot de passe. Le lien expire dans 30 minutes.",
       "backToSignIn": "Retour à la connexion"
     },
     "resetPassword": {
@@ -181,17 +182,31 @@
     },
     "verifyEmail": {
       "title": "Vérifiez votre e-mail",
-      "description": "Nous avons envoyé un lien de vérification à {email}. Ouvrez-le pour activer votre compte.",
-      "resend": "Renvoyer l’e-mail de vérification",
+      "description": "Nous avons envoyé un lien de vérification à <email></email>. Ouvrez-le pour activer votre compte.",
+      "resend": "Renvoyer l'e-mail de vérification",
       "resent": "E-mail de vérification renvoyé.",
       "backToSignIn": "Retour à la connexion",
-      "missingEmail": "E-mail manquant. Commencez par <link>l’inscription</link>."
+      "missingEmail": "E-mail manquant. Commencez par <link>l'inscription</link>."
+    },
+    "errors": {
+      "INVALID_EMAIL_OR_PASSWORD": "E-mail ou mot de passe invalide.",
+      "EMAIL_NOT_VERIFIED": "E-mail non vérifié.",
+      "USER_ALREADY_EXISTS": "Un compte existe déjà avec cet e-mail.",
+      "PASSWORD_TOO_SHORT": "Le mot de passe est trop court.",
+      "INVALID_TOKEN": "Ce lien est invalide ou a expiré.",
+      "TOO_MANY_REQUESTS": "Trop de tentatives. Attendez une minute et réessayez.",
+      "fallback": "Une erreur s'est produite. Réessayez."
     },
     "mailpitHint": "En local, ouvrez Mailpit sur http://localhost:8025 pour lire le message.",
     "fields": {
       "name": { "label": "Nom", "placeholder": "Sara Benali" },
       "email": { "label": "E-mail", "placeholder": "vous@entreprise.com" },
-      "password": { "label": "Mot de passe", "placeholder": "Au moins 10 caractères" },
+      "password": {
+        "label": "Mot de passe",
+        "placeholder": "Au moins 10 caractères",
+        "show": "Afficher le mot de passe",
+        "hide": "Masquer le mot de passe"
+      },
       "confirmPassword": {
         "label": "Confirmer le mot de passe",
         "placeholder": "Répétez le nouveau mot de passe"
@@ -203,7 +218,7 @@
     },
     "appShell": {
       "title": "Vous êtes connecté",
-      "description": "Les espaces et invitations viennent ensuite. Pour l’instant, cela confirme que votre session fonctionne.",
+      "description": "Les espaces et invitations viennent ensuite. Pour l'instant, cela confirme que votre session fonctionne.",
       "signOut": "Se déconnecter",
       "checkingSession": "Vérification de la session…",
       "name": "Nom",

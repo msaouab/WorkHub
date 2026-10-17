@@ -77,7 +77,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         status: HttpStatus.SERVICE_UNAVAILABLE,
         detail: 'One or more readiness checks failed.',
         instance,
-        code: ErrorCode.INTERNAL_ERROR,
+        code: ErrorCode.SERVICE_UNAVAILABLE,
         ...(details ? { details } : {}),
       };
     }
@@ -162,6 +162,8 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         return ErrorCode.CONFLICT;
       case HttpStatus.TOO_MANY_REQUESTS:
         return ErrorCode.RATE_LIMITED;
+      case HttpStatus.SERVICE_UNAVAILABLE:
+        return ErrorCode.SERVICE_UNAVAILABLE;
       default:
         return status >= 500
           ? ErrorCode.INTERNAL_ERROR

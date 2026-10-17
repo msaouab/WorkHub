@@ -5,7 +5,6 @@ import en from '../src/messages/en.json';
 
 vi.mock('next/image', () => ({
   default: (props: { alt: string }) => {
-    // eslint-disable-next-line @next/next/no-img-element
     return <img alt={props.alt} />;
   },
 }));

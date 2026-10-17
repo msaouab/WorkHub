@@ -1,10 +1,10 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   HealthCheck,
   HealthCheckService,
+  HealthIndicatorService,
   MemoryHealthIndicator,
-  PrismaHealthIndicator,
 } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '@work-hub/database';
@@ -20,10 +20,12 @@ import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 @AllowAnonymous()
 @Controller('health')
 export class HealthController {
+  private readonly logger = new Logger(HealthController.name);
+
   constructor(
     private readonly health: HealthCheckService,
     private readonly memory: MemoryHealthIndicator,
-    private readonly prismaHealth: PrismaHealthIndicator,
+    private readonly healthIndicator: HealthIndicatorService,
     private readonly prisma: PrismaService
   ) {}
 
@@ -44,7 +46,22 @@ export class HealthController {
   checkReady() {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', 512 * 1024 * 1024),
-      () => this.prismaHealth.pingCheck('database', this.prisma),
+      () => this.checkDatabase(),
     ]);
+  }
+
+  /** Ping Postgres without leaking driver/Prisma text into the public response. */
+  private async checkDatabase() {
+    const indicator = this.healthIndicator.check('database');
+    try {
+      await this.prisma.$queryRawUnsafe('SELECT 1');
+      return indicator.up();
+    } catch (error) {
+      this.logger.error(
+        'Database readiness check failed',
+        error instanceof Error ? error.stack : error
+      );
+      return indicator.down({ message: 'unreachable' });
+    }
   }
 }

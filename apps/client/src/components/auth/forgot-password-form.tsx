@@ -15,6 +15,7 @@ export function ForgotPasswordForm() {
   const t = useTranslations('Auth.forgotPassword');
   const tFields = useTranslations('Auth.fields');
   const tAuth = useTranslations('Auth');
+  const tErrors = useTranslations('Auth.errors');
   const tValidation = useTranslations('Validation');
   const tCommon = useTranslations('Common');
   const locale = useLocale();
@@ -45,7 +46,7 @@ export function ForgotPasswordForm() {
     setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError));
+      setError(authErrorMessage(authError, tErrors));
       return;
     }
 
@@ -60,7 +61,13 @@ export function ForgotPasswordForm() {
             {t('successTitle')}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            {t('successBody', { email: submittedEmail })}
+            {t.rich('successBody', {
+              email: () => (
+                <bdi className="font-medium text-foreground">
+                  {submittedEmail}
+                </bdi>
+              ),
+            })}
           </p>
         </div>
         {process.env.NODE_ENV === 'development' ? (

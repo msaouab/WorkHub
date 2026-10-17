@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchMe } from '@/lib/api/me';
+import { queryKeys } from '@/lib/api/query-keys';
 import { authClient } from '@/lib/auth-client';
 
 export function useMe() {
@@ -9,7 +10,7 @@ export function useMe() {
   const signedIn = Boolean(session?.user);
 
   const query = useQuery({
-    queryKey: ['me'],
+    queryKey: queryKeys.me,
     queryFn: fetchMe,
     enabled: signedIn,
   });

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import {
   buttonVariants,
   type ButtonVariantProps,

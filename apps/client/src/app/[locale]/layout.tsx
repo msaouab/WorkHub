@@ -1,12 +1,12 @@
 import '../global.css';
-import { DEFAULT_LOCALE, type Locale } from '@work-hub/constants';
+import { type Locale } from '@work-hub/constants';
 import { Figtree, IBM_Plex_Sans_Arabic, Syne } from 'next/font/google';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AppProviders } from '@/components/providers/app-providers';
-import { localeDirection } from '@/i18n/locale';
+import { localeDirection, localeFontClass } from '@/i18n/locale';
 import { routing } from '@/i18n/routing';
 
 const figtree = Figtree({
@@ -54,11 +54,9 @@ export default async function LocaleLayout({
       dir={dir}
       className={`${figtree.variable} ${syne.variable} ${plexArabic.variable} font-sans`}
     >
-      <body className={locale === 'ar' ? 'font-arabic' : undefined}>
+      <body className={localeFontClass(locale)}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AppProviders defaultLocale={locale ?? DEFAULT_LOCALE}>
-            {children}
-          </AppProviders>
+          <AppProviders defaultLocale={locale}>{children}</AppProviders>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -1,0 +1,13 @@
+{
+  "name": "@work-hub/backlog",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node src/cli.mjs"
+  },
+  "nx": {
+    "tags": ["scope:shared", "type:tool"]
+  }
+}

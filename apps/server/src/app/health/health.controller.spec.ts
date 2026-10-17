@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   HealthCheckService,
+  HealthIndicatorService,
   MemoryHealthIndicator,
-  PrismaHealthIndicator,
   TerminusModule,
 } from '@nestjs/terminus';
 import { PrismaService } from '@work-hub/database';
@@ -11,7 +11,8 @@ import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  const prisma = {};
+  const queryRawUnsafe = vi.fn(async () => [{ '?column?': 1 }]);
+  const prisma = { $queryRawUnsafe: queryRawUnsafe };
   const check = vi.fn(async (indicators: Array<() => unknown>) => {
     for (const indicator of indicators) {
       await indicator();
@@ -19,7 +20,15 @@ describe('HealthController', () => {
     return { status: 'ok', info: {}, error: {}, details: {} };
   });
   const checkHeap = vi.fn(async () => ({ memory_heap: { status: 'up' } }));
-  const pingCheck = vi.fn(async () => ({ database: { status: 'up' } }));
+  const indicatorSession = {
+    up: vi.fn(() => ({ database: { status: 'up' as const } })),
+    down: vi.fn((data?: { message?: string }) => ({
+      database: { status: 'down' as const, ...data },
+    })),
+  };
+  const healthIndicator = {
+    check: vi.fn(() => indicatorSession),
+  };
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,7 +37,7 @@ describe('HealthController', () => {
       providers: [
         { provide: HealthCheckService, useValue: { check } },
         { provide: MemoryHealthIndicator, useValue: { checkHeap } },
-        { provide: PrismaHealthIndicator, useValue: { pingCheck } },
+        { provide: HealthIndicatorService, useValue: healthIndicator },
         { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
@@ -38,6 +47,12 @@ describe('HealthController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    queryRawUnsafe.mockResolvedValue([{ '?column?': 1 }]);
+    healthIndicator.check.mockReturnValue(indicatorSession);
+    indicatorSession.up.mockReturnValue({ database: { status: 'up' } });
+    indicatorSession.down.mockImplementation((data?: { message?: string }) => ({
+      database: { status: 'down' as const, ...data },
+    }));
   });
 
   it('returns liveness without dependency checks', async () => {
@@ -45,7 +60,7 @@ describe('HealthController', () => {
       status: 'ok',
     });
     expect(check).toHaveBeenCalledWith([]);
-    expect(pingCheck).not.toHaveBeenCalled();
+    expect(queryRawUnsafe).not.toHaveBeenCalled();
   });
 
   it('runs memory and database checks for readiness', async () => {
@@ -53,11 +68,26 @@ describe('HealthController', () => {
       status: 'ok',
     });
     expect(checkHeap).toHaveBeenCalledOnce();
-    expect(pingCheck).toHaveBeenCalledWith('database', prisma);
+    expect(queryRawUnsafe).toHaveBeenCalledOnce();
+    expect(indicatorSession.up).toHaveBeenCalledOnce();
   });
 
-  it('fails readiness when the database ping fails', async () => {
-    pingCheck.mockRejectedValueOnce(new Error('database down'));
-    await expect(controller.checkReady()).rejects.toThrow('database down');
+  it('fails readiness with a generic message when the database is down', async () => {
+    queryRawUnsafe.mockRejectedValueOnce(
+      new Error('Invalid prisma.$queryRawUnsafe() invocation')
+    );
+
+    await controller.checkReady();
+
+    expect(indicatorSession.down).toHaveBeenCalledWith({
+      message: 'unreachable',
+    });
+    expect(indicatorSession.down.mock.results[0]?.value).toMatchObject({
+      database: { status: 'down', message: 'unreachable' },
+    });
+    expect(
+      JSON.stringify(indicatorSession.down.mock.results[0]?.value)
+    ).not.toContain('prisma');
   });
 });
+

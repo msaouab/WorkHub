@@ -57,6 +57,9 @@
   "references": [
     {
       "path": "../../libs/shared/contracts"
+    },
+    {
+      "path": "../../libs/shared/constants"
     }
   ]
 }

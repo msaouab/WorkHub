@@ -15,6 +15,7 @@ type VerifyEmailPanelProps = {
 export function VerifyEmailPanel({ email }: VerifyEmailPanelProps) {
   const t = useTranslations('Auth.verifyEmail');
   const tAuth = useTranslations('Auth');
+  const tErrors = useTranslations('Auth.errors');
   const tCommon = useTranslations('Common');
   const locale = useLocale();
   const [message, setMessage] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export function VerifyEmailPanel({ email }: VerifyEmailPanelProps) {
     setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError));
+      setError(authErrorMessage(authError, tErrors));
       return;
     }
     setMessage(t('resent'));
@@ -41,7 +42,11 @@ export function VerifyEmailPanel({ email }: VerifyEmailPanelProps) {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-sm leading-relaxed text-muted-foreground">
-        {t('description', { email })}
+        {t.rich('description', {
+          email: () => (
+            <bdi className="font-medium text-foreground">{email}</bdi>
+          ),
+        })}
       </p>
       {process.env.NODE_ENV === 'development' ? (
         <p className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">

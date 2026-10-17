@@ -56,6 +56,7 @@ Thumbs.db
 # Next.js
 .next
 out
+apps/client/next-env.d.ts
 
 test-output
 vitest.config.*.timestamp*

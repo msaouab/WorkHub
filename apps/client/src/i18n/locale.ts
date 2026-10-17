@@ -8,3 +8,8 @@ export function isAppLocale(value: string): value is Locale {
 export function localeDirection(locale: Locale): 'ltr' | 'rtl' {
   return RTL_LOCALES.includes(locale) ? 'rtl' : 'ltr';
 }
+
+/** Tailwind font class for locales that need a dedicated script font. */
+export function localeFontClass(locale: Locale): string | undefined {
+  return localeDirection(locale) === 'rtl' ? 'font-arabic' : undefined;
+}

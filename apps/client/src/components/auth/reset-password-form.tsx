@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useMemo, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
@@ -16,6 +16,7 @@ import { createResetPasswordSchema } from '@/lib/validators/auth';
 export function ResetPasswordForm() {
   const t = useTranslations('Auth.resetPassword');
   const tFields = useTranslations('Auth.fields');
+  const tErrors = useTranslations('Auth.errors');
   const tValidation = useTranslations('Validation');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,7 +73,7 @@ export function ResetPasswordForm() {
     setPending(false);
 
     if (authError) {
-      setError(authErrorMessage(authError));
+      setError(authErrorMessage(authError, tErrors));
       return;
     }
 
@@ -84,10 +85,9 @@ export function ResetPasswordForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-2">
         <Label htmlFor="reset-password">{tFields('newPassword.label')}</Label>
-        <Input
+        <PasswordInput
           id="reset-password"
           name="password"
-          type="password"
           autoComplete="new-password"
           value={password}
           onValueChange={setPassword}
@@ -99,10 +99,9 @@ export function ResetPasswordForm() {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="reset-confirm">{tFields('confirmPassword.label')}</Label>
-        <Input
+        <PasswordInput
           id="reset-confirm"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           value={confirmPassword}
           onValueChange={setConfirmPassword}

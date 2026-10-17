@@ -25,7 +25,8 @@
   "Locale": {
     "en": "English",
     "fr": "Français",
-    "ar": "العربية"
+    "ar": "العربية",
+    "saveFailed": "Couldn't save your language. Try again."
   },
   "Site": {
     "brand": "WorkHub",
@@ -129,7 +130,7 @@
   },
   "Contact": {
     "title": "Talk to us",
-    "description": "Tell us about your team. We’ll help you see if WorkHub fits leave and HR document workflows.",
+    "description": "Tell us about your team. We'll help you see if WorkHub fits leave and HR document workflows.",
     "fields": {
       "name": { "label": "Full name", "placeholder": "Alex Morgan" },
       "email": { "label": "Work email", "placeholder": "alex@company.com" },
@@ -141,7 +142,7 @@
     },
     "submit": "Send message",
     "successTitle": "Message received",
-    "successBody": "Thanks for reaching out. We’ll get back to you within one business day."
+    "successBody": "Thanks for reaching out. We'll get back to you within one business day."
   },
   "Auth": {
     "signIn": {
@@ -163,15 +164,15 @@
     },
     "forgotPassword": {
       "title": "Reset your password",
-      "description": "Enter your email and we’ll send a reset link if an account exists.",
+      "description": "Enter your email and we'll send a reset link if an account exists.",
       "submit": "Send reset link",
       "successTitle": "Check your email",
-      "successBody": "If an account exists for {email}, we sent a link to reset your password. The link expires in 30 minutes.",
+      "successBody": "If an account exists for <email></email>, we sent a link to reset your password. The link expires in 30 minutes.",
       "backToSignIn": "Back to sign in"
     },
     "resetPassword": {
       "title": "Choose a new password",
-      "description": "Use at least 10 characters. You’ll need to sign in again after this.",
+      "description": "Use at least 10 characters. You'll need to sign in again after this.",
       "submit": "Update password",
       "submitting": "Updating…",
       "missingToken": "This reset link is missing or invalid. Request a new one to continue.",
@@ -181,17 +182,31 @@
     },
     "verifyEmail": {
       "title": "Check your email",
-      "description": "We sent a verification link to {email}. Open it to activate your account.",
+      "description": "We sent a verification link to <email></email>. Open it to activate your account.",
       "resend": "Resend verification email",
       "resent": "Verification email sent again.",
       "backToSignIn": "Back to sign in",
       "missingEmail": "Missing email. Start from <link>sign up</link>."
     },
+    "errors": {
+      "INVALID_EMAIL_OR_PASSWORD": "Invalid email or password.",
+      "EMAIL_NOT_VERIFIED": "Email not verified.",
+      "USER_ALREADY_EXISTS": "An account with this email already exists.",
+      "PASSWORD_TOO_SHORT": "Password is too short.",
+      "INVALID_TOKEN": "This link is invalid or has expired.",
+      "TOO_MANY_REQUESTS": "Too many attempts. Wait a minute and try again.",
+      "fallback": "Something went wrong. Try again."
+    },
     "mailpitHint": "Locally, open Mailpit at http://localhost:8025 to read the message.",
     "fields": {
       "name": { "label": "Name", "placeholder": "Sara Benali" },
       "email": { "label": "Email", "placeholder": "you@company.com" },
-      "password": { "label": "Password", "placeholder": "At least 10 characters" },
+      "password": {
+        "label": "Password",
+        "placeholder": "At least 10 characters",
+        "show": "Show password",
+        "hide": "Hide password"
+      },
       "confirmPassword": {
         "label": "Confirm password",
         "placeholder": "Repeat your new password"
@@ -202,7 +217,7 @@
       }
     },
     "appShell": {
-      "title": "You’re signed in",
+      "title": "You're signed in",
       "description": "Spaces and invites come next. For now this confirms your session works.",
       "signOut": "Sign out",
       "checkingSession": "Checking session…",

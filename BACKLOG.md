@@ -57,7 +57,7 @@ The git hooks (`.githooks/`, enabled by `pnpm install`) add two gates:
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also lists committed `done` tickets to delete, and catches format mistakes: unknown status, duplicate ID, wrong order, stale tracker.
 
 **Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-080**.
-**Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
+**Priority:** **P0** broken or insecure, fix first · **P1** the **next roadmap milestone only** (so "move the next implementations" after a commit picks exactly that milestone) · **P2** planned · **P3** nice to have / cleanup. When a milestone is done, raise the next roadmap step's tickets to P1.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
 **Ticket format:**
@@ -67,13 +67,11 @@ Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks wh
 - **Blocked by** names a ticket that must be done first; **Depends on** is softer, "easier after".
 
 **Roadmap (one feature at a time, backend and frontend together):**
-1. ~~Login UI + frontend foundation~~ · ~~workspaces, roles, memberships + isolation~~ · ~~app shell~~ · ~~members~~ (done)
-2. ~~Invites + the Team page + quality gate~~ (done in `d9b04ab`, `8ded723`)
-2b. **Foundations: reliable e2e (WH-072) + CI (WH-069).** **Current milestone**
-3. **Permissions management (WH-011), next**, then teams/groups and the Manager role (WH-058)
-4. Workspace setup and holidays (WH-056, WH-063), then leave (WH-060 → WH-061 → WH-062 → WH-064)
-5. Documents (WH-065), notifications and emails in the user's language (WH-066, WH-013)
-6. OAuth sign-in (WH-012), profiles, sessions, 2FA; CI (WH-069) as early as possible
+1. ~~Login UI + frontend foundation~~ · ~~workspaces, roles, memberships + isolation~~ · ~~app shell~~ · ~~members~~ · ~~invites + Team page~~ · ~~quality gate, e2e, CI, protected `main`~~ · ~~permissions, groups + Manager role~~ (done)
+2. **Workspace setup and holidays (WH-056, WH-063).** **Next milestone (P1)**: country, timezone and work week, then public and company holidays; leave depends on both.
+3. Leave: WH-060 → WH-061 → WH-062 → WH-064
+4. Documents (WH-065), notifications and emails in the user's language (WH-066, WH-013)
+5. OAuth sign-in (WH-012), error pages (WH-055), profiles, sessions, 2FA, domain join
 
 ## Definition of Done
 A ticket moves to **Done** only when all of these hold. Problems found during review become checklist items on the ticket, or new tickets.
@@ -138,83 +136,25 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Blocks:** merging WH-011, WH-058, WH-077 and WH-078 (all `done` on this branch).
 - **Progress (2026-10-18):** reset branch to `cb49b24` (dropped `ec7f2af` + foreign `2e37e4c`); fixed `app-shell.spec.ts` Roles assertion; review rule updated; `origin/develop` deleted; local e2e **13/13**.
 - **Commit message:** `WH-079: Fix Roles e2e after WH-011 and drop the stray develop merge`
+- **Review (2026-10-18):** ✅ **done.** `pnpm quality` all green; **e2e 13/13** locally against `pnpm dev` (the new Roles assertion passes); the branch history is linear (`cb49b24` on `e9608e2`, no `develop` commit); `origin/develop` deleted; Review rule 1 now requires e2e for user-facing tickets. The two PR criteria (checks green, mergeable) are confirmed by the PR after the push.
+  - Note: `origin/wh-011-permissions` still points at the old merge `ec7f2af`. The next push must be `git push --force-with-lease` to replace it.
 
-### WH-011 · Permissions management
-- **Type:** feature · **Priority:** P1 · **Status:** done · **Area:** api + client
-- **Why:** your original requirement. Workspace admins set what each member can do and can change anyone's role.
+### WH-056 · Workspace setup: country, timezone, work week; edit name and slug
+- **Type:** feature · **Priority:** P1 · **Status:** start · **Area:** api + client + database
+- **Why:** FR-SPC-01 requires a workspace to have a **country, timezone and work week**. Leave days (FR-LVR-02), accruals (FR-LVB-03) and public holidays (FR-HOL-01) all depend on them, and today a workspace only has a name and slug. The settings page also says "editing the name and slug will be available soon".
 - **Scope:**
-  - change a member's role;
-  - custom roles;
-  - safety rules (you can't give permissions you don't have, can't change your own role, the owner role is locked);
-  - UI: members and roles settings;
-  - hook WH-019.
-- **Depends on:** WH-009 (done in `d39d25a`).
-- **UI rule (from WH-019, hook done in `d395684`):** "Change role" / role editing render only when `useCan(PERMISSIONS.ROLES_WRITE)`; the API still returns 403.
-- **Plan (2026-10-18), next after WH-072/WH-069.** Split when started:
-  1. **API: change a member's role.** `PATCH /spaces/{id}/members/{membershipId}` `{ roleId }` (`roles.write`). Rules:
-     - you can't change your own role;
-     - nobody can change the Owner's role, or make someone Owner (that's ownership transfer, WH-057);
-     - you can only grant a role whose permissions are a **subset of your own** (no escalation).
-  2. **API: custom roles.** `GET/POST/PATCH/DELETE /spaces/{id}/roles`. A name plus permissions from `PERMISSIONS`; system roles can't be renamed or deleted (Owner permissions locked; Admin/Member permissions editable); deleting a role in use → 409 `ROLE_IN_USE`; set the default role via `isDefault`.
-  3. **UI:** a role select per row in Team → Members (`useCan(ROLES_WRITE)`); the **Roles and permissions** page replaces its placeholder (a list of roles, plus an editor with permission checkboxes grouped by area and a "used by N members" count); the invite dialog lists custom roles automatically.
-  - Tests: an escalation attempt → 403; self-change → 403; Owner untouchable; cross-workspace role id → 404; RLS on roles writes.
-- **Progress (2026-10-18):**
-  - API: `PATCH …/members/:id` (no self-change, Owner locked, no escalation).
-  - API: `GET/POST/PATCH/DELETE …/roles` — custom roles; Owner permissions locked; Admin/Member permissions editable; system roles not renamed/deleted; `ROLE_IN_USE` / default-role guards; RLS covered in integration tests.
-  - UI: Team role picker (`ROLES_WRITE`); Roles and permissions page (list + permission editor + default + delete); invite dialog filters Owner and lists custom roles.
-  - Tests: members + roles unit/integration (escalation, Owner, cross-workspace 404, RLS write).
-- **Progress (2026-10-18, review fixes):** invite/resend grantable-role checks; manage only members/roles ⊆ actor (incl. deactivate/remove); block editing own role; case-insensitive reserved names; unknown perms via Zod only. Spaces tests 58/58 green. API restarted for browser check.
-- **Progress (2026-10-18):** custom permission templates capped at **3** per workspace (`MAX_CUSTOM_ROLES` / `ROLE_LIMIT_REACHED`); Owner/Admin via `roles.write`. UI shows count and disables create at the limit.
-- **Review (2026-10-18):** 🔁 well built, but there are **two privilege-escalation gaps** to close first. Verified:
-  - `pnpm quality` is green after a checker fix (see WH-078); the roles integration tests (5) cover CRUD, the Owner lock, escalation on create/update, cross-workspace 404 and `ROLE_IN_USE`, and the members tests cover role changes;
-  - `PATCH …/members/:id` (`roles.write`): no self-change (`CANNOT_CHANGE_OWN_ROLE`), the Owner untouchable (`CANNOT_MODIFY_OWNER`), no assigning Owner (`CANNOT_ASSIGN_OWNER`), the **new** role must be ⊆ your permissions (`ROLE_ESCALATION`);
-  - roles: the Owner role is locked (`SYSTEM_ROLE_LOCKED`), system roles can't be renamed or deleted, reserved names, unique `(space_id, name)` (DB constraint + check), the default role can't be cleared or deleted, `ROLE_IN_USE` counts members **and** open invites; Admin/Member permissions editable; no new migration needed.
-  - [x] 🔴 **Escalation through invites.** `resolveRoleId` / resend now require `permissionsAreSubset` (incl. default role) → 403 `ROLE_ESCALATION`. Unit tests on create + resend. Invite dialog only lists grantable non-Owner roles.
-  - [x] 🔴 **Acting on people and roles above you.** `updateRole` / `deactivate` / `remove` / `reactivate` require the **current** role ⊆ actor; `RolesService.update` / `delete` require the same for the role being changed. Tests added.
-  - [x] **Editing the role you hold.** `RolesService.update` / `delete` block `access.roleId` with `CANNOT_CHANGE_OWN_ROLE`. Roles UI locks own role and superior roles.
-  - [x] Reserved names compared case-insensitively (`owner` / `ADMIN` rejected).
-  - [x] Unknown permissions rejected by Zod (`z.enum(PERMISSION_LIST)`); service no longer maps unknowns to `ROLE_ESCALATION`.
-  - [x] Browser check: Roles page in `ar` (RTL, permission tree, 0/3 templates, New template); Team page role pickers for Admin/Member, Owner locked as plain text.
-- **Review (2026-10-18, 2nd pass):** 🔁 almost done. All the security fixes are verified **live**:
-  - an Admin inviting into a custom "Co-owner" role (`space.settings.write`) → **403**;
-  - an Admin editing that role → **403**; an Admin editing their own Admin role → **403**;
-  - a role named `manager` → **409** (reserved, case-insensitive); an unknown permission → **400** (Zod enum).
-  - In code: `assertInviteRoleGrantable` (including the default role), `assertRoleWithinReach` in deactivate, reactivate, remove and role change (current **and** new role), and in role update/delete; own-role edits blocked.
-  - `pnpm quality`: code checks green; spaces tests 76/76.
-  - [x] **The invite dialog still offers roles the inviter can't grant.** Invite dialog filters with `permissionsAreSubset(role.permissions, actorPermissions)` (same as Team members); if the default isn't grantable, the first grantable role is pre-selected.
-  - [x] Browser check: the Team role picker and the Roles page (permission tree, "used by N", default, delete → `ROLE_IN_USE`) in `ar`; confirm Admin no longer sees ungrantable roles in Invite.
-- **Progress (2026-10-18, review fixes 3rd pass):** invite dialog grantable-role filter + default fallback.
-- **Review (2026-10-18, 3rd pass):** 🔁 the dialog fix is in (`invite-people-dialog.tsx` filters with `permissionsAreSubset(role.permissions, actorPermissions)`). Remaining:
-  - [x] The suite is red because of the member-role change shared with WH-058 (see WH-058: the `members.service.ts:350` type error and the `members-api.spec.ts` fixture). WH-011 can't be `done` while `pnpm quality` fails. → fixed under WH-058.
-  - [x] Browser check: Team in `ar` (role pickers, RTL); Roles in `ar` (permission tree, 0/3 templates, Manager listed, New template, default badge on Member). Dev restarted 15:56.
-- **Review (2026-10-18, final):** ✅ **done.** `pnpm quality` is all green, on a branch rebased onto `e9608e2`. The suite blocker is fixed (shared with WH-058). **Browser, `ar`:** the Roles page (RTL, no English, Admin/Manager/Member\*/Owner with "used by 1 member", a "default" badge, the "0 of 3 custom templates" limit, the permission tree grouped by area with select all/none); the Team members tab with per-row role pickers. All escalation fixes were verified live in the 2nd pass (invite into a higher role → 403, edit a higher role → 403, edit own role → 403, reserved name `manager` → 409, unknown permission → 400).
+  - columns `country` (ISO 3166-1 alpha-2), `timezone` (IANA), `work_week` (e.g. `{mon..fri}`), with a migration and defaults for existing rows;
+  - the create form asks for country (prefilled from the browser locale) and timezone (prefilled from `Intl`), plus the work-week preset;
+  - `PATCH /api/v1/spaces/{spaceId}` (`space.settings.write`) for name, slug (409 on a taken slug; the old slug doesn't redirect, so warn), country, timezone and work week;
+  - the "General" settings section becomes editable.
+- **Done when:** a new workspace stores all three; the Owner can edit them; Admin and Member get 403; the slug change moves the URL.
 
-### WH-077 · Verify CI on GitHub: first green run and a proven red check
-- **Type:** chore · **Priority:** P1 · **Status:** done · **Area:** tooling
-- **Why:** a workflow is only proven once GitHub runs it. This can't happen inside WH-069, because the push gate only pushes done, committed work.
-- **Scope:**
-  - [x] Push `main`; the **Quality + integration** and **Playwright e2e** jobs pass on the first run (link the run here).
-  - [x] On a throwaway branch with a PR, add a lint error → the check goes red, then delete the branch. Optionally also break an RLS integration test.
-  - [x] If a job fails only on GitHub, fix it in a new commit referencing this ticket.
-  - [x] Protect `main` with `.github/rulesets/main.json`: GitHub → Settings → Rules → Rulesets → **New ruleset → Import a ruleset** → pick the file → **Create**. Then **delete the old classic branch protection rule** for `main` (Settings → Branches), which is the one demanding 1 approval.
-- **Done when:** both jobs are green on `main`, and a red check was seen on a PR.
-- **Progress (2026-10-18):** **red check proven.** A PR from `ci-red-check` (a throwaway `const ciRedCheck = 1;` in `apps/client/src/lib/__ci_red_check.ts`) failed **CI / Quality + integration** after about 2 min, on exactly the intended checks: `@work-hub/client:lint` (the unused variable) and knip (the unused file). Backlog, nx sync, typecheck, every test (client 64/64) and the translation keys passed, which proves install, migrations and Postgres work on GitHub. **CI / Playwright e2e** was skipped as designed (`needs: checks`). GitGuardian: no secrets.
-  - Found: the `main` protection requires **1 approving review**, and GitHub doesn't allow approving your own PR, so a solo developer is always blocked. Recommended: 0 required approvals for now plus **required status checks** (Quality + integration, Playwright e2e); raise approvals when a second developer joins.
-- **Progress (2026-10-18):** decided **pull requests only** for `main`. Added `.github/rulesets/main.json` (deletion + force-push blocked, linear history, PR required with 0 approvals and resolved threads, squash only, required checks `Quality + integration` and `Playwright e2e` from GitHub Actions (`integration_id` 15368) on an up-to-date branch, admin bypass only through the PR merge button). Documented the branch/PR flow in the Workflow section and the README.
-- **Progress (2026-10-18):** ruleset `main` active (id 25343016); classic branch protection gone. `ci-red-check` PR closed and remote branch deleted. First `main` run on `2f11d1a` failed on `@work-hub/storage:test` (12k×12k pixel-bomb fixture OOMs under parallel CI). Fix in PR https://github.com/msaouab/WorkHub/pull/3 — **Quality + integration** and **Playwright e2e** both green on the PR. Squash-merge when closing this batch so `main` gets its first full green run.
-- **Progress (2026-10-18):** **PR #3, "WH-077: Avoid OOM in storage pixel-bomb test on CI", squash-merged as `e9608e2`.** On GitHub's runners the pixel-bomb fixture (`sharp.create` 12000×12000 → PNG) ran out of memory with the tests in parallel. The test now builds a tiny PNG whose IHDR *claims* √(limit + 1) squared pixels, so sharp's `limitInputPixels` check rejects it from the header without allocating. The merge through a PR (`#3` in the subject) shows the PR flow works.
-  - Review note: the new fixture has no IDAT data, so with **or without** `limitInputPixels` sharp fails, and `decode()` maps any failure to `IMAGE_UNSUPPORTED_TYPE`; the test no longer proves the limit exists. Tracked in WH-054 (map "exceeds pixel limit" to `IMAGE_TOO_LARGE`, then assert that code).
-  - [x] Confirm on GitHub that the `main` run for `e9608e2` is green for **both** jobs (Quality + integration, Playwright e2e), and whether PR #3 merged with the checks green or through the admin bypass. Link the run here.
-- **Progress (2026-10-18):** **first green `main` run.** Squash-merge of PR #3 landed as `e9608e2`. PR checks were already green (Quality + integration + Playwright e2e on run [39134831997](https://github.com/msaouab/WorkHub/actions/runs/39134831997)) — merge was **not** via admin bypass. Push to `main` then ran CI green for both jobs: [39135928970](https://github.com/msaouab/WorkHub/actions/runs/39135928970) (`e9608e2`).
-
-### WH-078 · Workflow: start every next implementation after a commit, not just one
-- **Type:** chore · **Priority:** P1 · **Status:** done · **Area:** tooling
-- **Why:** after `2f11d1a`, only WH-077 was moved to `in progress`, while the flow says "move the next implementation**s**". WH-011 (the other P1 `start` ticket) was left behind.
-- **What changed (by Claude, 2026-10-18):** `nextStartTickets()` now returns **every `start` ticket at the highest remaining priority** (the current milestone), in planned order. The hook says "move the next implementations … : WH-…, WH-…", the Workflow rule 4 says the same, and the test covers several tickets plus the case with no start ticket. WH-011 was moved to `in progress`.
-- **Acceptance criteria:**
-  - [x] Backlog tests pass (15); `pnpm backlog` ✓.
-  - [x] Also fixed: the pre-push hook ran the whole push gate when **deleting** a remote branch (`git push origin --delete ci-red-check` was blocked). `.githooks/pre-push` now reads git's ref lines and skips the gate when every local sha is all zeros (delete-only pushes send no commits).
-  - [x] Also fixed (found in the WH-011 review): the unused-translation-key check treated `Spaces.roles.permissions.*` as unused, because the page reads them as `t(\`permissions.${permission}\`)` with dotted values (`space.settings.write`), so the dynamic segment is a **grandparent** of the leaves. `findUnusedMessageKeys()` now accepts any ancestor read with `${…}`, plus a test (quality tests 10/10).
+### WH-063 · Public and company holidays
+- **Type:** feature · **Priority:** P1 · **Status:** start · **Area:** api + client + database
+- **Blocked by:** WH-056
+- **Why:** FR-HOL-01/02 + FR-SPC-03 (seed the country's holidays at creation).
+- **Scope:** import public holidays by country and year (pick a data source: a bundled dataset or an API, recorded here); custom company holidays (`holidays.write`); list and calendar views; "Holidays" replaces its placeholder.
+- **Done when:** a Moroccan workspace gets its 2026 public holidays on creation; an Admin adds a company day; both count in WH-061's day calculation.
 
 ### WH-012 · Sign in with Google, GitHub, Microsoft and GitLab
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -240,16 +180,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - `app/global-error.tsx`: its own `<html><body>`, minimal, for errors in the root layout;
   - the same look as the 404 page (shared empty-state component).
 - **Done when:** a test page that throws shows the translated error page in `en`, `fr` and `ar`; "Try again" re-renders; no stack traces are shown to users.
-
-### WH-056 · Workspace setup: country, timezone, work week; edit name and slug
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
-- **Why:** FR-SPC-01 requires a workspace to have a **country, timezone and work week**. Leave days (FR-LVR-02), accruals (FR-LVB-03) and public holidays (FR-HOL-01) all depend on them, and today a workspace only has a name and slug. The settings page also says "editing the name and slug will be available soon".
-- **Scope:**
-  - columns `country` (ISO 3166-1 alpha-2), `timezone` (IANA), `work_week` (e.g. `{mon..fri}`), with a migration and defaults for existing rows;
-  - the create form asks for country (prefilled from the browser locale) and timezone (prefilled from `Intl`), plus the work-week preset;
-  - `PATCH /api/v1/spaces/{spaceId}` (`space.settings.write`) for name, slug (409 on a taken slug; the old slug doesn't redirect, so warn), country, timezone and work week;
-  - the "General" settings section becomes editable.
-- **Done when:** a new workspace stores all three; the Owner can edit them; Admin and Member get 403; the slug change moves the URL.
 
 ### WH-060 · Leave types and the balance ledger
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database + worker
@@ -291,13 +221,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - approval writes the ledger deduction **in the same transaction**;
   - "Approvals" replaces its placeholder.
 - **Done when:** the median path request → decision works end to end; the audit log can't be updated or deleted by the app role (DB grant + test).
-
-### WH-063 · Public and company holidays
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
-- **Blocked by:** WH-056
-- **Why:** FR-HOL-01/02 + FR-SPC-03 (seed the country's holidays at creation).
-- **Scope:** import public holidays by country and year (pick a data source: a bundled dataset or an API, recorded here); custom company holidays (`holidays.write`); list and calendar views; "Holidays" replaces its placeholder.
-- **Done when:** a Moroccan workspace gets its 2026 public holidays on creation; an Admin adds a company day; both count in WH-061's day calculation.
 
 ### WH-064 · Team calendar and leave bank
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** client + api

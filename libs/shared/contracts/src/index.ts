@@ -18,10 +18,12 @@ export {
 export {
   listSpaceMembersQuerySchema,
   listSpaceMembersResponseSchema,
+  patchSpaceMemberSchema,
   spaceMemberRoleSchema,
   spaceMemberSchema,
   type ListSpaceMembersQuery,
   type ListSpaceMembersResponse,
+  type PatchSpaceMember,
   type SpaceMember,
   type SpaceMemberRole,
 } from './members';
@@ -78,3 +80,21 @@ export {
   type SpaceResponse,
   type SpaceRole,
 } from './spaces';
+export {
+  createSpaceRoleSchema,
+  patchSpaceRoleSchema,
+  type CreateSpaceRole,
+  type PatchSpaceRole,
+} from './roles';
+export {
+  createSpaceTeamSchema,
+  listSpaceTeamsResponseSchema,
+  patchSpaceTeamSchema,
+  spaceTeamPersonSchema,
+  spaceTeamSchema,
+  type CreateSpaceTeam,
+  type ListSpaceTeamsResponse,
+  type PatchSpaceTeam,
+  type SpaceTeam,
+  type SpaceTeamPerson,
+} from './teams';

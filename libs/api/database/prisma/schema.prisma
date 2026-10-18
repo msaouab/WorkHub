@@ -58,6 +58,7 @@ model Space {
   roles       Role[]        @relation("SpaceRoles")
   memberships Membership[]
   invites     Invite[]
+  teams       Team[]
 
   @@map("spaces")
 }
@@ -124,10 +125,66 @@ model Membership {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   role  Role  @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
+  teamMemberships TeamMember[]
+  teamManagerOf   TeamManager[]
+
   @@unique([spaceId, userId])
+  /** Composite target for team_members / team_managers same-space FKs (WH-058). */
+  @@unique([id, spaceId])
   @@index([userId])
   @@index([roleId])
   @@map("memberships")
+}
+
+/** Workspace group (UI: “Groups”; API/DB: teams) — WH-058. */
+model Team {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  spaceId   String   @map("space_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  space     Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  members   TeamMember[]
+  managers  TeamManager[]
+
+  @@unique([spaceId, name])
+  /** Composite target for team_members / team_managers same-space FKs (WH-058). */
+  @@unique([id, spaceId])
+  @@index([spaceId])
+  @@map("teams")
+}
+
+model TeamMember {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  spaceId      String   @map("space_id") @db.Uuid
+  teamId       String   @map("team_id") @db.Uuid
+  membershipId String   @map("membership_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  team       Team       @relation(fields: [teamId, spaceId], references: [id, spaceId], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, spaceId], references: [id, spaceId], onDelete: Cascade)
+
+  @@unique([teamId, membershipId])
+  @@index([spaceId])
+  @@index([membershipId])
+  @@map("team_members")
+}
+
+model TeamManager {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  spaceId      String   @map("space_id") @db.Uuid
+  teamId       String   @map("team_id") @db.Uuid
+  membershipId String   @map("membership_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  team       Team       @relation(fields: [teamId, spaceId], references: [id, spaceId], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, spaceId], references: [id, spaceId], onDelete: Cascade)
+
+  @@unique([teamId, membershipId])
+  @@index([spaceId])
+  @@index([membershipId])
+  @@map("team_managers")
 }
 
 model Session {

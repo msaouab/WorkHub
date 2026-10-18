@@ -1,8 +1,20 @@
 'use client';
 
+import {
+  permissionsAreSubset,
+  SYSTEM_ROLE_NAMES,
+} from '@work-hub/constants';
 import { CheckIcon, ChevronDownIcon, CopyIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
+import { RoleSelect } from '@/components/team/role-select';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import {
@@ -21,7 +33,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useInviteActions, useSpaceRoles } from '@/hooks/use-invites';
-import { useRoleLabel } from '@/hooks/use-role-label';
+import { useCurrentSpace } from '@/hooks/use-space';
 import { ApiError } from '@/lib/api/fetch';
 import { parseInviteEmails } from '@/lib/team/parse-invite-emails';
 import { cn } from '@/lib/utils';
@@ -46,8 +58,19 @@ export function InvitePeopleDialog({
 }: InvitePeopleDialogProps) {
   const t = useTranslations('Team.inviteDialog');
   const tInvites = useTranslations('Spaces.invites');
+  const { space } = useCurrentSpace();
   const actions = useInviteActions(spaceId);
   const rolesQuery = useSpaceRoles(open ? spaceId : undefined);
+  const actorPermissions = space?.permissions ?? [];
+  const assignableRoles = useMemo(
+    () =>
+      (rolesQuery.data?.items ?? []).filter(
+        (role) =>
+          role.name !== SYSTEM_ROLE_NAMES.OWNER &&
+          permissionsAreSubset(role.permissions, actorPermissions)
+      ),
+    [rolesQuery.data?.items, actorPermissions]
+  );
   const baseId = useId();
 
   const [mode, setMode] = useState<InviteMode>('email');
@@ -77,16 +100,18 @@ export function InvitePeopleDialog({
   }, [open]);
 
   useEffect(() => {
-    if (roleId || !rolesQuery.data?.items.length) {
+    if (assignableRoles.length === 0) {
+      return;
+    }
+    if (roleId && assignableRoles.some((role) => role.id === roleId)) {
       return;
     }
     const preferred =
-      rolesQuery.data.items.find((role) => role.isDefault) ??
-      rolesQuery.data.items[0];
+      assignableRoles.find((role) => role.isDefault) ?? assignableRoles[0];
     if (preferred) {
       setRoleId(preferred.id);
     }
-  }, [roleId, rolesQuery.data]);
+  }, [roleId, assignableRoles]);
 
   function commitChips(raw: string) {
     const next = parseInviteEmails(raw);
@@ -222,7 +247,7 @@ export function InvitePeopleDialog({
           <RoleSelect
             labelledBy={`${baseId}-role-label`}
             value={roleId}
-            roles={rolesQuery.data?.items ?? []}
+            roles={assignableRoles}
             disabled={rolesQuery.isLoading}
             onValueChange={setRoleId}
             placeholder={t('role')}
@@ -399,54 +424,6 @@ export function InvitePeopleDialog({
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function RoleSelect({
-  labelledBy,
-  value,
-  roles,
-  disabled,
-  onValueChange,
-  placeholder,
-}: {
-  labelledBy: string;
-  value: string;
-  roles: { id: string; name: string }[];
-  disabled?: boolean;
-  onValueChange: (value: string) => void;
-  placeholder: string;
-}) {
-  const selected = roles.find((role) => role.id === value);
-  const selectedLabel = useRoleLabel(selected?.name ?? '');
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-labelledby={labelledBy}
-        disabled={disabled || roles.length === 0}
-        className={fieldTriggerClassName}
-      >
-        <span className="truncate">
-          {selected ? selectedLabel : placeholder}
-        </span>
-        <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" aria-hidden />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-44">
-        <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-          {roles.map((role) => (
-            <RoleRadioItem key={role.id} id={role.id} name={role.name} />
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function RoleRadioItem({ id, name }: { id: string; name: string }) {
-  const label = useRoleLabel(name);
-  return (
-    <DropdownMenuRadioItem value={id}>{label}</DropdownMenuRadioItem>
   );
 }
 

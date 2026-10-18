@@ -141,13 +141,19 @@ export const acceptInviteResponseSchema = z
   .meta({ id: 'AcceptInviteResponse' });
 export type AcceptInviteResponse = z.infer<typeof acceptInviteResponseSchema>;
 
-/** GET /spaces/:spaceId/roles — assignable roles for invite dialog (excludes Owner). */
+/**
+ * GET /spaces/:spaceId/roles — workspace roles (WH-011).
+ * Includes Owner (read-only in UI). Invite dialog filters Owner client-side.
+ */
 export const spaceRoleOptionSchema = z
   .object({
     id: z.uuid(),
     name: z.string(),
+    permissions: z.array(z.string()),
+    isSystem: z.boolean(),
     /** Workspace default invite role (`spaces.default_role_id`). */
     isDefault: z.boolean(),
+    memberCount: z.number().int().nonnegative(),
   })
   .meta({ id: 'SpaceRoleOption' });
 export type SpaceRoleOption = z.infer<typeof spaceRoleOptionSchema>;

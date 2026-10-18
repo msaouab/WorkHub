@@ -106,7 +106,7 @@ function SpaceSettingsBody() {
         })}
       </nav>
 
-      <section id="general" className="flex scroll-mt-28 flex-col gap-3">
+      <section id="general" className="flex scroll-mt-12 flex-col gap-3">
         <h2 className="text-sm font-medium text-foreground">
           {t('sections.general')}
         </h2>
@@ -125,16 +125,16 @@ function SpaceSettingsBody() {
         <p className="text-sm text-muted-foreground">{t('generalSoon')}</p>
       </section>
 
-      <section id="branding" className="flex scroll-mt-28 flex-col gap-3">
+      <section id="branding" className="flex scroll-mt-12 flex-col gap-3">
         <h2 className="text-sm font-medium text-foreground">
           {t('brandingTitle')}
         </h2>
         <p className="text-sm text-muted-foreground">{t('brandingDescription')}</p>
-        <SpaceBranding space={space} variant="settings" />
+        <SpaceBranding space={space} />
       </section>
 
       {canBilling ? (
-        <section id="billing" className="flex scroll-mt-28 flex-col gap-3">
+        <section id="billing" className="flex scroll-mt-12 flex-col gap-3">
           <h2 className="text-sm font-medium text-foreground">
             {t('sections.billing')}
           </h2>
@@ -143,7 +143,7 @@ function SpaceSettingsBody() {
       ) : null}
 
       {canDelete ? (
-        <section id="danger" className="flex scroll-mt-28 flex-col gap-3">
+        <section id="danger" className="flex scroll-mt-12 flex-col gap-3">
           <h2 className="text-sm font-medium text-destructive">
             {t('sections.danger')}
           </h2>

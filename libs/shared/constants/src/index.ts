@@ -9,6 +9,7 @@ export {
 } from './cover-presets';
 export { DEFAULT_LOCALE, LOCALES, RTL_LOCALES, type Locale } from './locales';
 export {
+  MAX_CUSTOM_ROLES,
   PERMISSION_LIST,
   PERMISSIONS,
   SYSTEM_ROLE_NAME_LIST,
@@ -18,3 +19,4 @@ export {
   type Permission,
   type SystemRoleName,
 } from './permissions';
+export { permissionsAreSubset } from './permission-subset';

@@ -1,12 +1,17 @@
 'use client';
 
-import { PERMISSIONS, SYSTEM_ROLE_NAMES } from '@work-hub/constants';
-import type { SpaceMember } from '@work-hub/contracts';
+import {
+  PERMISSIONS,
+  SYSTEM_ROLE_NAMES,
+  permissionsAreSubset,
+} from '@work-hub/constants';
+import type { SpaceMember, SpaceRoleOption } from '@work-hub/contracts';
 import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { UserAvatar } from '@/components/account/user-avatar';
 import { LogoLoader } from '@/components/brand/logo-loader';
+import { RoleSelect } from '@/components/team/role-select';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { Label } from '@/components/ui/label';
@@ -40,6 +45,7 @@ import { useMe } from '@/hooks/use-me';
 import { useMemberActions } from '@/hooks/use-member-actions';
 import { useMembers } from '@/hooks/use-members';
 import { useRoleLabel } from '@/hooks/use-role-label';
+import { useSpaceRoles } from '@/hooks/use-roles';
 import { useCurrentSpace } from '@/hooks/use-space';
 import { ApiError } from '@/lib/api/fetch';
 import { cn } from '@/lib/utils';
@@ -59,6 +65,9 @@ const ERROR_CODES = [
   'CANNOT_DEACTIVATE_SELF',
   'CANNOT_REMOVE_SELF',
   'LAST_OWNER',
+  'CANNOT_CHANGE_OWN_ROLE',
+  'CANNOT_ASSIGN_OWNER',
+  'ROLE_ESCALATION',
 ] as const;
 
 type MemberErrorCode = (typeof ERROR_CODES)[number];
@@ -74,6 +83,7 @@ export function TeamMembers() {
   const { space } = useCurrentSpace();
   const { data: me } = useMe();
   const canWrite = useCan(PERMISSIONS.MEMBERS_WRITE);
+  const canChangeRoles = useCan(PERMISSIONS.ROLES_WRITE);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'' | 'active' | 'deactivated'>('');
   const [role, setRole] = useState('');
@@ -83,6 +93,9 @@ export function TeamMembers() {
     status: status || undefined,
     role: role || undefined,
   });
+  const rolesQuery = useSpaceRoles(
+    canChangeRoles ? space?.id : undefined
+  );
   const actions = useMemberActions(space?.id ?? '');
   const [pending, setPending] = useState<PendingAction>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -91,6 +104,15 @@ export function TeamMembers() {
     () => membersQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [membersQuery.data]
   );
+
+  const assignableRoles = useMemo(() => {
+    const actorPermissions = space?.permissions ?? [];
+    return (rolesQuery.data?.items ?? []).filter(
+      (row) =>
+        row.name !== SYSTEM_ROLE_NAMES.OWNER &&
+        permissionsAreSubset(row.permissions, actorPermissions)
+    );
+  }, [rolesQuery.data?.items, space?.permissions]);
 
   /** When the full unfiltered list is loaded, hide Leave for the sole Owner. */
   const hideLeaveAsLastOwner = useMemo(() => {
@@ -117,7 +139,23 @@ export function TeamMembers() {
     actions.deactivate.isPending ||
     actions.reactivate.isPending ||
     actions.remove.isPending ||
+    actions.updateRole.isPending ||
     actions.leave.isPending;
+
+  async function onChangeRole(member: SpaceMember, roleId: string) {
+    if (roleId === member.role.id) {
+      return;
+    }
+    setActionError(null);
+    try {
+      await actions.updateRole.mutateAsync({
+        membershipId: member.id,
+        roleId,
+      });
+    } catch (err) {
+      setActionError(mapActionError(err, t));
+    }
+  }
 
   async function confirmPending() {
     if (!pending || !space) {
@@ -238,6 +276,9 @@ export function TeamMembers() {
               <TableHead className="hidden md:table-cell">
                 {t('columns.status')}
               </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                {t('columns.joined')}
+              </TableHead>
               <TableHead className="w-12 text-end">
                 <span className="sr-only">{t('columns.actions')}</span>
               </TableHead>
@@ -250,6 +291,10 @@ export function TeamMembers() {
                 member={member}
                 isSelf={member.userId === me?.id}
                 canWrite={canWrite}
+                canChangeRoles={canChangeRoles}
+                assignableRoles={assignableRoles}
+                roleChangeBusy={actions.updateRole.isPending}
+                onChangeRole={onChangeRole}
                 canLeave={
                   member.userId === me?.id ? !hideLeaveAsLastOwner : false
                 }
@@ -263,10 +308,17 @@ export function TeamMembers() {
                 reactivateLabel={t('reactivate')}
                 removeLabel={t('remove')}
                 leaveLabel={t('leave')}
+                rolePlaceholder={t('columns.role')}
               />
             ))}
           </TableBody>
         </Table>
+      ) : null}
+
+      {actionError && !pending ? (
+        <p className="text-sm text-destructive" role="alert">
+          {actionError}
+        </p>
       ) : null}
 
       {membersQuery.hasNextPage ? (
@@ -371,6 +423,10 @@ type MemberRowProps = {
   member: SpaceMember;
   isSelf: boolean;
   canWrite: boolean;
+  canChangeRoles: boolean;
+  assignableRoles: SpaceRoleOption[];
+  roleChangeBusy: boolean;
+  onChangeRole: (member: SpaceMember, roleId: string) => void;
   canLeave: boolean;
   statusLabel: string;
   onAction: (action: PendingAction) => void;
@@ -380,12 +436,17 @@ type MemberRowProps = {
   reactivateLabel: string;
   removeLabel: string;
   leaveLabel: string;
+  rolePlaceholder: string;
 };
 
 function MemberRow({
   member,
   isSelf,
   canWrite,
+  canChangeRoles,
+  assignableRoles,
+  roleChangeBusy,
+  onChangeRole,
   canLeave,
   statusLabel,
   onAction,
@@ -395,12 +456,30 @@ function MemberRow({
   reactivateLabel,
   removeLabel,
   leaveLabel,
+  rolePlaceholder,
 }: MemberRowProps) {
   const roleLabel = useRoleLabel(member.role.name);
+  const roleLabelId = useId();
   const isOwner = member.role.name === SYSTEM_ROLE_NAMES.OWNER;
   const showAdminActions = canWrite && !isOwner && !isSelf;
+  const showRolePicker = canChangeRoles && !isOwner && !isSelf;
   const showLeave = canLeave;
   const showMenu = showAdminActions || showLeave;
+  const pickerRoles = showRolePicker
+    ? assignableRoles.some((role) => role.id === member.role.id)
+      ? assignableRoles
+      : [
+          ...assignableRoles,
+          {
+            id: member.role.id,
+            name: member.role.name,
+            permissions: [] as string[],
+            isSystem: false,
+            isDefault: false,
+            memberCount: 0,
+          },
+        ]
+    : [];
 
   return (
     <TableRow
@@ -434,9 +513,33 @@ function MemberRow({
       <TableCell className="hidden max-w-56 truncate sm:table-cell">
         {member.email}
       </TableCell>
-      <TableCell className="whitespace-nowrap">{roleLabel}</TableCell>
+      <TableCell className="whitespace-nowrap">
+        {showRolePicker ? (
+          <>
+            <span id={roleLabelId} className="sr-only">
+              {rolePlaceholder}
+            </span>
+            <RoleSelect
+              labelledBy={roleLabelId}
+              value={member.role.id}
+              roles={pickerRoles}
+              disabled={roleChangeBusy}
+              onValueChange={(roleId) => onChangeRole(member, roleId)}
+              placeholder={rolePlaceholder}
+              className="min-w-36"
+            />
+          </>
+        ) : (
+          roleLabel
+        )}
+      </TableCell>
       <TableCell className="hidden whitespace-nowrap md:table-cell">
         {statusLabel}
+      </TableCell>
+      <TableCell className="hidden whitespace-nowrap lg:table-cell">
+        <time dateTime={member.createdAt}>
+          {new Date(member.createdAt).toLocaleDateString()}
+        </time>
       </TableCell>
       <TableCell className="text-end">
         {showMenu ? (

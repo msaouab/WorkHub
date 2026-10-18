@@ -29,7 +29,7 @@ start ──▶ in progress ──▶ under-review ──▶ done ──▶ comm
 1. Check every acceptance criterion and the Definition of Done: read the code, run `pnpm quality`, and check the running app for user-facing work.
 2. **No feedback at all** → status **`done`**, its Review tracker row deleted, and Claude **gives the commit message** for the done tickets. The ticket **stays in the file** until it's committed.
 3. **Any feedback** → back to **`in progress`**, with a dated **Review** entry marked 🔁 *changes requested* (a checklist), and its tracker row deleted. When the fixes land, set it to `under-review` again.
-4. **After the commit** that carries a ticket as `done` (it's `done` in `HEAD`'s copy of this file), Claude **deletes** it, and **moves the next implementation from `start` to `in progress`** (the first `start` ticket(s) by priority and planned order, following the Roadmap). The deletion and the move go into the next commit.
+4. **After the commit** that carries a ticket as `done` (it's `done` in `HEAD`'s copy of this file), Claude **deletes** it, and **moves the next implementations from `start` to `in progress`**: every `start` ticket at the highest remaining priority (the current milestone), in planned order. The deletion and the move go into the next commit.
 5. New problems outside the ticket's scope become new `start` tickets, placed by priority.
 
 **Automatic tracking:** Claude Code hooks (`.claude/settings.json`) run the tracker at the start of each session and on every message. Claude is told when a ticket is `under-review` and hasn't been reviewed since its last change, when `done` tickets are committed and ready to delete, or when the file breaks a rule.
@@ -47,9 +47,16 @@ The git hooks (`.githooks/`, enabled by `pnpm install`) add two gates:
 
 `git commit/push --no-verify` bypasses them, for emergencies only.
 
+**Branches and pull requests (since 2026-10-18):** `main` is protected by the ruleset in `.github/rulesets/main.json`: no direct pushes, force-pushes or deletion; changes arrive by **pull request** with **both CI checks green** (`Quality + integration`, `Playwright e2e`) on an up-to-date branch, all conversations resolved, **squash merge** only (linear history), 0 approvals while there's one developer. Per ticket:
+1. Work on a branch named after the ticket(s), e.g. `wh-011-permissions` (`git switch -c wh-011-permissions`).
+2. Review → `done` → commit on the branch (the commit gate applies).
+3. Push the branch (the push gate applies), open a PR whose **title is the commit subject** (`WH-011: …`), since the squash commit on `main` uses it.
+4. CI green → **Squash and merge** → delete the branch → `git switch main && git pull`.
+5. Claude deletes the merged `done` tickets and moves the next implementations to `in progress`.
+
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also lists committed `done` tickets to delete, and catches format mistakes: unknown status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-078**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-079**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -115,19 +122,8 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
 
-### WH-077 · Verify CI on GitHub: first green run and a proven red check
-- **Type:** chore · **Priority:** P1 · **Status:** start · **Area:** tooling
-- **Blocked by:** WH-069
-- **Why:** a workflow is only proven once GitHub runs it. This can't happen inside WH-069, because the push gate only pushes done, committed work.
-- **Scope:**
-  - [ ] Push `main`; the **Quality + integration** and **Playwright e2e** jobs pass on the first run (link the run here).
-  - [ ] On a throwaway branch with a PR, add a lint error → the check goes red, then delete the branch. Optionally also break an RLS integration test.
-  - [ ] If a job fails only on GitHub, fix it in a new commit referencing this ticket.
-  - [ ] Optional: protect `main` (require the CI checks before merge) once the team works through PRs.
-- **Done when:** both jobs are green on `main`, and a red check was seen on a PR.
-
 ### WH-011 · Permissions management
-- **Type:** feature · **Priority:** P1 · **Status:** start · **Area:** api + client
+- **Type:** feature · **Priority:** P1 · **Status:** done · **Area:** api + client
 - **Why:** your original requirement. Workspace admins set what each member can do and can change anyone's role.
 - **Scope:**
   - change a member's role;
@@ -142,64 +138,66 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
      - you can't change your own role;
      - nobody can change the Owner's role, or make someone Owner (that's ownership transfer, WH-057);
      - you can only grant a role whose permissions are a **subset of your own** (no escalation).
-  2. **API: custom roles.** `GET/POST/PATCH/DELETE /spaces/{id}/roles` (`roles.write`). A name plus permissions from `PERMISSIONS`; system roles can't be renamed or deleted (Owner's permissions are locked; Admin and Member editable?, decide); deleting a role in use → 409 or reassign to the default role; set the default role.
+  2. **API: custom roles.** `GET/POST/PATCH/DELETE /spaces/{id}/roles`. A name plus permissions from `PERMISSIONS`; system roles can't be renamed or deleted (Owner permissions locked; Admin/Member permissions editable); deleting a role in use → 409 `ROLE_IN_USE`; set the default role via `isDefault`.
   3. **UI:** a role select per row in Team → Members (`useCan(ROLES_WRITE)`); the **Roles and permissions** page replaces its placeholder (a list of roles, plus an editor with permission checkboxes grouped by area and a "used by N members" count); the invite dialog lists custom roles automatically.
   - Tests: an escalation attempt → 403; self-change → 403; Owner untouchable; cross-workspace role id → 404; RLS on roles writes.
+- **Progress (2026-10-18):**
+  - API: `PATCH …/members/:id` (no self-change, Owner locked, no escalation).
+  - API: `GET/POST/PATCH/DELETE …/roles` — custom roles; Owner permissions locked; Admin/Member permissions editable; system roles not renamed/deleted; `ROLE_IN_USE` / default-role guards; RLS covered in integration tests.
+  - UI: Team role picker (`ROLES_WRITE`); Roles and permissions page (list + permission editor + default + delete); invite dialog filters Owner and lists custom roles.
+  - Tests: members + roles unit/integration (escalation, Owner, cross-workspace 404, RLS write).
+- **Progress (2026-10-18, review fixes):** invite/resend grantable-role checks; manage only members/roles ⊆ actor (incl. deactivate/remove); block editing own role; case-insensitive reserved names; unknown perms via Zod only. Spaces tests 58/58 green. API restarted for browser check.
+- **Progress (2026-10-18):** custom permission templates capped at **3** per workspace (`MAX_CUSTOM_ROLES` / `ROLE_LIMIT_REACHED`); Owner/Admin via `roles.write`. UI shows count and disables create at the limit.
+- **Review (2026-10-18):** 🔁 well built, but there are **two privilege-escalation gaps** to close first. Verified:
+  - `pnpm quality` is green after a checker fix (see WH-078); the roles integration tests (5) cover CRUD, the Owner lock, escalation on create/update, cross-workspace 404 and `ROLE_IN_USE`, and the members tests cover role changes;
+  - `PATCH …/members/:id` (`roles.write`): no self-change (`CANNOT_CHANGE_OWN_ROLE`), the Owner untouchable (`CANNOT_MODIFY_OWNER`), no assigning Owner (`CANNOT_ASSIGN_OWNER`), the **new** role must be ⊆ your permissions (`ROLE_ESCALATION`);
+  - roles: the Owner role is locked (`SYSTEM_ROLE_LOCKED`), system roles can't be renamed or deleted, reserved names, unique `(space_id, name)` (DB constraint + check), the default role can't be cleared or deleted, `ROLE_IN_USE` counts members **and** open invites; Admin/Member permissions editable; no new migration needed.
+  - [x] 🔴 **Escalation through invites.** `resolveRoleId` / resend now require `permissionsAreSubset` (incl. default role) → 403 `ROLE_ESCALATION`. Unit tests on create + resend. Invite dialog only lists grantable non-Owner roles.
+  - [x] 🔴 **Acting on people and roles above you.** `updateRole` / `deactivate` / `remove` / `reactivate` require the **current** role ⊆ actor; `RolesService.update` / `delete` require the same for the role being changed. Tests added.
+  - [x] **Editing the role you hold.** `RolesService.update` / `delete` block `access.roleId` with `CANNOT_CHANGE_OWN_ROLE`. Roles UI locks own role and superior roles.
+  - [x] Reserved names compared case-insensitively (`owner` / `ADMIN` rejected).
+  - [x] Unknown permissions rejected by Zod (`z.enum(PERMISSION_LIST)`); service no longer maps unknowns to `ROLE_ESCALATION`.
+  - [x] Browser check: Roles page in `ar` (RTL, permission tree, 0/3 templates, New template); Team page role pickers for Admin/Member, Owner locked as plain text.
+- **Review (2026-10-18, 2nd pass):** 🔁 almost done. All the security fixes are verified **live**:
+  - an Admin inviting into a custom "Co-owner" role (`space.settings.write`) → **403**;
+  - an Admin editing that role → **403**; an Admin editing their own Admin role → **403**;
+  - a role named `manager` → **409** (reserved, case-insensitive); an unknown permission → **400** (Zod enum).
+  - In code: `assertInviteRoleGrantable` (including the default role), `assertRoleWithinReach` in deactivate, reactivate, remove and role change (current **and** new role), and in role update/delete; own-role edits blocked.
+  - `pnpm quality`: code checks green; spaces tests 76/76.
+  - [x] **The invite dialog still offers roles the inviter can't grant.** Invite dialog filters with `permissionsAreSubset(role.permissions, actorPermissions)` (same as Team members); if the default isn't grantable, the first grantable role is pre-selected.
+  - [x] Browser check: the Team role picker and the Roles page (permission tree, "used by N", default, delete → `ROLE_IN_USE`) in `ar`; confirm Admin no longer sees ungrantable roles in Invite.
+- **Progress (2026-10-18, review fixes 3rd pass):** invite dialog grantable-role filter + default fallback.
+- **Review (2026-10-18, 3rd pass):** 🔁 the dialog fix is in (`invite-people-dialog.tsx` filters with `permissionsAreSubset(role.permissions, actorPermissions)`). Remaining:
+  - [x] The suite is red because of the member-role change shared with WH-058 (see WH-058: the `members.service.ts:350` type error and the `members-api.spec.ts` fixture). WH-011 can't be `done` while `pnpm quality` fails. → fixed under WH-058.
+  - [x] Browser check: Team in `ar` (role pickers, RTL); Roles in `ar` (permission tree, 0/3 templates, Manager listed, New template, default badge on Member). Dev restarted 15:56.
+- **Review (2026-10-18, final):** ✅ **done.** `pnpm quality` is all green, on a branch rebased onto `e9608e2`. The suite blocker is fixed (shared with WH-058). **Browser, `ar`:** the Roles page (RTL, no English, Admin/Manager/Member\*/Owner with "used by 1 member", a "default" badge, the "0 of 3 custom templates" limit, the permission tree grouped by area with select all/none); the Team members tab with per-row role pickers. All escalation fixes were verified live in the 2nd pass (invite into a higher role → 403, edit a higher role → 403, edit own role → 403, reserved name `manager` → 409, unknown permission → 400).
 
-### WH-072 · E2E stability: sign in once per role, not through the form in every test
-- **Type:** tech-debt · **Priority:** P1 · **Status:** done · **Area:** tooling (e2e)
-- **Why:** found while reviewing WH-053 (2026-10-17). Three runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev` gave three different results: 5 passed / 2 failed (`toHaveURL` after sign-in, `ERR_ABORTED`), then 3 passed / 4 timed out, then the API on `:3333` was down. Causes:
-  - **Sign-in rate limit.** `app-shell.spec.ts` signs in through the form in each test (owner, member, admin), and the sign-up test adds more. Better Auth allows **5 sign-ins per minute**, and on localhost every request shares one key (`no-trusted-ip`), so a full run (plus any manual sign-in) hits 429 and `signIn()` never reaches `/dashboard`.
-  - **Load.** Playwright runs tests in parallel against a single `next dev`; with compiles on first visit, `page.goto` exceeded 90 s at load average about 18.
-- **Scope:**
-  - [x] A Playwright **setup project** signs in once per seed role (owner, admin, member) through the API (`POST /api/auth/sign-in/email`) and saves `storageState` to `playwright/.auth/{role}.json` (gitignored). Tests use `test.use({ storageState })` instead of `signIn()`. One test still covers the real sign-in form.
-  - [x] `workers: 1` when local (no `CI`); parallel workers allowed in CI against built apps (WH-069).
-  - [x] When the API isn't reachable locally, fail fast ("start `pnpm dev` first") via `global-setup` — no auto `nx serve server`.
-- **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
-  - [x] Add the Team e2e test (from WH-073): Owner invites by email → the pending row appears with its badge → revoke → the preview answers "revoked". Uses the Owner storage state.
-- **Progress (2026-10-18):** setup project + `auth.setup.ts` (API sign-in per role, 429 backoff); `auth-signin.spec.ts` keeps one form path; app-shell uses storageState and Team nav; `team-invites.spec.ts` added; local fail-fast + `workers: 1`. **Three consecutive local runs: 13/13 passed** (after waiting out the shared sign-in window between runs).
-- **Review (2026-10-18):** 🔁 one small fix. The design is right and the **Done-when criterion is met: 3 consecutive runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev`, 13/13 passing each time** (runs 2 and 3 took about 1.3 min because back-to-back runs exceed 5 sign-ins/min; `auth.setup.ts` waits and retries on 429, as intended).
-  - `auth.setup.ts` signs in once per role through the API and saves `playwright/.auth/{role}.json` (gitignored);
-  - specs use `test.use({ storageState })`; `auth-signin.spec.ts` keeps the real form; sign-up and sign-in start with an empty state;
-  - `workers: 1` locally; `global-setup.mts` fails fast with "Start `pnpm dev` first";
-  - the Team test (invite → pending → revoke → preview revoked) is in `team-invites.spec.ts`; shared helpers `env.ts`, `mailpit.ts`, `reachability.ts`.
-  - [x] **`pnpm quality` fails (knip):** added `src/auth.setup.ts` and `src/global-setup.mts` to the `apps/client-e2e` knip `entry` list; `pnpm quality` knip ✓.
-- **Progress (2026-10-18):** review feedback fixed; relative ESM imports use `.js` extensions; back to under-review.
-- **Review (2026-10-18, 2nd pass):** ✅ done. `knip.json` lists `src/auth.setup.ts` and `src/global-setup.mts` as entries; `pnpm quality` is all green. The e2e sources are unchanged since the 3 consecutive passing runs (13/13 each) against `pnpm dev`.
-
-### WH-069 · CI: run the checks on every push and pull request
+### WH-077 · Verify CI on GitHub: first green run and a proven red check
 - **Type:** chore · **Priority:** P1 · **Status:** done · **Area:** tooling
-- **Why:** there is **no `.github/` folder**: nothing runs `typecheck/lint/test`, the integration tests or e2e except by hand (SRS §9). Reviews have caught lint failures that a pipeline would have blocked.
-- **Scope:** GitHub Actions on Node 22 + pnpm cache:
-  - `pnpm quality` (covers backlog, sync, typecheck/lint/test, knip, unused i18n);
-  - a Postgres 16 service for the `*.integration.spec.ts` files (migrate deploy first);
-  - Playwright e2e against built apps, with Mailpit + MinIO services;
-  - `pnpm backlog` must print ✓ (via the quality backlog step).
-- **Done when:** the workflow file is ready to run on GitHub (first green run + red-check proof → **WH-077**).
-- **Plan (2026-10-18):** the repo is on GitHub (`origin`, `main` ahead of remote).
-  - Workflow `.github/workflows/ci.yml` on `push` to `main` and on `pull_request`:
-    1. **checks:** Node 22 + `pnpm/action-setup` + pnpm store cache; `pnpm install --frozen-lockfile`; Postgres 16 + app role SQL + migrate; `pnpm quality` (**without `--gate`**: the review state is local);
-    2. **e2e:** build both apps, Mailpit service + MinIO via compose, seed, Playwright (`CI=true` → parallel workers, built apps via `webServer`).
-  - Secrets: only test values in the workflow env; no real credentials.
-  - [x] the workflow file;
-  - [x] _(moved to WH-077)_ a red check proven on a throwaway branch (a lint error, a failing RLS test);
-  - [x] a README badge + "how CI works" note (feeds WH-027).
-- **Progress (2026-10-18):** added `.github/workflows/ci.yml` (checks + e2e jobs) and README CI section.
-- **Review (2026-10-18):** 🔁 a good structure, but it would fail on its first run. Two jobs: **Quality + integration** (Postgres 16 service, app role from `docker/postgres/init/01-app-role.sql`, migrate, `pnpm quality` without `--gate`), then **Playwright e2e** (Postgres + Mailpit services, MinIO through compose, migrate + seed, `pnpm build`, `next start` + `node apps/server/dist/main.js` via Playwright `webServer`). The README has a badge and a "CI" section. **It has never run:** `ci.yml` is uncommitted and `main` is ahead of `origin/main`.
-  - [x] 🔴 **The migrate step can't work.** Root script `pnpm db:migrate` (`pnpm --filter @work-hub/database exec prisma migrate deploy`); used in both CI jobs and the README. Verified locally.
-  - [x] **pnpm version given twice.** Removed `version:` / `PNPM_VERSION`; `packageManager` decides. Node via `node-version-file: .nvmrc`.
-  - [x] **The env is duplicated three times:** heredocs → `tools/ci/write-env.sh` (optional `--with-client`); workflow `env:` stays as the single source for values.
-  - [x] **Least privilege:** `permissions: contents: read`.
-  - [x] **Debuggability:** Playwright browser cache + upload report/traces on failure.
-  - Proving it on GitHub (first green run + a red check) is **WH-077**, since it can only happen after this ticket is committed and pushed.
-- **Progress (2026-10-18):** all review feedback fixed; `pnpm quality` ✓; back to under-review.
-- **Review (2026-10-18, 2nd pass):** ✅ done:
-  - root `pnpm db:migrate` (`pnpm --filter @work-hub/database exec prisma migrate deploy`), verified locally ("No pending migrations to apply"), used in both jobs and the README;
-  - `pnpm/action-setup@v4` with no `version` input (`packageManager` decides); `node-version-file: .nvmrc`;
-  - env written by one script, `tools/ci/write-env.sh` (`--with-client` for e2e), with required vars asserted;
-  - `permissions: contents: read`; the Playwright browser cache; the report uploaded on failure from `apps/client-e2e/test-output` (where Nx's TS-solution preset writes `playwright/{output,report}`);
-  - `pnpm quality` all green.
-  - The first run on GitHub (green + a proven red check) is WH-077, after the commit and push.
+- **Why:** a workflow is only proven once GitHub runs it. This can't happen inside WH-069, because the push gate only pushes done, committed work.
+- **Scope:**
+  - [x] Push `main`; the **Quality + integration** and **Playwright e2e** jobs pass on the first run (link the run here).
+  - [x] On a throwaway branch with a PR, add a lint error → the check goes red, then delete the branch. Optionally also break an RLS integration test.
+  - [x] If a job fails only on GitHub, fix it in a new commit referencing this ticket.
+  - [x] Protect `main` with `.github/rulesets/main.json`: GitHub → Settings → Rules → Rulesets → **New ruleset → Import a ruleset** → pick the file → **Create**. Then **delete the old classic branch protection rule** for `main` (Settings → Branches), which is the one demanding 1 approval.
+- **Done when:** both jobs are green on `main`, and a red check was seen on a PR.
+- **Progress (2026-10-18):** **red check proven.** A PR from `ci-red-check` (a throwaway `const ciRedCheck = 1;` in `apps/client/src/lib/__ci_red_check.ts`) failed **CI / Quality + integration** after about 2 min, on exactly the intended checks: `@work-hub/client:lint` (the unused variable) and knip (the unused file). Backlog, nx sync, typecheck, every test (client 64/64) and the translation keys passed, which proves install, migrations and Postgres work on GitHub. **CI / Playwright e2e** was skipped as designed (`needs: checks`). GitGuardian: no secrets.
+  - Found: the `main` protection requires **1 approving review**, and GitHub doesn't allow approving your own PR, so a solo developer is always blocked. Recommended: 0 required approvals for now plus **required status checks** (Quality + integration, Playwright e2e); raise approvals when a second developer joins.
+- **Progress (2026-10-18):** decided **pull requests only** for `main`. Added `.github/rulesets/main.json` (deletion + force-push blocked, linear history, PR required with 0 approvals and resolved threads, squash only, required checks `Quality + integration` and `Playwright e2e` from GitHub Actions (`integration_id` 15368) on an up-to-date branch, admin bypass only through the PR merge button). Documented the branch/PR flow in the Workflow section and the README.
+- **Progress (2026-10-18):** ruleset `main` active (id 25343016); classic branch protection gone. `ci-red-check` PR closed and remote branch deleted. First `main` run on `2f11d1a` failed on `@work-hub/storage:test` (12k×12k pixel-bomb fixture OOMs under parallel CI). Fix in PR https://github.com/msaouab/WorkHub/pull/3 — **Quality + integration** and **Playwright e2e** both green on the PR. Squash-merge when closing this batch so `main` gets its first full green run.
+- **Progress (2026-10-18):** **PR #3, "WH-077: Avoid OOM in storage pixel-bomb test on CI", squash-merged as `e9608e2`.** On GitHub's runners the pixel-bomb fixture (`sharp.create` 12000×12000 → PNG) ran out of memory with the tests in parallel. The test now builds a tiny PNG whose IHDR *claims* √(limit + 1) squared pixels, so sharp's `limitInputPixels` check rejects it from the header without allocating. The merge through a PR (`#3` in the subject) shows the PR flow works.
+  - Review note: the new fixture has no IDAT data, so with **or without** `limitInputPixels` sharp fails, and `decode()` maps any failure to `IMAGE_UNSUPPORTED_TYPE`; the test no longer proves the limit exists. Tracked in WH-054 (map "exceeds pixel limit" to `IMAGE_TOO_LARGE`, then assert that code).
+  - [x] Confirm on GitHub that the `main` run for `e9608e2` is green for **both** jobs (Quality + integration, Playwright e2e), and whether PR #3 merged with the checks green or through the admin bypass. Link the run here.
+- **Progress (2026-10-18):** **first green `main` run.** Squash-merge of PR #3 landed as `e9608e2`. PR checks were already green (Quality + integration + Playwright e2e on run [39134831997](https://github.com/msaouab/WorkHub/actions/runs/39134831997)) — merge was **not** via admin bypass. Push to `main` then ran CI green for both jobs: [39135928970](https://github.com/msaouab/WorkHub/actions/runs/39135928970) (`e9608e2`).
+
+### WH-078 · Workflow: start every next implementation after a commit, not just one
+- **Type:** chore · **Priority:** P1 · **Status:** done · **Area:** tooling
+- **Why:** after `2f11d1a`, only WH-077 was moved to `in progress`, while the flow says "move the next implementation**s**". WH-011 (the other P1 `start` ticket) was left behind.
+- **What changed (by Claude, 2026-10-18):** `nextStartTickets()` now returns **every `start` ticket at the highest remaining priority** (the current milestone), in planned order. The hook says "move the next implementations … : WH-…, WH-…", the Workflow rule 4 says the same, and the test covers several tickets plus the case with no start ticket. WH-011 was moved to `in progress`.
+- **Acceptance criteria:**
+  - [x] Backlog tests pass (15); `pnpm backlog` ✓.
+  - [x] Also fixed: the pre-push hook ran the whole push gate when **deleting** a remote branch (`git push origin --delete ci-red-check` was blocked). `.githooks/pre-push` now reads git's ref lines and skips the gate when every local sha is all zeros (delete-only pushes send no commits).
+  - [x] Also fixed (found in the WH-011 review): the unused-translation-key check treated `Spaces.roles.permissions.*` as unused, because the page reads them as `t(\`permissions.${permission}\`)` with dotted values (`space.settings.write`), so the dynamic segment is a **grandparent** of the leaves. `findUnusedMessageKeys()` now accepts any ancestor read with `${…}`, plus a test (quality tests 10/10).
 
 ### WH-012 · Sign in with Google, GitHub, Microsoft and GitLab
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -235,18 +233,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - `PATCH /api/v1/spaces/{spaceId}` (`space.settings.write`) for name, slug (409 on a taken slug; the old slug doesn't redirect, so warn), country, timezone and work week;
   - the "General" settings section becomes editable.
 - **Done when:** a new workspace stores all three; the Owner can edit them; Admin and Member get 403; the slug change moves the URL.
-
-### WH-058 · Teams and the Manager role
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database
-- **Why:** the PRD has four roles (Owner, Admin/HR, **Manager**, Employee) and FR-MEM-05/06 need teams with one or more managers who approve their team's leave. The code only has Owner, Admin and Member presets and no teams. Approvals (WH-062) can't route without this.
-- **Scope:**
-  - a `Manager` system role preset (`leave.approve`, optional `documents.fulfil`, `calendar.read`, …);
-  - `teams` + `team_members` + `team_managers` tables with RLS;
-  - CRUD under `teams.write`;
-  - assign a member's team and manager (FR-MEM-05);
-  - the "Teams" page replaces its placeholder.
-- **Done when:** an Admin creates a team, adds members and managers; a manager sees only their teams' requests (once WH-062 exists).
-- **UI placement (2026-10-17, see WH-073):** teams appear as a **"Groups" tab inside the Team page**, not as a separate sidebar item. The user-facing word "Team" now means the whole workspace roster, so use "Groups" in the UI (keep `teams` as the table and permission name: `teams.write`).
 
 ### WH-060 · Leave types and the balance ledger
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client + database + worker
@@ -315,6 +301,41 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - "Documents" replaces its placeholder.
 - **Done when:** a ready document downloads with a signed URL that expires after 10 min; anonymous access to the private bucket → 403.
 
+### WH-058 · Teams and the Manager role
+- **Type:** feature · **Priority:** P2 · **Status:** done · **Area:** api + client + database
+- **Why:** the PRD has four roles (Owner, Admin/HR, **Manager**, Employee) and FR-MEM-05/06 need teams with one or more managers who approve their team's leave. The code only has Owner, Admin and Member presets and no teams. Approvals (WH-062) can't route without this.
+- **Scope:**
+  - [x] a `Manager` system role preset (`leave.approve`, optional `documents.fulfil`, `calendar.read`, …);
+  - [x] `teams` + `team_members` + `team_managers` tables with RLS;
+  - [x] CRUD under `teams.write`;
+  - [x] assign a member's team and manager (FR-MEM-05);
+  - [x] the "Teams" page replaces its placeholder.
+- **Done when:** an Admin creates a team, adds members and managers; a manager sees only their teams' requests (once WH-062 exists).
+- **UI placement (2026-10-17, see WH-073):** teams appear as a **"Groups" tab inside the Team page**, not as a separate sidebar item. The user-facing word "Team" now means the whole workspace roster, so use "Groups" in the UI (keep `teams` as the table and permission name: `teams.write`).
+- **Progress (2026-10-18):** `SYSTEM_ROLE_NAMES.MANAGER` with Member + `leave.approve` + `documents.fulfil` (Member ⊆ Manager ⊆ Admin ⊆ Owner). Migration `20261018150000_teams_and_manager_role` creates teams tables + RLS and backfills Manager on existing spaces. Seed/`systemRolesFor` create Manager for new workspaces.
+- **Progress (2026-10-18):** API `GET/POST/PATCH/DELETE …/teams` (`members.read` list, `teams.write` mutations); contracts + unit/integration tests (CRUD, name conflict, RLS). Client Groups tab: list/create/edit/delete with member + manager pickers (`useCan(TEAMS_WRITE)`). Ready for batch review.
+- **Review (2026-10-18):** 🔁 a solid base; three fixes. Verified:
+  - migration `20261018150000_teams_and_manager_role` (applied): `teams`, `team_members` and `team_managers` with forced tenant RLS, unique names per space, cascades; the **app role's grants** cover them (default privileges);
+  - the **Manager** backfill on existing spaces (live roles: Admin, Manager, Member\*, Owner); `systemRolesFor()` creates it for new workspaces; the catalog test keeps Member ⊆ Manager ⊆ Admin ⊆ Owner;
+  - **live:** a Member creating a team → 403; an Admin creating one → 201; a duplicate name → 409; a Member listing teams → 200 (`members.read`); delete → 204; tests: teams service (3) + integration (3).
+  - [x] **Managers who can't approve.** `assertManagersCanApprove` → 400 `VALIDATION_FAILED` when a manager's role lacks `leave.approve`. Groups picker lists only members with that permission; member list API now returns `role.permissions`.
+  - [x] **Same-workspace integrity in the database.** Migration uses composite FKs: `UNIQUE (id, space_id)` on `teams` / `memberships`, and `FOREIGN KEY (team_id|membership_id, space_id)` on `team_members` / `team_managers`.
+  - [x] Minor: backfill comment notes `gen_random_uuid()` (v4) vs app UUID v7.
+  - [x] Browser check: the Groups tab (create/edit with the member and manager pickers, `teams.write` gating; manager list excludes plain Members) in `ar`.
+- **Progress (2026-10-18, review fixes):** manager `leave.approve` guard + UI filter; composite same-space FKs in `20261018150000_teams_and_manager_role`; member `role.permissions` on the list contract.
+- **Review (2026-10-18, 2nd pass):** 🔁 the feedback is fixed, but the suite is red. Verified:
+  - **manager rule:** `TeamsService` rejects managers whose role lacks `leave.approve` → 400 `VALIDATION_FAILED` (unit test `teams.service.spec.ts:118`, integration `teams.integration.spec.ts:197`); the Groups picker lists only people with `leave.approve`;
+  - **composite FKs**, edited into the still-uncommitted migration and re-applied at 15:46 (checksum matches the file): `UNIQUE (id, space_id)` on `teams` and `memberships`, plus `(team_id, space_id)` / `(membership_id, space_id)` FKs on both link tables. **Proven in Postgres** (rolled back): a team in workspace A with a membership from B → `team_members_membership_space_fkey` violation; a link row with B's `space_id` and A's team → `team_managers_team_space_fkey` violation;
+  - the UUID v4 backfill comment is added.
+  - [x] 🔴 **Typecheck fails** in `@work-hub/spaces`: `toMember` now filters through `PERMISSION_LIST` via `catalogPermissions()`.
+  - [x] 🔴 **A client test fails:** `specs/members-api.spec.ts` fixture includes `role.permissions`.
+  - [x] Browser check: Groups in `ar` — New group dialog; managers list = Owner only (approver); members list includes Member + Owner; RTL + translated hint. Dev restarted 15:56.
+- **Progress (2026-10-18, review fixes 2nd pass):** catalog filter on member permissions; members-api fixture updated; Arabic Groups browser check.
+- **Review (2026-10-18, final):** ✅ **done.**
+  - `members.service.ts` `toMember()` now narrows role permissions with `catalogPermissions()` (a type guard over the catalog, so stale DB values never reach the contract); the `members-api.spec.ts` fixture has `role.permissions`; `pnpm quality` is all green.
+  - **Live, fresh API:** a plain Member as manager → **400 `VALIDATION_FAILED`**; an Admin (with `leave.approve`) → 201.
+  - **Browser, `ar`:** the Groups tab lists the team (manager and members, "1 member · 1 manager", Edit/Delete, New group); the **manager picker lists only approvers** (Adam Admin, Mohamed Saouab, Olivia Owner, without "Member") with an explanatory hint. The test team was deleted afterwards.
+
 ### WH-042 · Dark mode: decide, then implement or remove the unused styles
 - **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** client
 - **Why:** `global.css` has a `.dark` block, but nothing ever turns it on, and it defines no brand colors. WH-037's "check in dark mode" couldn't be done.
@@ -380,7 +401,7 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Why:** three small leftovers noted when WH-047 and WH-050 were closed in `d39d25a`.
 - **Scope:**
   - [ ] Delete `libs/api/auth/src/strip-client-image.ts`, its spec, and the `databaseHooks.user.update.before` that uses it. It can't work: Better Auth merges hook results (`{...actualData, ...result.data}`), so omitting `image` changes nothing. The route-level `hooks.before` on `/update-user` (400 when `image` is sent) is the real guard and has its own test.
-  - [ ] A pixel-bomb upload answers 415 `IMAGE_UNSUPPORTED_TYPE`. Map sharp's "exceeds pixel limit" error to 413 `IMAGE_TOO_LARGE` (or a new `IMAGE_DIMENSIONS_TOO_LARGE`) so the client can show "image too large".
+  - [ ] A pixel-bomb upload answers 415 `IMAGE_UNSUPPORTED_TYPE`. **Also a test gap since `e9608e2` (WH-077):** the spec's header-only PNG fails to decode with or without `limitInputPixels`, so it passes even if the limit is removed. Once the pixel-limit error has its own code, assert that code (and make the fixture's IHDR exactly 1 pixel over the limit). Map sharp's "exceeds pixel limit" error to 413 `IMAGE_TOO_LARGE` (or a new `IMAGE_DIMENSIONS_TOO_LARGE`) so the client can show "image too large".
   - [ ] The bucket name `workhub` is hard-coded in `docker-compose.yml` and `docker/minio/anonymous-get-object.json`, while the API reads `STORAGE_BUCKET`. Either derive both from `STORAGE_BUCKET` (render the policy with `sed` in `minio-init`) or document that they must match.
 
 ### WH-057 · Transfer ownership, archive and delete a workspace

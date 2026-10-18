@@ -92,10 +92,12 @@ describe('validate', () => {
 });
 
 describe('nextStartTickets', () => {
-  it('returns the first start tickets in list order', () => {
-    const tickets = parseTickets(backlog({ tickets: [ticket('WH-002', 1, 'in progress'), ticket('WH-003', 1, 'start'), ticket('WH-001', 2, 'start')] }));
-    assert.deepEqual(nextStartTickets(tickets).map((t) => t.id), ['WH-003']);
-    assert.deepEqual(nextStartTickets(tickets, 2).map((t) => t.id), ['WH-003', 'WH-001']);
+  it('returns every start ticket at the highest remaining priority, in list order', () => {
+    const tickets = parseTickets(
+      backlog({ tickets: [ticket('WH-002', 1, 'in progress'), ticket('WH-003', 1, 'start'), ticket('WH-005', 1, 'start'), ticket('WH-001', 2, 'start')] })
+    );
+    assert.deepEqual(nextStartTickets(tickets).map((t) => t.id), ['WH-003', 'WH-005']);
+    assert.deepEqual(nextStartTickets(parseTickets(backlog({ tickets: [ticket('WH-001', 2, 'in progress')] }))), []);
   });
 });
 
@@ -152,7 +154,7 @@ describe('review tracking', () => {
     const withNext = parseTickets(backlog({ tickets: [ticket('WH-005', 1, 'start'), ticket('WH-004', 2, 'done')] }));
     const text = hookContext({ event: 'prompt', tickets: withNext, problems: [], pending: [], committedDone: done });
     assert.match(text, /delete them from BACKLOG.md now: WH-004/);
-    assert.match(text, /move the next implementation from `start` to `in progress`.*: WH-005/);
+    assert.match(text, /move the next implementations from `start` to `in progress`.*: WH-005/);
     assert.match(loud, /give the user a commit message/);
   });
 });

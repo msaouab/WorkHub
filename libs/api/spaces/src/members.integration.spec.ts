@@ -336,6 +336,71 @@ describeDb('MembersService + SpaceGuard (DB)', () => {
     });
   });
 
+  it('changes a member role with WH-011 safety rules', async () => {
+    const ownerAccess = await loadAccess(spaceAId, ownerId);
+    const adminAccess = await loadAccess(spaceAId, adminId);
+
+    const roles = await prisma.withTenant(
+      { userId: ownerId, spaceId: spaceAId },
+      (tx) => tx.role.findMany({ where: { spaceId: spaceAId } })
+    );
+    const adminRole = roles.find((r) => r.name === SYSTEM_ROLE_NAMES.ADMIN);
+    const memberRole = roles.find((r) => r.name === SYSTEM_ROLE_NAMES.MEMBER);
+    const ownerRole = roles.find((r) => r.name === SYSTEM_ROLE_NAMES.OWNER);
+    if (!adminRole || !memberRole || !ownerRole) {
+      throw new Error('system roles missing');
+    }
+
+    await expect(
+      members.updateRole(adminAccess, adminMembershipId, memberRole.id)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.CANNOT_CHANGE_OWN_ROLE },
+    });
+    await expect(
+      members.updateRole(adminAccess, ownerMembershipId, memberRole.id)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.CANNOT_MODIFY_OWNER },
+    });
+    await expect(
+      members.updateRole(adminAccess, memberMembershipId, ownerRole.id)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.CANNOT_ASSIGN_OWNER },
+    });
+
+    // Space B owner role id is cross-tenant → 404 under space A tenant.
+    const spaceBOwnerRoleId = await prisma.withTenant(
+      { userId: outsiderId, spaceId: spaceBId },
+      async (tx) => {
+        const membership = await tx.membership.findUniqueOrThrow({
+          where: { id: spaceBOwnerMembershipId },
+          select: { roleId: true },
+        });
+        return membership.roleId;
+      }
+    );
+    await expect(
+      members.updateRole(adminAccess, memberMembershipId, spaceBOwnerRoleId)
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    const promoted = await members.updateRole(
+      ownerAccess,
+      memberMembershipId,
+      adminRole.id
+    );
+    expect(promoted.role.id).toBe(adminRole.id);
+    expect(promoted.role.name).toBe(SYSTEM_ROLE_NAMES.ADMIN);
+    expect(promoted.role.permissions).toEqual(
+      expect.arrayContaining([PERMISSIONS.LEAVE_APPROVE, PERMISSIONS.ROLES_WRITE])
+    );
+
+    const demoted = await members.updateRole(
+      ownerAccess,
+      memberMembershipId,
+      memberRole.id
+    );
+    expect(demoted.role.name).toBe(SYSTEM_ROLE_NAMES.MEMBER);
+  });
+
   it('lets a member leave the workspace', async () => {
     const leaveUserId = randomUUID();
     await prisma.user.create({

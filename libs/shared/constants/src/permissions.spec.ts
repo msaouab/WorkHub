@@ -8,7 +8,7 @@ import {
 } from './permissions';
 
 describe('permission catalog', () => {
-  it('keeps system presets inside the catalog with Owner ⊇ Admin ⊇ Member', () => {
+  it('keeps system presets inside the catalog with Owner ⊇ Admin ⊇ Manager ⊇ Member', () => {
     expect(systemRolePresetsAreConsistent()).toBe(true);
   });
 
@@ -25,6 +25,17 @@ describe('permission catalog', () => {
     expect(
       SYSTEM_ROLE_PERMISSIONS[SYSTEM_ROLE_NAMES.ADMIN]
     ).not.toContain(PERMISSIONS.SPACE_SETTINGS_WRITE);
+  });
+
+  it('gives Manager the employee baseline plus approval permissions', () => {
+    expect(SYSTEM_ROLE_PERMISSIONS[SYSTEM_ROLE_NAMES.MANAGER]).toEqual([
+      PERMISSIONS.MEMBERS_READ,
+      PERMISSIONS.CALENDAR_READ,
+      PERMISSIONS.REQUESTS_CREATE,
+      PERMISSIONS.PROFILE_WRITE,
+      PERMISSIONS.LEAVE_APPROVE,
+      PERMISSIONS.DOCUMENTS_FULFIL,
+    ]);
   });
 
   it('gives Member only the employee baseline', () => {

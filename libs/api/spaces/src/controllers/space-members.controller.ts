@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -30,6 +32,7 @@ import type {
 } from '@work-hub/contracts';
 import { PROBLEM_DETAILS_REF, SESSION_SECURITY } from '@work-hub/core';
 import { ListSpaceMembersQueryDto } from '../dto/list-space-members-query.dto';
+import { PatchSpaceMemberDto } from '../dto/patch-space-member.dto';
 import { MembersService } from '../members.service';
 
 @ApiTags('spaces')
@@ -53,6 +56,24 @@ export class SpaceMembersController {
     @Query() query: ListSpaceMembersQueryDto
   ): Promise<ListSpaceMembersResponse> {
     return this.members.list(access, query);
+  }
+
+  @Patch(':membershipId')
+  @RequirePermission(PERMISSIONS.ROLES_WRITE)
+  @ApiOperation({ summary: 'Change a member role' })
+  @ApiParam({ name: 'spaceId', format: 'uuid' })
+  @ApiParam({ name: 'membershipId', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Member with updated role' })
+  @ApiResponse({ status: 401, ...PROBLEM_DETAILS_REF })
+  @ApiResponse({ status: 403, ...PROBLEM_DETAILS_REF })
+  @ApiResponse({ status: 404, ...PROBLEM_DETAILS_REF })
+  async updateRole(
+    @Param('spaceId') _spaceId: string,
+    @Param('membershipId') membershipId: string,
+    @Body() body: PatchSpaceMemberDto,
+    @CurrentSpaceAccess() access: SpaceAccess
+  ): Promise<SpaceMember> {
+    return this.members.updateRole(access, membershipId, body.roleId);
   }
 
   @Post(':membershipId/deactivate')

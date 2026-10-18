@@ -14,6 +14,12 @@ describe('listSpaceMembersResponseSchema', () => {
           role: {
             id: '01936b3c-0000-7000-8000-000000000003',
             name: 'Member',
+            permissions: [
+              'members.read',
+              'calendar.read',
+              'requests.create',
+              'profile.write',
+            ],
           },
           membershipStatus: 'active',
           createdAt: '2026-10-17T12:00:00.000Z',

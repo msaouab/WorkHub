@@ -391,6 +391,7 @@
         "email": "Email",
         "role": "Role",
         "status": "Status",
+        "joined": "Joined",
         "actions": "Actions"
       },
       "actions": "Member actions",
@@ -414,7 +415,88 @@
         "CANNOT_MODIFY_OWNER": "Owners can't be changed this way.",
         "CANNOT_DEACTIVATE_SELF": "You can't deactivate yourself.",
         "CANNOT_REMOVE_SELF": "Use leave to remove yourself.",
-        "LAST_OWNER": "Transfer ownership before leaving as the last owner."
+        "LAST_OWNER": "Transfer ownership before leaving as the last owner.",
+        "CANNOT_CHANGE_OWN_ROLE": "You can't change your own role.",
+        "CANNOT_ASSIGN_OWNER": "Use ownership transfer to make someone Owner.",
+        "ROLE_ESCALATION": "You can't grant permissions you don't have."
+      }
+    },
+    "roles": {
+      "title": "Roles and permissions",
+      "description": "Built-in roles plus up to 3 custom permission templates you can assign to people.",
+      "loading": "Loading roles…",
+      "failed": "Couldn't load roles. Try again.",
+      "empty": "Select a role to edit it.",
+      "listHeading": "Roles",
+      "create": "New template",
+      "createTitle": "New permission template",
+      "templateCount": "{count} of {max} custom templates",
+      "limitReached": "You can create up to {max} custom permission templates.",
+      "nameLabel": "Role name",
+      "systemNameHint": "Built-in roles keep their name.",
+      "permissionsHeading": "Permissions",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "expandBranch": "Expand {name}",
+      "collapseBranch": "Collapse {name}",
+      "ownerLocked": "The Owner role always has every permission.",
+      "ownRoleLocked": "You can't edit the role you currently hold.",
+      "aboveActorLocked": "You can only edit roles with permissions at or below your own.",
+      "defaultLabel": "Default role for new invites",
+      "defaultBadge": "Default",
+      "memberCount": "{count, plural, =0 {Used by no members} one {Used by # member} other {Used by # members}}",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "delete": "Delete role",
+      "confirmDeleteTitle": "Delete this role?",
+      "confirmDeleteDescription": "“{name}” will be removed. Members must be moved to another role first.",
+      "actionFailed": "That action failed. Try again.",
+      "tree": {
+        "space": "Workspace",
+        "settings": "Settings",
+        "billing": "Billing",
+        "members": "Members",
+        "roles": "Roles",
+        "teams": "Teams",
+        "invites": "Invites",
+        "leave_types": "Leave types",
+        "holidays": "Holidays",
+        "balances": "Balances",
+        "leave": "Leave",
+        "documents": "Documents",
+        "calendar": "Calendar",
+        "requests": "Requests",
+        "profile": "Profile"
+      },
+      "permissions": {
+        "space": {
+          "settings": { "write": "Edit workspace settings" },
+          "delete": "Delete the workspace",
+          "billing": { "write": "Manage billing" }
+        },
+        "members": {
+          "read": "View members",
+          "write": "Manage members"
+        },
+        "roles": { "write": "Manage roles and permissions" },
+        "teams": { "write": "Manage teams" },
+        "invites": { "write": "Invite people" },
+        "leave_types": { "write": "Manage leave types" },
+        "holidays": { "write": "Manage holidays" },
+        "balances": { "adjust": "Adjust leave balances" },
+        "leave": { "approve": "Approve leave requests" },
+        "documents": { "fulfil": "Fulfil document requests" },
+        "calendar": { "read": "View the team calendar" },
+        "requests": { "create": "Create leave and document requests" },
+        "profile": { "write": "Edit own profile" }
+      },
+      "errors": {
+        "ROLE_ESCALATION": "You can't grant permissions you don't have.",
+        "SYSTEM_ROLE_LOCKED": "Built-in roles can't be changed that way.",
+        "ROLE_IN_USE": "Move members and invites off this role before deleting it.",
+        "ROLE_LIMIT_REACHED": "You can create up to 3 custom permission templates.",
+        "CONFLICT": "That change conflicts with the current default role or name."
       }
     },
     "invites": {
@@ -498,6 +580,7 @@
       "roles": {
         "Owner": "Owner",
         "Admin": "Admin",
+        "Manager": "Manager",
         "Member": "Member"
       },
       "statusValues": {
@@ -520,7 +603,7 @@
       "title": "Workspace settings",
       "description": "Manage how this workspace looks.",
       "brandingTitle": "Branding",
-      "brandingDescription": "Logo and cover shown on the workspace home and in the switcher.",
+      "brandingDescription": "Logo and cover used in the workspace switcher and settings.",
       "sectionNav": "Settings sections",
       "sections": {
         "general": "General",
@@ -588,8 +671,12 @@
     "loading": "Loading invite…",
     "joining": "Joining workspace…",
     "title": "Join {space}",
-    "description": "You'll join as {role}.",
+    "description": "You'll join as {role}. Sign in or create an account to continue.",
+    "confirmDescription": "You've been invited to join as {role}. Accept to add this workspace to your account.",
     "emailHint": "Sign in with {email} to accept this invite.",
+    "emailHintSignedIn": "This invite was sent to {email}.",
+    "accept": "Accept invite",
+    "decline": "Not now",
     "signIn": "Sign in",
     "signUp": "Create account",
     "unavailableTitle": "Invite unavailable",
@@ -650,6 +737,41 @@
       "send": "Send invites",
       "close": "Close",
       "failed": "Couldn't send invites. Try again."
+    },
+    "groups": {
+      "description": "Organize people into groups with managers who can approve leave.",
+      "newGroup": "New group",
+      "loading": "Loading groups…",
+      "failed": "Couldn't load groups. Try again.",
+      "empty": "No groups yet.",
+      "emptyWritable": "No groups yet. Create one to assign managers and members.",
+      "counts": "{members, plural, one {# member} other {# members}} · {managers, plural, one {# manager} other {# managers}}",
+      "managers": "Managers",
+      "members": "Members",
+      "noManagers": "No managers assigned.",
+      "noMembers": "No members assigned.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "createTitle": "New group",
+      "editTitle": "Edit group",
+      "editorDescription": "Name the group and choose managers and members.",
+      "name": "Name",
+      "nameRequired": "Enter a group name.",
+      "managersHint": "Managers approve leave for people in this group. Only people whose role includes leave approval are listed.",
+      "managersEmpty": "No one with leave approval is available. Assign Manager, Admin, or Owner first.",
+      "membersHint": "People who belong to this group.",
+      "create": "Create group",
+      "save": "Save",
+      "confirmDeleteTitle": "Delete group?",
+      "confirmDeleteDescription": "“{name}” will be removed. Memberships are not deleted.",
+      "errors": {
+        "TEAM_NAME_TAKEN": "A group with this name already exists.",
+        "MEMBERSHIP_NOT_IN_SPACE": "One or more people aren't active in this workspace.",
+        "VALIDATION_FAILED": "This person's role can't approve requests.",
+        "CONFLICT": "That change conflicted with another update. Try again.",
+        "failed": "Couldn't save the group. Try again."
+      }
     }
   },
   "ComingSoon": {
@@ -664,7 +786,6 @@
       "people": "People",
       "approvals": "Approvals",
       "roles": "Roles and permissions",
-      "teams": "Groups",
       "leavePolicies": "Leave policies",
       "signInMethods": "Sign-in methods",
       "sessions": "Sessions",

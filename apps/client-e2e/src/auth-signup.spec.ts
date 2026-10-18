@@ -1,51 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { waitForEmailLink } from './helpers/mailpit.js';
 
-const MAILPIT = process.env['MAILPIT_URL'] ?? 'http://localhost:8025';
 const password = 'workhub-e2e-1';
 
-type MailpitMessageSummary = {
-  ID: string;
-  To: Array<{ Address: string }>;
-  Subject: string;
-};
-
-type MailpitMessage = {
-  ID: string;
-  Text: string;
-  HTML: string;
-};
-
-async function waitForVerifyLink(email: string): Promise<string> {
-  const deadline = Date.now() + 30_000;
-  while (Date.now() < deadline) {
-    const list = (await (
-      await fetch(`${MAILPIT}/api/v1/messages`)
-    ).json()) as { messages: MailpitMessageSummary[] };
-
-    const match = list.messages?.find(
-      (message) =>
-        message.To?.some((to) => to.Address === email) &&
-        /verify/i.test(message.Subject)
-    );
-
-    if (match) {
-      const full = (await (
-        await fetch(`${MAILPIT}/api/v1/message/${match.ID}`)
-      ).json()) as MailpitMessage;
-      const body = `${full.Text}\n${full.HTML}`;
-      const url = body.match(/https?:\/\/[^\s"'<>]+/i)?.[0];
-      if (url) {
-        return url.replace(/&amp;/g, '&');
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-
-  throw new Error(`No verification email for ${email} in Mailpit within 30s`);
-}
-
 test.describe('auth sign-up', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('signs up, verifies, lands signed in, and signs out via the menu', async ({
     page,
   }) => {
@@ -61,14 +21,15 @@ test.describe('auth sign-up', () => {
     await expect(page).toHaveURL(/\/en\/verify-email/);
     await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
 
-    const verifyUrl = await waitForVerifyLink(email);
+    const verifyUrl = await waitForEmailLink({
+      email,
+      subject: /verify/i,
+    });
     await page.goto(verifyUrl);
 
-    // No workspaces yet → post-auth hub sends new users to create.
-    await expect(page).toHaveURL(/\/en\/(dashboard|spaces\/new)/, {
-      timeout: 20_000,
-    });
-    await expect(page).toHaveURL(/\/en\/spaces\/new/, { timeout: 10_000 });
+    // Verified users land on the dashboard hub; empty roster offers create.
+    await expect(page).toHaveURL(/\/en\/dashboard/, { timeout: 20_000 });
+    await expect(page.getByRole('link', { name: /Create/i })).toBeVisible();
 
     await page.getByRole('button', { name: `Account menu: ${name}` }).click();
     await expect(page.getByText(email)).toBeVisible();

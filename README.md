@@ -77,12 +77,23 @@ workhub/
 # copy apps/server/.env.example → apps/server/.env and apps/client/.env.example → apps/client/.env first
 docker compose --env-file apps/server/.env up -d   # Postgres :5434, Mailpit :8025, Adminer :8083, MinIO :9000 (console :9001)
 pnpm install
-pnpm exec prisma migrate deploy --schema libs/api/database/prisma/schema.prisma
+pnpm db:migrate
 pnpm db:seed
 pnpm dev                      # web :3000 + API :3333
 ```
 
 Object storage (WH-047) uses **pgsty/silo** (S3-compatible; the old `minio/minio` images are no longer public). Root user / password / bucket come from `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `STORAGE_BUCKET` in `apps/server/.env` (defaults: `workhub` / `workhubsecret` / `workhub`, public-read). Console: http://localhost:9001.
+
+### CI
+
+[![CI](https://github.com/msaouab/WorkHub/actions/workflows/ci.yml/badge.svg)](https://github.com/msaouab/WorkHub/actions/workflows/ci.yml)
+
+On every push to `main` and every pull request, GitHub Actions runs:
+
+1. **Quality + integration** — `pnpm quality` (backlog rules, `nx sync:check`, typecheck/lint/test, knip, unused translation keys) against Postgres 16 with migrations applied. The commit gate (`--gate`) is **not** used in CI; review state is local.
+2. **Playwright e2e** — builds the client and API, starts Mailpit + MinIO, seeds Acme, and runs `@work-hub/client-e2e` against the built apps.
+
+Local e2e: start `pnpm dev`, then `pnpm nx e2e @work-hub/client-e2e` (one worker; signs in once per seed role via the API).
 
 ## Status
 

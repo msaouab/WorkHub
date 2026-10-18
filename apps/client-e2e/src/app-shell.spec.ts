@@ -1,25 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { authStatePath } from './helpers/env.js';
 
-const password = process.env['SEED_PASSWORD'] ?? 'workhub-dev-1';
+test.describe('app shell (WH-053) — owner', () => {
+  test.use({ storageState: authStatePath('owner') });
 
-async function signIn(
-  page: import('@playwright/test').Page,
-  email: string
-) {
-  await page.goto('/en/sign-in');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/(en|ar|fr)\/(dashboard|s\/|spaces)/, {
-    timeout: 20_000,
-  });
-}
-
-test.describe('app shell (WH-053)', () => {
   test('owner sees full nav and every item opens its route', async ({
     page,
   }) => {
-    await signIn(page, 'owner@workhub.test');
     await page.goto('/en/s/acme');
 
     // Desktop sidebar only (drawer keeps a duplicate nav in the DOM).
@@ -27,7 +14,9 @@ test.describe('app shell (WH-053)', () => {
     const nav = desktop.getByRole('navigation', { name: 'Workspace' });
     await expect(nav.getByRole('link', { name: 'Home' })).toBeVisible();
     await expect(nav.getByRole('link', { name: /My leave/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /People/ })).toBeVisible();
+    await expect(
+      nav.getByRole('link', { name: 'Team', exact: true })
+    ).toBeVisible();
     await expect(desktop.getByText('Manage', { exact: true })).toBeVisible();
     await expect(nav.getByRole('link', { name: /Settings/ })).toBeVisible();
 
@@ -37,9 +26,7 @@ test.describe('app shell (WH-053)', () => {
       { path: '/en/s/acme/holidays', heading: 'Holidays' },
       { path: '/en/s/acme/documents', heading: 'Documents' },
       { path: '/en/s/acme/approvals', heading: 'Approvals' },
-      { path: '/en/s/acme/invites', heading: 'Invites' },
       { path: '/en/s/acme/roles', heading: 'Roles and permissions' },
-      { path: '/en/s/acme/teams', heading: 'Teams' },
       { path: '/en/s/acme/leave-policies', heading: 'Leave policies' },
     ] as const;
 
@@ -53,10 +40,10 @@ test.describe('app shell (WH-053)', () => {
       ).toBeVisible();
     }
 
-    await page.goto('/en/s/acme/people');
-    await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
+    await page.goto('/en/s/acme/team');
+    await expect(page.getByRole('heading', { name: 'Team' })).toBeVisible();
     await expect(
-      page.getByPlaceholder('Search by name or email')
+      page.getByRole('tab', { name: /Members/ })
     ).toBeVisible();
 
     await page.goto('/en/s/acme/settings');
@@ -64,16 +51,21 @@ test.describe('app shell (WH-053)', () => {
       page.getByRole('heading', { name: 'Workspace settings' })
     ).toBeVisible();
   });
+});
+
+test.describe('app shell (WH-053) — member', () => {
+  test.use({ storageState: authStatePath('member') });
 
   test('member has no Manage; roles URL is no access', async ({ page }) => {
-    await signIn(page, 'member@workhub.test');
     await page.goto('/en/s/acme');
 
     const nav = page
       .locator('div.hidden.lg\\:flex')
       .getByRole('navigation', { name: 'Workspace' });
     await expect(nav.getByRole('link', { name: 'Home' })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /People/ })).toBeVisible();
+    await expect(
+      nav.getByRole('link', { name: 'Team', exact: true })
+    ).toBeVisible();
     await expect(
       page.locator('div.hidden.lg\\:flex').getByText('Manage', { exact: true })
     ).toHaveCount(0);
@@ -91,17 +83,7 @@ test.describe('app shell (WH-053)', () => {
     ).toBeVisible();
   });
 
-  test('members redirects to team; settings lists coming-soon items', async ({
-    page,
-    request,
-  }) => {
-    const res = await request.get('/en/s/acme/members', { maxRedirects: 0 });
-    expect([301, 308]).toContain(res.status());
-    expect(res.headers()['location'] ?? '').toMatch(
-      /\/en\/s\/acme\/team(\?tab=members)?$/
-    );
-
-    await signIn(page, 'member@workhub.test');
+  test('settings lists coming-soon items', async ({ page }) => {
     await page.goto('/en/settings');
     await expect(
       page.getByRole('link', { name: /Sign-in methods/ })
@@ -109,5 +91,15 @@ test.describe('app shell (WH-053)', () => {
     await expect(
       page.getByRole('link', { name: /Delete account/ })
     ).toBeVisible();
+  });
+});
+
+test.describe('app shell redirects', () => {
+  test('members redirects to team', async ({ request }) => {
+    const res = await request.get('/en/s/acme/members', { maxRedirects: 0 });
+    expect([301, 308]).toContain(res.status());
+    expect(res.headers()['location'] ?? '').toMatch(
+      /\/en\/s\/acme\/team(\?tab=members)?$/
+    );
   });
 });

@@ -10,6 +10,7 @@
     "build": "nx run-many -t build --projects=@work-hub/client,server",
     "lint": "nx run-many -t lint --projects=@work-hub/client,server",
     "test": "nx run-many -t test --projects=@work-hub/client,server",
+    "db:migrate": "pnpm --filter @work-hub/database exec prisma migrate deploy",
     "db:seed": "nx run @work-hub/seed:seed",
     "backlog": "node tools/backlog/src/cli.mjs",
     "quality": "node tools/quality/src/cli.mjs",

@@ -109,7 +109,7 @@ function BackToDashboard({ label }: { label: string }) {
       href={ROUTES.dashboard}
       className={cn(
         buttonVariants({ variant: 'ghost', size: 'sm' }),
-        '-ms-2 mb-2 text-muted-foreground'
+        'self-start -ms-2 mb-2 text-muted-foreground'
       )}
     >
       <ArrowLeftIcon

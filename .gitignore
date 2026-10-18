@@ -62,6 +62,11 @@ test-output
 vitest.config.*.timestamp*
 .vitest
 
+# Playwright auth state (WH-072)
+apps/client-e2e/playwright/.auth/
+**/test-results/
+**/playwright-report/
+
 # Prisma generated client
 libs/api/database/src/generated/
 .claude/backlog-review-state.json

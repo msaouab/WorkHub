@@ -49,7 +49,7 @@ The git hooks (`.githooks/`, enabled by `pnpm install`) add two gates:
 
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also lists committed `done` tickets to delete, and catches format mistakes: unknown status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-077**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-078**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -115,36 +115,16 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
 
-### WH-072 · E2E stability: sign in once per role, not through the form in every test
-- **Type:** tech-debt · **Priority:** P1 · **Status:** start · **Area:** tooling (e2e)
-- **Why:** found while reviewing WH-053 (2026-10-17). Three runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev` gave three different results: 5 passed / 2 failed (`toHaveURL` after sign-in, `ERR_ABORTED`), then 3 passed / 4 timed out, then the API on `:3333` was down. Causes:
-  - **Sign-in rate limit.** `app-shell.spec.ts` signs in through the form in each test (owner, member, admin), and the sign-up test adds more. Better Auth allows **5 sign-ins per minute**, and on localhost every request shares one key (`no-trusted-ip`), so a full run (plus any manual sign-in) hits 429 and `signIn()` never reaches `/dashboard`.
-  - **Load.** Playwright runs tests in parallel against a single `next dev`; with compiles on first visit, `page.goto` exceeded 90 s at load average about 18.
-- **Scope:**
-  - [ ] A Playwright **setup project** signs in once per seed role (owner, admin, member) through the API (`POST /api/auth/sign-in/email`) and saves `storageState` to `playwright/.auth/{role}.json` (gitignored). Tests use `test.use({ storageState })` instead of `signIn()`. One test still covers the real sign-in form.
-  - [ ] `workers: 1` when `reuseExistingServer` hits a dev server (keep parallel in CI against built apps, WH-069).
-  - [ ] When the API isn't reachable, fail fast with a clear message ("start `pnpm dev` first") instead of trying to launch a second `nx serve server` next to `pnpm dev`.
-- **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
-  - [ ] Add the Team e2e test (from WH-073): Owner invites by email → the pending row appears with its badge → revoke → the preview answers "revoked". Uses the Owner storage state.
-
-### WH-069 · CI: run the checks on every push and pull request
+### WH-077 · Verify CI on GitHub: first green run and a proven red check
 - **Type:** chore · **Priority:** P1 · **Status:** start · **Area:** tooling
-- **Why:** there is **no `.github/` folder**: nothing runs `typecheck/lint/test`, the integration tests or e2e except by hand (SRS §9). Reviews have caught lint failures that a pipeline would have blocked.
-- **Scope:** GitHub Actions on Node 22 + pnpm cache:
-  - `pnpm nx affected -t typecheck lint test` (with a `nx sync:check` step);
-  - a Postgres 16 service for the `*.integration.spec.ts` files (migrate deploy first);
-  - Playwright e2e against built apps, with Mailpit + MinIO services;
-  - `pnpm backlog` must print ✓.
-- **Done when:** a PR that breaks lint, a test or an RLS integration test shows a red check.
-- **Plan (2026-10-18):** the repo is on GitHub (`origin`, `main` 5 commits ahead, not pushed).
-  - Workflow `.github/workflows/ci.yml` on `push` to `main` and on `pull_request`:
-    1. **checks:** Node 22 (`.nvmrc`) + `pnpm/action-setup` + pnpm store cache; `pnpm install --frozen-lockfile`; `nx-set-shas`; `pnpm quality` (**without `--gate`**: the review state is local);
-    2. **integration:** a Postgres 16 service + `prisma migrate deploy` (the app role and its grants come from the migrations; the `workhub_app` role itself from `docker/postgres/init`, so replicate that SQL as a CI step), then the `*.integration.spec.ts` suites;
-    3. **e2e:** after WH-072, build both apps, start them plus Mailpit and MinIO (`docker compose` or service containers), seed, and run Playwright (`workers` > 1 allowed against built apps).
-  - Secrets: only test values (a `BETTER_AUTH_SECRET` generated per run); no real credentials in the workflow.
-  - [ ] the workflow file;
-  - [ ] a red check proven on a throwaway branch (a lint error, a failing RLS test);
-  - [ ] a README badge + "how CI works" note (feeds WH-027).
+- **Blocked by:** WH-069
+- **Why:** a workflow is only proven once GitHub runs it. This can't happen inside WH-069, because the push gate only pushes done, committed work.
+- **Scope:**
+  - [ ] Push `main`; the **Quality + integration** and **Playwright e2e** jobs pass on the first run (link the run here).
+  - [ ] On a throwaway branch with a PR, add a lint error → the check goes red, then delete the branch. Optionally also break an RLS integration test.
+  - [ ] If a job fails only on GitHub, fix it in a new commit referencing this ticket.
+  - [ ] Optional: protect `main` (require the CI checks before merge) once the team works through PRs.
+- **Done when:** both jobs are green on `main`, and a red check was seen on a PR.
 
 ### WH-011 · Permissions management
 - **Type:** feature · **Priority:** P1 · **Status:** start · **Area:** api + client
@@ -166,19 +146,60 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   3. **UI:** a role select per row in Team → Members (`useCan(ROLES_WRITE)`); the **Roles and permissions** page replaces its placeholder (a list of roles, plus an editor with permission checkboxes grouped by area and a "used by N members" count); the invite dialog lists custom roles automatically.
   - Tests: an escalation attempt → 403; self-change → 403; Owner untouchable; cross-workspace role id → 404; RLS on roles writes.
 
-### WH-076 · Workflow: a `done` status (delete after commit) and a push gate
+### WH-072 · E2E stability: sign in once per role, not through the form in every test
+- **Type:** tech-debt · **Priority:** P1 · **Status:** done · **Area:** tooling (e2e)
+- **Why:** found while reviewing WH-053 (2026-10-17). Three runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev` gave three different results: 5 passed / 2 failed (`toHaveURL` after sign-in, `ERR_ABORTED`), then 3 passed / 4 timed out, then the API on `:3333` was down. Causes:
+  - **Sign-in rate limit.** `app-shell.spec.ts` signs in through the form in each test (owner, member, admin), and the sign-up test adds more. Better Auth allows **5 sign-ins per minute**, and on localhost every request shares one key (`no-trusted-ip`), so a full run (plus any manual sign-in) hits 429 and `signIn()` never reaches `/dashboard`.
+  - **Load.** Playwright runs tests in parallel against a single `next dev`; with compiles on first visit, `page.goto` exceeded 90 s at load average about 18.
+- **Scope:**
+  - [x] A Playwright **setup project** signs in once per seed role (owner, admin, member) through the API (`POST /api/auth/sign-in/email`) and saves `storageState` to `playwright/.auth/{role}.json` (gitignored). Tests use `test.use({ storageState })` instead of `signIn()`. One test still covers the real sign-in form.
+  - [x] `workers: 1` when local (no `CI`); parallel workers allowed in CI against built apps (WH-069).
+  - [x] When the API isn't reachable locally, fail fast ("start `pnpm dev` first") via `global-setup` — no auto `nx serve server`.
+- **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
+  - [x] Add the Team e2e test (from WH-073): Owner invites by email → the pending row appears with its badge → revoke → the preview answers "revoked". Uses the Owner storage state.
+- **Progress (2026-10-18):** setup project + `auth.setup.ts` (API sign-in per role, 429 backoff); `auth-signin.spec.ts` keeps one form path; app-shell uses storageState and Team nav; `team-invites.spec.ts` added; local fail-fast + `workers: 1`. **Three consecutive local runs: 13/13 passed** (after waiting out the shared sign-in window between runs).
+- **Review (2026-10-18):** 🔁 one small fix. The design is right and the **Done-when criterion is met: 3 consecutive runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev`, 13/13 passing each time** (runs 2 and 3 took about 1.3 min because back-to-back runs exceed 5 sign-ins/min; `auth.setup.ts` waits and retries on 429, as intended).
+  - `auth.setup.ts` signs in once per role through the API and saves `playwright/.auth/{role}.json` (gitignored);
+  - specs use `test.use({ storageState })`; `auth-signin.spec.ts` keeps the real form; sign-up and sign-in start with an empty state;
+  - `workers: 1` locally; `global-setup.mts` fails fast with "Start `pnpm dev` first";
+  - the Team test (invite → pending → revoke → preview revoked) is in `team-invites.spec.ts`; shared helpers `env.ts`, `mailpit.ts`, `reachability.ts`.
+  - [x] **`pnpm quality` fails (knip):** added `src/auth.setup.ts` and `src/global-setup.mts` to the `apps/client-e2e` knip `entry` list; `pnpm quality` knip ✓.
+- **Progress (2026-10-18):** review feedback fixed; relative ESM imports use `.js` extensions; back to under-review.
+- **Review (2026-10-18, 2nd pass):** ✅ done. `knip.json` lists `src/auth.setup.ts` and `src/global-setup.mts` as entries; `pnpm quality` is all green. The e2e sources are unchanged since the 3 consecutive passing runs (13/13 each) against `pnpm dev`.
+
+### WH-069 · CI: run the checks on every push and pull request
 - **Type:** chore · **Priority:** P1 · **Status:** done · **Area:** tooling
-- **Why:** team rules from 2026-10-18: (0) `start` = next implementations, `in progress` = current; a clean review → `done` + a commit message; after the commit → delete + move the next `start` ticket(s) to `in progress`; (1) the order is **start → in progress → under-review → done → commit → delete**, so a reviewed ticket stays in the file as `done` until a commit carries it; (2) **push only done work**, never commits whose tickets are still under review.
-- **What changed (by Claude):**
-  - `@work-hub/backlog`: `done` is a valid status, sorted last within a priority (`STATUSES`); `committedDoneTickets()` (`done` here and `done` in `HEAD:BACKLOG.md`) → `pnpm backlog` and the hooks ask Claude to delete those tickets; the hook's review instruction says "no feedback → `done`, keep it until committed".
-  - `nextStartTickets()`: after a commit closes done tickets, the hook names the next implementation to move to `in progress`; the review instruction asks for a commit message.
-  - `@work-hub/quality`: commit gate = no ticket `in progress` or `under-review` (no more review-state lookup); **push gate** `pnpm quality --push`, which blocks when an outgoing commit (`@{upstream}..HEAD`) names a ticket still `in progress` or `under-review`; `.githooks/pre-push`.
-  - BACKLOG.md "Workflow": the status table, diagram, review rules and both gates rewritten.
-  - Tests: backlog 15 + quality 9 passing; `pnpm quality` green.
-- **Acceptance criteria:**
-  - [x] A ticket can be `done`; `done` sorts after `under-review`; unknown statuses are still rejected.
-  - [x] After a commit with a ticket as `done`, `pnpm backlog` lists it under "COMMITTED AS DONE, delete".
-  - [x] `pnpm quality --gate` blocks on `in progress` / `under-review`; `--push` blocks only for tickets named by outgoing commits (verified: the 5 unpushed commits → "Push allowed").
+- **Why:** there is **no `.github/` folder**: nothing runs `typecheck/lint/test`, the integration tests or e2e except by hand (SRS §9). Reviews have caught lint failures that a pipeline would have blocked.
+- **Scope:** GitHub Actions on Node 22 + pnpm cache:
+  - `pnpm quality` (covers backlog, sync, typecheck/lint/test, knip, unused i18n);
+  - a Postgres 16 service for the `*.integration.spec.ts` files (migrate deploy first);
+  - Playwright e2e against built apps, with Mailpit + MinIO services;
+  - `pnpm backlog` must print ✓ (via the quality backlog step).
+- **Done when:** the workflow file is ready to run on GitHub (first green run + red-check proof → **WH-077**).
+- **Plan (2026-10-18):** the repo is on GitHub (`origin`, `main` ahead of remote).
+  - Workflow `.github/workflows/ci.yml` on `push` to `main` and on `pull_request`:
+    1. **checks:** Node 22 + `pnpm/action-setup` + pnpm store cache; `pnpm install --frozen-lockfile`; Postgres 16 + app role SQL + migrate; `pnpm quality` (**without `--gate`**: the review state is local);
+    2. **e2e:** build both apps, Mailpit service + MinIO via compose, seed, Playwright (`CI=true` → parallel workers, built apps via `webServer`).
+  - Secrets: only test values in the workflow env; no real credentials.
+  - [x] the workflow file;
+  - [x] _(moved to WH-077)_ a red check proven on a throwaway branch (a lint error, a failing RLS test);
+  - [x] a README badge + "how CI works" note (feeds WH-027).
+- **Progress (2026-10-18):** added `.github/workflows/ci.yml` (checks + e2e jobs) and README CI section.
+- **Review (2026-10-18):** 🔁 a good structure, but it would fail on its first run. Two jobs: **Quality + integration** (Postgres 16 service, app role from `docker/postgres/init/01-app-role.sql`, migrate, `pnpm quality` without `--gate`), then **Playwright e2e** (Postgres + Mailpit services, MinIO through compose, migrate + seed, `pnpm build`, `next start` + `node apps/server/dist/main.js` via Playwright `webServer`). The README has a badge and a "CI" section. **It has never run:** `ci.yml` is uncommitted and `main` is ahead of `origin/main`.
+  - [x] 🔴 **The migrate step can't work.** Root script `pnpm db:migrate` (`pnpm --filter @work-hub/database exec prisma migrate deploy`); used in both CI jobs and the README. Verified locally.
+  - [x] **pnpm version given twice.** Removed `version:` / `PNPM_VERSION`; `packageManager` decides. Node via `node-version-file: .nvmrc`.
+  - [x] **The env is duplicated three times:** heredocs → `tools/ci/write-env.sh` (optional `--with-client`); workflow `env:` stays as the single source for values.
+  - [x] **Least privilege:** `permissions: contents: read`.
+  - [x] **Debuggability:** Playwright browser cache + upload report/traces on failure.
+  - Proving it on GitHub (first green run + a red check) is **WH-077**, since it can only happen after this ticket is committed and pushed.
+- **Progress (2026-10-18):** all review feedback fixed; `pnpm quality` ✓; back to under-review.
+- **Review (2026-10-18, 2nd pass):** ✅ done:
+  - root `pnpm db:migrate` (`pnpm --filter @work-hub/database exec prisma migrate deploy`), verified locally ("No pending migrations to apply"), used in both jobs and the README;
+  - `pnpm/action-setup@v4` with no `version` input (`packageManager` decides); `node-version-file: .nvmrc`;
+  - env written by one script, `tools/ci/write-env.sh` (`--with-client` for e2e), with required vars asserted;
+  - `permissions: contents: read`; the Playwright browser cache; the report uploaded on failure from `apps/client-e2e/test-output` (where Nx's TS-solution preset writes `playwright/{output,report}`);
+  - `pnpm quality` all green.
+  - The first run on GitHub (green + a proven red check) is WH-077, after the commit and push.
 
 ### WH-012 · Sign in with Google, GitHub, Microsoft and GitLab
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client

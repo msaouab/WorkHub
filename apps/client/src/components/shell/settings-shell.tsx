@@ -53,7 +53,7 @@ export function SettingsShell({ children }: { children: ReactNode }) {
           href={ROUTES.dashboard}
           className={cn(
             buttonVariants({ variant: 'ghost', size: 'sm' }),
-            '-ms-2 mb-4 text-muted-foreground lg:hidden'
+            'self-start -ms-2 mb-4 text-muted-foreground lg:hidden'
           )}
         >
           <ArrowLeftIcon

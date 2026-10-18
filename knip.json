@@ -57,6 +57,8 @@
       "entry": [
         "playwright.config.mts",
         "src/**/*.spec.ts",
+        "src/auth.setup.ts",
+        "src/global-setup.mts",
         "src/global-teardown.mts"
       ]
     },

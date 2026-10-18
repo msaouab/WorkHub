@@ -1,11 +1,47 @@
 import { ErrorCode } from '@work-hub/constants';
+import { crc32 } from 'node:zlib';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import {
   ImageProcessError,
+  IMAGE_LIMIT_INPUT_PIXELS,
   processCover,
   processSquareImage,
 } from './image-process';
+
+/**
+ * Tiny PNG whose IHDR claims `width`×`height` without allocating that many
+ * pixels. Used so CI doesn't OOM building a real pixel-bomb fixture.
+ */
+function pngClaimingSize(width: number, height: number): Buffer {
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const ihdrData = Buffer.alloc(13);
+  ihdrData.writeUInt32BE(width, 0);
+  ihdrData.writeUInt32BE(height, 4);
+  ihdrData[8] = 8; // bit depth
+  ihdrData[9] = 2; // RGB
+  const ihdrType = Buffer.from('IHDR');
+  const ihdrCrc = Buffer.alloc(4);
+  ihdrCrc.writeUInt32BE(crc32(Buffer.concat([ihdrType, ihdrData])), 0);
+  const ihdrLen = Buffer.alloc(4);
+  ihdrLen.writeUInt32BE(ihdrData.length, 0);
+
+  const iendType = Buffer.from('IEND');
+  const iendCrc = Buffer.alloc(4);
+  iendCrc.writeUInt32BE(crc32(iendType), 0);
+  const iendLen = Buffer.alloc(4);
+
+  return Buffer.concat([
+    signature,
+    ihdrLen,
+    ihdrType,
+    ihdrData,
+    ihdrCrc,
+    iendLen,
+    iendType,
+    iendCrc,
+  ]);
+}
 
 async function jpeg(width: number, height: number, withGps = false) {
   const base = sharp({
@@ -74,17 +110,9 @@ describe('processSquareImage', () => {
   });
 
   it('rejects pixel-bomb images over limitInputPixels', async () => {
-    // 12000×12000 ≈ 144 M pixels > IMAGE_LIMIT_INPUT_PIXELS (40 M).
-    const bomb = await sharp({
-      create: {
-        width: 12_000,
-        height: 12_000,
-        channels: 3,
-        background: { r: 0, g: 0, b: 0 },
-      },
-    })
-      .png({ compressionLevel: 9 })
-      .toBuffer();
+    // Just over IMAGE_LIMIT_INPUT_PIXELS without allocating that many pixels.
+    const side = Math.ceil(Math.sqrt(IMAGE_LIMIT_INPUT_PIXELS + 1));
+    const bomb = pngClaimingSize(side, side);
     await expect(
       processSquareImage(bomb, 50 * 1024 * 1024)
     ).rejects.toMatchObject({ code: ErrorCode.IMAGE_UNSUPPORTED_TYPE });

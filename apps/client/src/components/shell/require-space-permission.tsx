@@ -3,7 +3,7 @@
 import type { Permission } from '@work-hub/constants';
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useCurrentSpace } from '@/hooks/use-space';
 import { Link } from '@/i18n/navigation';
@@ -28,11 +28,7 @@ export function RequireSpacePermission({
   const { slug, space, isPending, isError, isForbidden } = useCurrentSpace();
 
   if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <LogoLoader size="lg" showLabel label={t('loading')} />
-      </div>
-    );
+    return <PageLoader fill="parent" label={t('loading')} />;
   }
 
   if (isError) {

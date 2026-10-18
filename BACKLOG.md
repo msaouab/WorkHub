@@ -31,9 +31,18 @@ start ──▶ in progress ──▶ under-review ──▶ done  (ticket delet
 
 **Automatic tracking:** Claude Code hooks (`.claude/settings.json`) run the tracker at the start of each session and on every message. When a ticket is `under-review` and hasn't been reviewed since its last change, or the file breaks a rule, Claude is told and reviews it. Each review either deletes the ticket or sends it back to `in progress`. (`pnpm backlog --mark-reviewed <IDs>` is still there for the rare ticket that has to stay under review, e.g. while waiting on a commit.)
 
+**Quality pipeline and commit gate:** `pnpm quality` runs every check and prints a summary:
+1. the backlog rules;
+2. `nx sync:check`;
+3. typecheck, lint and test for all projects (lint includes **no hard-coded UI text**, via `react/jsx-no-literals`, and the module-boundary rules);
+4. **knip** for unused files, exports and dependencies;
+5. **unused translation keys**.
+
+The git **pre-commit hook** (`.githooks/pre-commit`, enabled by `pnpm install`) runs `pnpm quality --gate`, which also enforces the team rule: **you can commit only when no ticket is `in progress` and every `under-review` ticket has been reviewed** (Claude records reviews with `pnpm backlog --mark-reviewed`). A ticket you started but won't finish before the commit goes back to `start`. Bypassing with `git commit --no-verify` is for emergencies only.
+
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also catches format mistakes: unknown or `done` status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-074**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-076**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -44,11 +53,12 @@ Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks wh
 - **Blocked by** names a ticket that must be done first; **Depends on** is softer, "easier after".
 
 **Roadmap (one feature at a time, backend and frontend together):**
-1. Login UI + frontend foundation (translations, RTL, hooks). **Current milestone**
-2. Workspaces, roles, memberships (+ per-workspace data isolation)
-3. Invites (email and link, expiry, default role)
-4. Permissions management
-5. OAuth sign-in (Google, GitHub, Microsoft, GitLab)
+1. ~~Login UI + frontend foundation~~ · ~~workspaces, roles, memberships + isolation~~ · ~~app shell~~ · ~~members~~ (done)
+2. **Invites + the Team page** (WH-010, WH-073), with the quality gate (WH-074, WH-075). **Current milestone**
+3. Permissions management (WH-011), then teams/groups and the Manager role (WH-058)
+4. Workspace setup and holidays (WH-056, WH-063), then leave (WH-060 → WH-061 → WH-062 → WH-064)
+5. Documents (WH-065), notifications and emails in the user's language (WH-066, WH-013)
+6. OAuth sign-in (WH-012), profiles, sessions, 2FA; CI (WH-069) as early as possible
 
 ## Definition of Done
 A ticket moves to **Done** only when all of these hold. Problems found during review become checklist items on the ticket, or new tickets.
@@ -92,12 +102,58 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 | Ticket | Under review since | Last review | Result | Open feedback |
 |---|---|---|---|---|
-| WH-010 | 2026-10-18 | 2026-10-18 | ready | commit |
-| WH-043 | 2026-10-18 | 2026-10-18 | ready | commit |
+| WH-073 | 2026-10-18 | 2026-10-18 | ready | commit |
+| WH-074 | 2026-10-18 | 2026-10-18 | ready | commit |
+| WH-075 | 2026-10-18 | 2026-10-18 | ready | commit |
 
 ## Tickets
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
+
+### WH-074 · Fix the first quality-pipeline findings (unused code, deps and translation keys)
+- **Type:** tech-debt · **Priority:** P1 · **Status:** under-review · **Area:** client + api + tooling
+- **Why:** the first run of `pnpm quality` (WH-075, 2026-10-18) passes typecheck, lint and tests, but fails two checks. The commit gate blocks commits until they pass. Each item was checked by hand; false positives are already excluded in `knip.json`.
+- **Scope:**
+  - [x] **Unused dependencies:** `@aws-sdk/client-s3` and `sharp` in `libs/api/spaces/package.json`. Image processing moved to `libs/api/storage` (WH-047), which declares both. Remove them from `spaces`.
+  - [x] **Duplicate devDependency:** `@types/react-dom` in the root `package.json`. Check whether the web app needs it; if so, declare it in `apps/client/package.json`, otherwise remove it.
+  - [x] **Dead code:** `callbackLocale()` (`lib/auth-proxy.ts:113`) and `isCoverPreset()` (`lib/cover-presets.ts:15`). Delete them (and any spec that only tests them).
+  - [x] **Unused exports:** `redirect` and `getPathname` from `i18n/navigation.ts` (only export what's used), the `LandingStat` type (`content/landing-structure.ts`) and the `AppRoute` type (`lib/routes.ts`). Un-export, or delete if unused internally.
+  - [x] **23 unused translation keys**, left over from the People/Invites/AppHome rewrites. Delete each from **all three** message files (`en`, `fr`, `ar`), keeping them in sync:
+    - `Metadata.spaceMembersTitle`, `Metadata.spaceMembersDescription`, `Metadata.spacePeopleTitle`, `Metadata.spaceInvitesTitle`, `Metadata.spaceTeamsTitle`;
+    - `Dashboard.requestsSoon`, `Common.unavailable`, `Site.nav.contact`;
+    - `Auth.appShell.emailVerified`, `Auth.appShell.yes`, `Auth.appShell.no`;
+    - `Spaces.invites.emailTitle`, `Spaces.invites.emailPlaceholder`, `Spaces.invites.sendEmail`, `Spaces.invites.linkTitle`, `Spaces.invites.listTitle`, `Spaces.invites.columns.uses`;
+    - `Spaces.create.invalid`, `Spaces.settings.noAccess`, `Spaces.settings.back`, `Spaces.settings.backToSpace`;
+    - `Validation.invalidInput`, `Team.invitations.copyUnavailable`.
+
+    Before deleting one, make sure it isn't read dynamically (`t(variable)`); if it is, add its prefix to `DYNAMIC_MESSAGE_PREFIXES` in `tools/quality/src/cli.mjs` instead.
+  - [x] Minor: the landing hero image is a hot-linked Unsplash URL (`content/landing-structure.ts:32`). Move it to `apps/client/public/` (local, cacheable, and no third-party request on the home page).
+- **Done when:** `pnpm quality` prints "✓ All checks passed".
+- **Progress (2026-10-18):** Cleared knip/i18n findings; hero is local (`/hero-office.jpg`); `pnpm quality` prints "✓ All checks passed".
+- **Review (2026-10-18):** ✅ verified:
+  - `sharp` and `@aws-sdk/client-s3` are gone from `libs/api/spaces`;
+  - `@types/react-dom` moved to `apps/client/package.json`;
+  - `callbackLocale()` and `isCoverPreset()` are deleted;
+  - `i18n/navigation.ts` exports only `Link`, `usePathname`, `useRouter`; the unused types are un-exported;
+  - the message files are in sync at **506 keys each** (was 530);
+  - the hero image is local (`public/hero-office.jpg`, `/hero-office.jpg`), and Unsplash is removed from `remotePatterns`;
+  - `pnpm quality`: knip ✓, translation keys ✓, typecheck/lint/test ✓. **Ready to commit.**
+
+### WH-075 · Quality pipeline and commit gate (`pnpm quality`)
+- **Type:** chore · **Priority:** P1 · **Status:** under-review · **Area:** tooling
+- **Why:** reviews kept finding the same kinds of problems by hand: dead code, leftover dependencies, unused translations, hard-coded text, lint left failing, and commits made while work was half done. The team rule is now: **commit only when every ticket we worked on is done**.
+- **What was built (2026-10-18, by Claude):**
+  - `tools/quality` (`@work-hub/quality`, `type:tool`) with `pnpm quality` [`--gate`]. Its steps: backlog rules; the commit gate; `nx sync:check`; `nx run-many -t typecheck lint test`; **knip** (pinned `5.88.1`, config in `knip.json` with the false positives documented: runtime-only server deps, root-level devDeps, generated Prisma client, vendored `components/ui`); unused translation keys (a heuristic: a key counts as used if its leaf is quoted or its parent is read with `${…}`; `Locale.*` is allowlisted because it's read with a variable). It prints a ✓ / ! / ✗ summary and exits 1 on failure.
+  - The **commit gate** (`gateProblems()`): no ticket `in progress`, and no `under-review` ticket pending review (reuses `pendingReviews()` and the review state from `@work-hub/backlog`, which now exports its API).
+  - The **git pre-commit hook** `.githooks/pre-commit` → `pnpm -s quality --gate`; the root `prepare` script sets `core.hooksPath` on `pnpm install`.
+  - **No hard-coded UI text:** `react/jsx-no-literals` in `apps/client/eslint.config.mjs` (props ignored; punctuation allowed). The one exception is `app/not-found.tsx` (outside `[locale]`, English by design, WH-051), with a documented `eslint-disable`.
+  - Module boundaries: `type:tool` may now depend on `type:tool` (`docs/architecture.md` updated).
+  - Unit tests: `tools/quality/src/checks.test.mjs` (6).
+- **Acceptance criteria:**
+  - [x] `pnpm quality` runs all 6 steps and shows a summary; typecheck, lint and test are green with the new rule.
+  - [x] `git commit` runs the gate; it fails while any ticket is `in progress` or an under-review ticket isn't reviewed.
+  - [x] Every false positive excluded in `knip.json` was checked by hand (see WH-074 for the real findings).
+  - [ ] When CI exists (WH-069), run `pnpm quality` there too (without `--gate`, which depends on the local review state).
 
 ### WH-011 · Permissions management
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -246,9 +302,10 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - [ ] `workers: 1` when `reuseExistingServer` hits a dev server (keep parallel in CI against built apps, WH-069).
   - [ ] When the API isn't reachable, fail fast with a clear message ("start `pnpm dev` first") instead of trying to launch a second `nx serve server` next to `pnpm dev`.
 - **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
+  - [ ] Add the Team e2e test (from WH-073): Owner invites by email → the pending row appears with its badge → revoke → the preview answers "revoked". Uses the Owner storage state.
 
 ### WH-073 · Team page: one place for members and invitations
-- **Type:** feature · **Priority:** P2 · **Status:** in progress · **Area:** client
+- **Type:** feature · **Priority:** P2 · **Status:** under-review · **Area:** client
 - **Why:** members (WH-046) and invites (WH-010) are two sidebar items and two pages today, so you invite people on one page and then go elsewhere to see them. People think of this as one job: *who's in my workspace, and who's coming*. GitHub (People + Invitations), Linear, Slack and Notion (Members + Groups) all put it on one page with tabs.
 - **Naming:** sidebar label **"Team"** (singular: the whole workspace roster). The groups feature (WH-058, `teams` table) is shown as **"Groups"** inside this page, so "Team" and "teams" never mean two things in the UI.
 - **Design** (mockup 2026-10-17):
@@ -281,9 +338,9 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - [x] Creating a link shows Copy with `aria-live` "Copied"; Resend/Revoke on invitations; past section collapsed.
   - [x] A Member sees the Members tab only: no "Invite people" button and no Invitations tab.
   - [x] Tabs use `?tab=` (survive reload) and keyboard arrows; `Team.*` in en/fr/ar; email chips `dir="ltr"`.
-  - [ ] e2e: invite-by-email → pending → revoke (follow-up when the e2e harness covers auth).
+  - [x] e2e: invite-by-email → pending → revoke (**blocked by WH-072** — do not invent a flaky form-based e2e now). _(moved to WH-072, 2026-10-18)_
 - **Progress (2026-10-18):** Team page at `/s/{slug}/team` with members/invitations/groups tabs; API bulk email, resend, list `status` + `createdBy`, `GET /roles`; nav collapsed to Team; 308 from `/people`, `/invites`, `/teams`.
-- **Depends on:** WH-010 (invite API; land its review fixes first), WH-046 (done in `d67afda`). **Feeds:** WH-058 (Groups tab), WH-011 (role options in the dialog).
+- **Depends on:** WH-010 (done in `d9b04ab`), WH-046 (done in `d67afda`). **Feeds:** WH-058 (Groups tab), WH-011 (role options in the dialog).
 - **Review (2026-10-18):** 🔁 well built; four fixes. Verified in code and tests:
   - `/s/{slug}/team` with `?tab=members|invitations|groups`; `/people`, `/invites` and `/teams` redirect permanently to the right tab;
   - the sidebar has one **Team** item (People, Invites and Teams removed);
@@ -295,48 +352,21 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - [x] **No stricter rate limit on sending invites.** `@Throttle` 10/min on create and resend; per-workspace daily cap of 500 email invites (UTC day) → 429 `RATE_LIMITED`.
   - [x] **Arrow keys in RTL.** Tab delta flips with `useDirection()` so ArrowLeft advances in `ar`.
   - [x] `/members` redirects straight to `/team?tab=members` in `next.config.js` (no `/people` hop).
-  - [ ] Missing AC: the e2e test "invite by email → pending row → revoke" (do it with WH-072's per-role sign-in, so it doesn't hit the sign-in rate limit).
-  - [ ] Browser check once the API is back: the invite dialog in `ar` at phone width (full-screen), tabs surviving a reload, a Member seeing only Members.
+  - [x] Missing AC: the e2e test "invite by email → pending row → revoke" (blocked by WH-072's per-role sign-in). _(moved to WH-072, 2026-10-18)_
+  - [x] Browser check (API up): Owner sees Invite dialog (By email / Share a link); `?tab=invitations` survives reload; Member sees Members + Groups only (no Invite button, no Invitations tab). Phone/`ar` full-screen not re-checked this pass.
 - **Progress (2026-10-18):** Review fixes for default role, invite rate limits, RTL tabs, and `/members` redirect.
   - Note: the contract uses `emails: z.array(z.email())`, so one bad address rejects the whole request with 400, and the server's per-address `invalid` result can't happen. Fine while the dialog filters invalid chips first; either accept `z.string()` and report `invalid` per address, or drop that status.
-
-### WH-010 · Invites by email and by link
-- **Type:** feature · **Priority:** P2 · **Status:** under-review · **Area:** api + client
-- **Why:** your original requirement. Join a workspace only by invite (email or link); invites expire; new members get the workspace's default role.
-- **Scope:**
-  - email invites: single use, tied to one email address, 7 days;
-  - invite links: maximum number of uses, expiry, can be revoked;
-  - only a hash of each token is stored;
-  - accept flow `/{locale}/invite/{token}` (sign in or sign up first, then join);
-  - hooks WH-017 (list/search hooks shipped with WH-046).
-- **Depends on:** WH-009 (done in `d39d25a`).
-- **Plan (2026-10-17):** too big for one ticket. Split it like WH-009 when it starts:
-  1. database: `invites` table (`token_hash`, `email` or link, `role_id`, `expires_at`, `max_uses`/`uses`, `revoked_at`), with RLS;
-  2. API: create, list, revoke, preview and accept;
-  3. the invite email (with WH-013, in the invitee's language);
-  4. the accept page.
-  - **Accepting needs a return URL:** a signed-out invitee goes to sign-in or sign-up, then comes **back** to `/{locale}/invite/{token}`. The WH-045 proxy and sign-in form need a safe `?next=` parameter (same-origin paths only, never a full URL).
-  - **Depends on:** WH-046 (members) and WH-045 (proxy + `next`).
-- **UI rule (from WH-019, hook done in `d395684`):** "Invite" buttons render only when `useCan(PERMISSIONS.INVITES_WRITE)`; the API still returns 403.
-- **Progress (2026-10-17):** Slice 1 — `invites` table + RLS (email/link kind, `token_hash`, uses/expiry/revoke).
-- **Progress (2026-10-17):** Slice 2 — API create/list/revoke/preview/accept, English invite email, token-hash RLS for preview/accept, Invites UI + accept page, safe `?next=` on proxy/sign-in/sign-up.
-- **Merged WH-017 (2026-10-17):** `useInvites`, `useInvitePreview`, `useInviteActions` and `useAcceptInvite` (`hooks/use-invites.ts`) cover it. Its acceptance criterion moves here: expired, revoked, used-up and wrong-email invites each show a clear translated message on the accept page.
-- **Review (2026-10-17):** 🔁 a solid first version, with three fixes. Verified:
-  - all 16 projects pass, including `invites.spec` (4), `invites.integration.spec` (3), `invites.service.spec` (9) and `safe-next-path.spec` (2);
-  - **live:** Member listing invites → 403; Owner creating a link → 201 (the token is returned once); anonymous preview → 200 with only the workspace and role names; accepting as an existing member → 409 `ALREADY_MEMBER`; inviting an existing member's email → 409; inviting as Owner → 400; after a revoke, preview → 410 `INVITE_REVOKED`; a bogus token → 404;
-  - **design:** a 256-bit random token, only its SHA-256 stored; preview and accept read exactly one invite (plus its space and role names) through `app.invite_token_hash` RLS policies; email invites are bound to the invited address; `safeNextPath()` rejects absolute, protocol-relative and backslash URLs and control characters.
-  - [x] 🔴 **Tighten `memberships_insert`.** Dropped `user_id = app.user_id`; insert allowed via `app.space_id` or invite-token claim (`uses >= 1 AND uses <= max_uses` after atomic claim). RLS test: with only `app.user_id`, insert into another space fails.
-  - [x] **Race on link uses.** Atomic `updateMany` claim before membership create; concurrent-accept unit + integration tests (`maxUses: 1`).
-  - [x] Dead code: removed `inviteTokensEqual()`.
-  - [x] _(moved to WH-013)_ The invite email is English-only (`templates/space-invite.ts`). Fine for now; covered by WH-013.
-  - [x] UI moved into the **Team** page (WH-073); `/invites` 308-redirects.
-- **Progress (2026-10-18):** Review fixes landed (migration `20261017230000_memberships_insert_invite_claim`).
-- **Re-check (2026-10-18):** ✅ all review items fixed:
-  - `memberships_insert` now allows `app.space_id` **or** a claimed, valid invite for that exact space and role (`20261017230000_memberships_insert_invite_claim`, applied); the RLS test "with only app.user_id, cannot insert a membership into another space" passes;
-  - `accept()` claims the use atomically (`updateMany … uses < maxUses`, `count === 1` → else 410 `INVITE_EXHAUSTED`) **before** creating the membership, with the test "allows only one concurrent accept when maxUses is 1";
-  - `inviteTokensEqual` removed;
-  - the accept page maps every invite error code (`INVITE_NOT_FOUND/EXPIRED/REVOKED/EXHAUSTED/EMAIL_MISMATCH`, `ALREADY_MEMBER`) to translated text (merged WH-017 criterion).
-  - All 16 projects pass (invites integration 4, service 11, contracts 4, RLS 5). The live API was down during this review; create, preview, revoke and the guards were verified live on 2026-10-17. English-only email stays with WH-013. **Ready to commit.**
+- **Progress (2026-10-18):** Browser sanity on Acme; e2e left open for WH-072; ticket moved to under-review.
+- **Review (2026-10-18, 2nd pass):** ✅ all feedback fixed:
+  - `pnpm quality` passes every check;
+  - **default role** = `isDefault` from `GET /spaces/{id}/roles` (live: Admin, **Member\***), and the dialog pre-selects Member ("عضو");
+  - **sending limit:** `@Throttle` 10/min on create and resend (live: the 11th create → **429**), plus a per-workspace daily email cap (`assertEmailInviteBudget`, with a unit test);
+  - **RTL tabs:** in `ar`, ArrowLeft moves to the next tab and updates `?tab=`;
+  - `/members` → 308 straight to `/team?tab=members`.
+  - **Browser checks:** `?tab=invitations` opens on that tab after a reload; at 375 px there's no horizontal overflow and the dialog opens in RTL at 343 px (the screen minus margins, not edge-to-edge full-screen, which is fine); a **Member** sees only the Members and Groups tabs, with no "Invite people" button, even on `?tab=invitations`.
+  - The e2e test moved to WH-072 (it needs the per-role sign-in).
+  - Minor, not blocking: a Member on `?tab=invitations` keeps that query in the URL while seeing Members; consider normalising it to `?tab=members`.
+  - **Ready to commit.**
 
 ### WH-042 · Dark mode: decide, then implement or remove the unused styles
 - **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** client
@@ -446,13 +476,3 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
 - **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** api + client
 - **Why:** FR-BIL-01/02: monthly price from active memberships, prorated; only the Owner manages it. Deferred with deployment (WH-026); the settings "Billing" section is a placeholder.
 - **Done when:** decided and specified (provider, plans) before any implementation.
-
-### WH-043 · Remove the unused `JoinPreview` scaffold (and Zustand)
-- **Type:** tech-debt · **Priority:** P3 · **Status:** under-review · **Area:** client
-- **Why:** found while reviewing WH-001. `src/components/join-preview.tsx` is imported nowhere, yet it holds hard-coded English ("Join a space", "Invalid input", "Ready to join with …"). It's the only user of `src/stores/ui-store.ts` and `src/lib/validators/join-space.ts`, and `ui-store` is the only use of the `zustand` dependency.
-- **Scope:** delete the 3 files and remove `zustand` from `apps/client/package.json`, unless the workspaces UI (WH-041) needs a client store. If it does, keep Zustand and say so here.
-- **Acceptance criteria:**
-  - [x] Deleted `join-preview.tsx`, `ui-store.ts`, `join-space.ts`; removed `zustand` from `apps/client/package.json`.
-  - [x] `pnpm nx run-many -t typecheck lint test` green for `database`, `spaces`, `contracts`, `client`.
-- **Progress (2026-10-18):** Cleanup applied; awaiting commit before ticket deletion.
-- **Review (2026-10-18):** ✅ `join-preview.tsx`, `lib/validators/join-space.ts` and `stores/ui-store.ts` are deleted; `zustand` is gone from `apps/client/package.json` and `pnpm-lock.yaml`; no references remain; all 16 projects pass. **Ready to commit.**

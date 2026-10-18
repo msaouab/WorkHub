@@ -55,14 +55,14 @@ export function AppMain({
     <main
       className={
         className ??
-        'relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-8 sm:px-6 sm:py-10'
+        'relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-8 pb-16 sm:px-6 sm:pt-10 sm:pb-24'
       }
     >
       <div
         className={
           wide
-            ? 'mx-auto flex min-h-full w-full max-w-5xl flex-col'
-            : 'mx-auto flex min-h-full w-full max-w-xl flex-col'
+            ? 'mx-auto flex min-h-full w-full max-w-5xl flex-1 flex-col'
+            : 'mx-auto flex min-h-full w-full max-w-xl flex-1 flex-col'
         }
       >
         {children}

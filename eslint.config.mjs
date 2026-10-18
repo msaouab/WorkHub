@@ -62,6 +62,7 @@ export default [
                 'type:feature',
                 'type:data-access',
                 'type:util',
+                'type:tool',
               ],
             },
             {

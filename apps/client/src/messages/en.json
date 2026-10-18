@@ -19,21 +19,16 @@
     "spaceDescription": "Your WorkHub workspace.",
     "spaceSettingsTitle": "Workspace settings — WorkHub",
     "spaceSettingsDescription": "Branding and settings for this workspace.",
-    "spaceMembersTitle": "People — WorkHub",
-    "spaceMembersDescription": "People in this workspace.",
     "settingsTitle": "Settings — WorkHub",
     "settingsDescription": "Manage your WorkHub account.",
     "spaceLeaveTitle": "My leave — WorkHub",
     "spaceCalendarTitle": "Team calendar — WorkHub",
     "spaceHolidaysTitle": "Holidays — WorkHub",
     "spaceDocumentsTitle": "Documents — WorkHub",
-    "spacePeopleTitle": "People — WorkHub",
     "spaceTeamTitle": "Team — WorkHub",
     "spaceApprovalsTitle": "Approvals — WorkHub",
-    "spaceInvitesTitle": "Invites — WorkHub",
     "inviteAcceptTitle": "Accept invite — WorkHub",
     "spaceRolesTitle": "Roles — WorkHub",
-    "spaceTeamsTitle": "Teams — WorkHub",
     "spaceLeavePoliciesTitle": "Leave policies — WorkHub",
     "settingsSignInTitle": "Sign-in methods — WorkHub",
     "settingsSessionsTitle": "Sessions — WorkHub",
@@ -47,8 +42,8 @@
     "collapse": "Collapse",
     "expand": "Expand",
     "workspaceNav": "Workspace",
-    "settingsNavLabel": "Account settings",
     "accountSettings": "Account settings",
+    "settingsNavLabel": "Account settings",
     "spaceNav": {
       "home": "Home",
       "leave": "My leave",
@@ -92,8 +87,7 @@
     "allSpaces": "All workspaces",
     "failed": "Couldn't load your workspaces.",
     "requestsTitle": "Your requests, everywhere",
-    "requestsDescription": "Leave and document requests across your workspaces will show up here.",
-    "requestsSoon": "We're building this. It'll be ready soon."
+    "requestsDescription": "Leave and document requests across your workspaces will show up here."
   },
   "NotFound": {
     "code": "404",
@@ -109,7 +103,6 @@
     "creatingAccount": "Creating account…",
     "sending": "Sending…",
     "language": "Language",
-    "unavailable": "Unavailable",
     "saving": "Saving…"
   },
   "Account": {
@@ -168,7 +161,6 @@
     "brand": "WorkHub",
     "nav": {
       "product": "Product",
-      "contact": "Talk to us",
       "signIn": "Sign in",
       "signUp": "Sign up",
       "signOut": "Sign out"
@@ -374,10 +366,7 @@
       "checkingSession": "Checking session…",
       "name": "Name",
       "email": "Email",
-      "locale": "Language",
-      "emailVerified": "Email verified",
-      "yes": "Yes",
-      "no": "No"
+      "locale": "Language"
     }
   },
   "Spaces": {
@@ -431,18 +420,12 @@
     "invites": {
       "title": "Invites",
       "description": "Invite people by email or share a link. New members get the default role.",
-      "emailTitle": "Invite by email",
-      "emailLabel": "Email",
-      "emailPlaceholder": "name@company.com",
-      "sendEmail": "Send invite",
       "sending": "Sending…",
-      "linkTitle": "Invite link",
       "createLink": "Create link",
       "linkCreated": "Share this link (shown once):",
       "copyLink": "Copy link",
       "copied": "Copied",
       "copyFailed": "Couldn't copy the link. Select it and copy manually.",
-      "listTitle": "Pending invites",
       "loading": "Loading invites…",
       "loadingMore": "Loading…",
       "loadMore": "Load more",
@@ -461,7 +444,6 @@
         "type": "Type",
         "target": "To",
         "role": "Role",
-        "uses": "Uses",
         "expires": "Expires",
         "actions": "Actions"
       },
@@ -498,7 +480,6 @@
       "slugLatinHint": "Use Latin letters, numbers and hyphens for the URL (e.g. acme).",
       "submit": "Create workspace",
       "submitting": "Creating…",
-      "invalid": "Check the name and slug.",
       "slugTaken": "That slug is already taken.",
       "failed": "Couldn't create the workspace. Try again.",
       "errors": {
@@ -540,9 +521,6 @@
       "description": "Manage how this workspace looks.",
       "brandingTitle": "Branding",
       "brandingDescription": "Logo and cover shown on the workspace home and in the switcher.",
-      "noAccess": "You aren't a member of “{slug}”, or it doesn't exist.",
-      "back": "Back to workspaces",
-      "backToSpace": "Back to workspace",
       "sectionNav": "Settings sections",
       "sections": {
         "general": "General",
@@ -600,7 +578,6 @@
     "nameMax": "Name is too long",
     "confirmPassword": "Confirm your password",
     "passwordMismatch": "Passwords do not match",
-    "invalidInput": "Invalid input",
     "spaceNameMin": "Enter a workspace name",
     "spaceNameMax": "Name is too long",
     "spaceSlugMin": "Slug must be at least 2 characters",
@@ -652,8 +629,7 @@
       "pastTitle": "Past invitations",
       "pastEmpty": "No past invitations.",
       "invitedBy": "Invited by",
-      "resend": "Resend",
-      "copyUnavailable": "Copy the link when you create it."
+      "resend": "Resend"
     },
     "inviteDialog": {
       "title": "Invite people",
@@ -679,7 +655,6 @@
   "ComingSoon": {
     "description": "We're building this. It'll be ready soon.",
     "backToHome": "Back to workspace home",
-    "backToProfile": "Back to profile",
     "backToDashboard": "Back to dashboard",
     "features": {
       "leave": "My leave",
@@ -697,6 +672,7 @@
       "deleteAccount": "Delete account",
       "search": "Search",
       "dashboardRequests": "Your requests"
-    }
+    },
+    "backToProfile": "Back to profile"
   }
 }

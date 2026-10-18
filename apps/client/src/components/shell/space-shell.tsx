@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 import { AppFrame, AppMain } from '@/components/shell/app-frame';
 import { MobileNavDrawer } from '@/components/shell/mobile-nav-drawer';
 import { SpaceSidebar } from '@/components/shell/space-sidebar';
@@ -35,9 +35,7 @@ export function SpaceShell({ children, initialCollapsed }: SpaceShellProps) {
     return (
       <AppFrame>
         <AppMain>
-          <div className="flex justify-center py-12">
-            <LogoLoader size="lg" showLabel label={t('loading')} />
-          </div>
+          <PageLoader fill="parent" label={t('loading')} />
         </AppMain>
       </AppFrame>
     );

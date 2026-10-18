@@ -51,8 +51,6 @@ export function SettingsProfileForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-      <h2 className="font-display text-xl font-semibold">{t('profileTitle')}</h2>
-
       <div className="flex flex-col gap-2">
         <Label htmlFor="settings-name">{t('nameLabel')}</Label>
         <Controller
@@ -66,7 +64,6 @@ export function SettingsProfileForm() {
               onValueChange={field.onChange}
               onBlur={field.onBlur}
               ref={field.ref}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}
@@ -83,7 +80,6 @@ export function SettingsProfileForm() {
           readOnly
           disabled
           dir="ltr"
-          className="h-10"
         />
         <p className="text-xs text-muted-foreground">{t('emailHint')}</p>
       </div>

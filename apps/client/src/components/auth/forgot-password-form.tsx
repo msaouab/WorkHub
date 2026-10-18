@@ -107,7 +107,6 @@ export function ForgotPasswordForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={tFields('email.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
             />

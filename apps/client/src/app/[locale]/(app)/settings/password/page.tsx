@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { SettingsPasswordForm } from '@/components/account/settings-password-form';
+import { PageHeader } from '@/components/shell/page-header';
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -22,11 +23,7 @@ export default async function SettingsPasswordPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {t('passwordTitle')}
-        </h1>
-      </div>
+      <PageHeader title={t('passwordTitle')} />
       <SettingsPasswordForm />
     </div>
   );

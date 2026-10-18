@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Suspense } from 'react';
 import { AcceptInvite } from '@/components/invites/accept-invite';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 
 type PageProps = {
   params: Promise<{ locale: string; token: string }>;
@@ -24,11 +24,7 @@ export default async function InviteAcceptPage({ params }: PageProps) {
 
   return (
     <Suspense
-      fallback={
-        <div className="flex justify-center py-10">
-          <LogoLoader size="lg" showLabel />
-        </div>
-      }
+      fallback={<PageLoader fill="parent" />}
     >
       <AcceptInvite token={token} />
     </Suspense>

@@ -89,7 +89,6 @@ export function SignUpForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={tFields('name.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
             />
@@ -113,7 +112,6 @@ export function SignUpForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={tFields('email.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
             />
@@ -136,7 +134,6 @@ export function SignUpForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={tFields('password.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
             />

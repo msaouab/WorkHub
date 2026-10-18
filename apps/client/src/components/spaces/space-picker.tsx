@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { SpaceLogo } from '@/components/spaces/space-logo';
 import { useSpaces } from '@/hooks/use-spaces';
@@ -18,11 +18,7 @@ export function SpacePicker() {
   const { data: spaces, isPending, isError } = useSpaces();
 
   if (authPending || !isSignedIn || isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <LogoLoader size="lg" showLabel label={t('loading')} />
-      </div>
-    );
+    return <PageLoader fill="parent" label={t('loading')} />;
   }
 
   if (isError) {

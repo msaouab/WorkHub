@@ -63,7 +63,6 @@ export function ContactForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={t('fields.name.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}
@@ -86,7 +85,6 @@ export function ContactForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={t('fields.email.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}
@@ -108,7 +106,6 @@ export function ContactForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={t('fields.company.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}

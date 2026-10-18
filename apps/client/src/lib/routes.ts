@@ -14,5 +14,3 @@ export const ROUTES = {
   verifyEmail: '/verify-email',
   contact: '/contact',
 } as const;
-
-export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES];

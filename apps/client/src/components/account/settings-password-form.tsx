@@ -58,8 +58,6 @@ export function SettingsPasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-      <h2 className="font-display text-xl font-semibold">{t('passwordTitle')}</h2>
-
       <div className="flex flex-col gap-2">
         <Label htmlFor="settings-current-password">{t('currentPassword')}</Label>
         <Controller
@@ -73,7 +71,6 @@ export function SettingsPasswordForm() {
               onValueChange={field.onChange}
               onBlur={field.onBlur}
               ref={field.ref}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}
@@ -94,7 +91,6 @@ export function SettingsPasswordForm() {
               onValueChange={field.onChange}
               onBlur={field.onBlur}
               ref={field.ref}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}
@@ -115,7 +111,6 @@ export function SettingsPasswordForm() {
               onValueChange={field.onChange}
               onBlur={field.onBlur}
               ref={field.ref}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
             />
           )}

@@ -1,0 +1,18 @@
+{
+  "name": "@work-hub/quality",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "nx": {
+    "tags": [
+      "scope:shared",
+      "type:tool"
+    ]
+  },
+  "dependencies": {
+    "@work-hub/backlog": "workspace:*"
+  }
+}

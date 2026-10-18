@@ -39,7 +39,7 @@ Enforced by `@nx/enforce-module-boundaries` in `eslint.config.mjs`:
 | `type:feature` | `feature`, `data-access`, `util` |
 | `type:data-access` | `data-access`, `util` |
 | `type:util` | `util` only |
-| `type:tool` | `feature`, `data-access`, `util` |
+| `type:tool` | `feature`, `data-access`, `util`, `tool` (e.g. `quality` reuses `backlog`) |
 | `type:e2e` | `app`, `feature`, `data-access`, `util` |
 | `scope:api` | `scope:api`, `scope:shared` |
 | `scope:client` | `scope:client`, `scope:shared` |

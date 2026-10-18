@@ -1,0 +1,90 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "webpack": false,
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "@nestjs/schematics",
+    "@nx/nest",
+    "@nx/node",
+    "@nx/web",
+    "@eslint/js",
+    "eslint-config-next",
+    "eslint-plugin-import",
+    "eslint-plugin-jsx-a11y",
+    "eslint-plugin-react-hooks",
+    "typescript-eslint",
+    "prettier",
+    "tslib",
+    "@nestjs/testing",
+    "@testing-library/dom",
+    "@testing-library/react",
+    "@types/express",
+    "@vitejs/plugin-react",
+    "react",
+    "react-dom"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [],
+      "project": []
+    },
+    "apps/server": {
+      "entry": [
+        "src/main.ts",
+        "src/generate-openapi.ts"
+      ],
+      "project": [
+        "src/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@aws-sdk/client-s3",
+        "@node-rs/argon2",
+        "@prisma/adapter-pg",
+        "@work-hub/constants",
+        "nodemailer",
+        "pg",
+        "pino-pretty",
+        "sharp",
+        "swagger-ui-dist"
+      ]
+    },
+    "apps/client": {
+      "ignore": [
+        "src/components/ui/**"
+      ]
+    },
+    "apps/client-e2e": {
+      "entry": [
+        "playwright.config.mts",
+        "src/**/*.spec.ts",
+        "src/global-teardown.mts"
+      ]
+    },
+    "libs/*/*": {
+      "project": [
+        "src/**/*.ts"
+      ]
+    },
+    "tools/*": {
+      "entry": [
+        "src/**/*.test.mjs"
+      ],
+      "project": [
+        "src/**/*.{ts,mjs}"
+      ]
+    },
+    "libs/api/database": {
+      "project": [
+        "src/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@prisma/client"
+      ]
+    },
+    "tools/seed": {
+      "project": [
+        "src/**/*.ts"
+      ]
+    }
+  }
+}

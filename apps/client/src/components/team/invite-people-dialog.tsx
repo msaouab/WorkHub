@@ -1,15 +1,23 @@
 'use client';
 
-import { CheckIcon, CopyIcon, XIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, CopyIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useInviteActions, useSpaceRoles } from '@/hooks/use-invites';
@@ -18,8 +26,10 @@ import { ApiError } from '@/lib/api/fetch';
 import { parseInviteEmails } from '@/lib/team/parse-invite-emails';
 import { cn } from '@/lib/utils';
 
-const selectClassName =
-  'h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50';
+const fieldTriggerClassName = cn(
+  buttonVariants({ variant: 'outline' }),
+  'w-full justify-between gap-2 px-2.5 font-normal'
+);
 
 type InviteMode = 'email' | 'link';
 
@@ -208,18 +218,15 @@ export function InvitePeopleDialog({
         </div>
 
         <div className="mt-4 flex flex-col gap-2">
-          <Label htmlFor={`${baseId}-role`}>{t('role')}</Label>
-          <select
-            id={`${baseId}-role`}
-            className={selectClassName}
+          <Label id={`${baseId}-role-label`}>{t('role')}</Label>
+          <RoleSelect
+            labelledBy={`${baseId}-role-label`}
             value={roleId}
-            onChange={(event) => setRoleId(event.target.value)}
+            roles={rolesQuery.data?.items ?? []}
             disabled={rolesQuery.isLoading}
-          >
-            {(rolesQuery.data?.items ?? []).map((role) => (
-              <RoleOption key={role.id} id={role.id} name={role.name} />
-            ))}
-          </select>
+            onValueChange={setRoleId}
+            placeholder={t('role')}
+          />
         </div>
 
         {mode === 'email' ? (
@@ -233,7 +240,7 @@ export function InvitePeopleDialog({
             <div className="flex flex-col gap-2">
               <Label htmlFor={`${baseId}-emails`}>{t('emails')}</Label>
               <div
-                className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border border-input px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50"
+                className="flex min-h-8 flex-wrap items-center gap-1.5 rounded-lg border border-input px-2 py-1 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50"
                 dir="ltr"
               >
                 {emails.map((email) => (
@@ -299,19 +306,33 @@ export function InvitePeopleDialog({
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor={`${baseId}-expires`}>{t('expiresIn')}</Label>
-                <select
-                  id={`${baseId}-expires`}
-                  className={selectClassName}
-                  value={expiresInDays}
-                  onChange={(event) =>
-                    setExpiresInDays(Number(event.target.value))
-                  }
-                >
-                  <option value={1}>{t('days', { count: 1 })}</option>
-                  <option value={7}>{t('days', { count: 7 })}</option>
-                  <option value={30}>{t('days', { count: 30 })}</option>
-                </select>
+                <Label id={`${baseId}-expires-label`}>{t('expiresIn')}</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-labelledby={`${baseId}-expires-label`}
+                    className={fieldTriggerClassName}
+                  >
+                    <span>{t('days', { count: expiresInDays })}</span>
+                    <ChevronDownIcon
+                      className="size-3.5 opacity-70"
+                      aria-hidden
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-36">
+                    <DropdownMenuRadioGroup
+                      value={String(expiresInDays)}
+                      onValueChange={(value) =>
+                        setExpiresInDays(Number(value) || 7)
+                      }
+                    >
+                      {[1, 7, 30].map((days) => (
+                        <DropdownMenuRadioItem key={days} value={String(days)}>
+                          {t('days', { count: days })}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor={`${baseId}-uses`}>{t('maxUses')}</Label>
@@ -381,9 +402,52 @@ export function InvitePeopleDialog({
   );
 }
 
-function RoleOption({ id, name }: { id: string; name: string }) {
+function RoleSelect({
+  labelledBy,
+  value,
+  roles,
+  disabled,
+  onValueChange,
+  placeholder,
+}: {
+  labelledBy: string;
+  value: string;
+  roles: { id: string; name: string }[];
+  disabled?: boolean;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+}) {
+  const selected = roles.find((role) => role.id === value);
+  const selectedLabel = useRoleLabel(selected?.name ?? '');
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-labelledby={labelledBy}
+        disabled={disabled || roles.length === 0}
+        className={fieldTriggerClassName}
+      >
+        <span className="truncate">
+          {selected ? selectedLabel : placeholder}
+        </span>
+        <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-44">
+        <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
+          {roles.map((role) => (
+            <RoleRadioItem key={role.id} id={role.id} name={role.name} />
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function RoleRadioItem({ id, name }: { id: string; name: string }) {
   const label = useRoleLabel(name);
-  return <option value={id}>{label}</option>;
+  return (
+    <DropdownMenuRadioItem value={id}>{label}</DropdownMenuRadioItem>
+  );
 }
 
 function mapError(

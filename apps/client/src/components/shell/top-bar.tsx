@@ -73,7 +73,7 @@ export function TopBar({
                 placeholder={tTop('searchPlaceholder', {
                   name: searchWorkspaceName,
                 })}
-                className="h-9 w-full rounded-lg border border-border/80 bg-muted/40 pe-3 ps-9 text-sm text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-8 w-full rounded-lg border border-border/80 bg-muted/40 pe-3 ps-9 text-sm text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onFocus={(e) => e.currentTarget.blur()}
                 aria-describedby="wh-search-soon"
               />

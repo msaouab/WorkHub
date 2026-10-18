@@ -93,7 +93,7 @@ export function SettingsAvatar() {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">{t('title')}</h2>
+        <h2 className="text-sm font-medium text-foreground">{t('title')}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
       </div>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { SettingsLanguageForm } from '@/components/account/settings-language-form';
+import { PageHeader } from '@/components/shell/page-header';
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -22,12 +23,10 @@ export default async function SettingsLanguagePage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {t('languageTitle')}
-        </h1>
-        <p className="mt-2 text-muted-foreground">{t('languageDescription')}</p>
-      </div>
+      <PageHeader
+        title={t('languageTitle')}
+        description={t('languageDescription')}
+      />
       <SettingsLanguageForm />
     </div>
   );

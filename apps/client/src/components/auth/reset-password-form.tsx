@@ -98,7 +98,6 @@ export function ResetPasswordForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={tFields('newPassword.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
             />
@@ -121,7 +120,6 @@ export function ResetPasswordForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={tFields('confirmPassword.placeholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
             />

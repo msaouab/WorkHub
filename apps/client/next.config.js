@@ -9,10 +9,6 @@ const nextConfig = {
   transpilePackages: ['@work-hub/contracts', '@work-hub/constants'],
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
       // Local MinIO (WH-047); production CDN host goes here too.
       {
         protocol: 'http',

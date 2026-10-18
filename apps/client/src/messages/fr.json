@@ -19,21 +19,16 @@
     "spaceDescription": "Votre espace WorkHub.",
     "spaceSettingsTitle": "Paramètres de l'espace — WorkHub",
     "spaceSettingsDescription": "Apparence et paramètres de cet espace.",
-    "spaceMembersTitle": "Personnes — WorkHub",
-    "spaceMembersDescription": "Les personnes de cet espace.",
     "settingsTitle": "Paramètres — WorkHub",
     "settingsDescription": "Gérez votre compte WorkHub.",
     "spaceLeaveTitle": "Mes congés — WorkHub",
     "spaceCalendarTitle": "Calendrier d’équipe — WorkHub",
     "spaceHolidaysTitle": "Jours fériés — WorkHub",
     "spaceDocumentsTitle": "Documents — WorkHub",
-    "spacePeopleTitle": "Personnes — WorkHub",
     "spaceTeamTitle": "Équipe — WorkHub",
     "spaceApprovalsTitle": "Approbations — WorkHub",
-    "spaceInvitesTitle": "Invitations — WorkHub",
     "inviteAcceptTitle": "Accepter l'invitation — WorkHub",
     "spaceRolesTitle": "Rôles — WorkHub",
-    "spaceTeamsTitle": "Équipes — WorkHub",
     "spaceLeavePoliciesTitle": "Politiques de congés — WorkHub",
     "settingsSignInTitle": "Méthodes de connexion — WorkHub",
     "settingsSessionsTitle": "Sessions — WorkHub",
@@ -47,8 +42,8 @@
     "collapse": "Réduire",
     "expand": "Développer",
     "workspaceNav": "Espace",
-    "settingsNavLabel": "Paramètres du compte",
     "accountSettings": "Paramètres du compte",
+    "settingsNavLabel": "Paramètres du compte",
     "spaceNav": {
       "home": "Accueil",
       "leave": "Mes congés",
@@ -92,8 +87,7 @@
     "allSpaces": "Tous les espaces",
     "failed": "Impossible de charger vos espaces.",
     "requestsTitle": "Vos demandes, partout",
-    "requestsDescription": "Les demandes de congés et de documents de tous vos espaces apparaîtront ici.",
-    "requestsSoon": "Nous construisons cette page. Elle sera bientôt prête."
+    "requestsDescription": "Les demandes de congés et de documents de tous vos espaces apparaîtront ici."
   },
   "NotFound": {
     "code": "404",
@@ -109,7 +103,6 @@
     "creatingAccount": "Création du compte…",
     "sending": "Envoi…",
     "language": "Langue",
-    "unavailable": "Indisponible",
     "saving": "Enregistrement…"
   },
   "Account": {
@@ -168,7 +161,6 @@
     "brand": "WorkHub",
     "nav": {
       "product": "Produit",
-      "contact": "Nous contacter",
       "signIn": "Connexion",
       "signUp": "Inscription",
       "signOut": "Déconnexion"
@@ -374,10 +366,7 @@
       "checkingSession": "Vérification de la session…",
       "name": "Nom",
       "email": "E-mail",
-      "locale": "Langue",
-      "emailVerified": "E-mail vérifié",
-      "yes": "Oui",
-      "no": "Non"
+      "locale": "Langue"
     }
   },
   "Spaces": {
@@ -431,18 +420,12 @@
     "invites": {
       "title": "Invitations",
       "description": "Invitez par e-mail ou partagez un lien. Les nouveaux membres reçoivent le rôle par défaut.",
-      "emailTitle": "Inviter par e-mail",
-      "emailLabel": "E-mail",
-      "emailPlaceholder": "nom@entreprise.com",
-      "sendEmail": "Envoyer l'invitation",
       "sending": "Envoi…",
-      "linkTitle": "Lien d'invitation",
       "createLink": "Créer un lien",
       "linkCreated": "Partagez ce lien (affiché une seule fois) :",
       "copyLink": "Copier le lien",
       "copied": "Copié",
       "copyFailed": "Impossible de copier le lien. Sélectionnez-le et copiez-le manuellement.",
-      "listTitle": "Invitations en attente",
       "loading": "Chargement des invitations…",
       "loadingMore": "Chargement…",
       "loadMore": "Charger plus",
@@ -461,7 +444,6 @@
         "type": "Type",
         "target": "Destinataire",
         "role": "Rôle",
-        "uses": "Utilisations",
         "expires": "Expire",
         "actions": "Actions"
       },
@@ -498,7 +480,6 @@
       "slugLatinHint": "Utilisez des lettres latines, des chiffres et des tirets pour l'URL (ex. acme).",
       "submit": "Créer l'espace",
       "submitting": "Création…",
-      "invalid": "Vérifiez le nom et l'identifiant.",
       "slugTaken": "Cet identifiant est déjà pris.",
       "failed": "Impossible de créer l'espace. Réessayez.",
       "errors": {
@@ -540,9 +521,6 @@
       "description": "Gérez l'apparence de cet espace.",
       "brandingTitle": "Apparence",
       "brandingDescription": "Logo et couverture affichés sur l'accueil et dans le sélecteur.",
-      "noAccess": "Vous n'êtes pas membre de « {slug} », ou il n'existe pas.",
-      "back": "Retour aux espaces",
-      "backToSpace": "Retour à l'espace",
       "sectionNav": "Sections des paramètres",
       "sections": {
         "general": "Général",
@@ -600,7 +578,6 @@
     "nameMax": "Le nom est trop long",
     "confirmPassword": "Confirmez votre mot de passe",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
-    "invalidInput": "Saisie invalide",
     "spaceNameMin": "Entrez un nom d'espace",
     "spaceNameMax": "Le nom est trop long",
     "spaceSlugMin": "L'identifiant doit faire au moins 2 caractères",
@@ -652,8 +629,7 @@
       "pastTitle": "Invitations passées",
       "pastEmpty": "Aucune invitation passée.",
       "invitedBy": "Invité par",
-      "resend": "Renvoyer",
-      "copyUnavailable": "Copiez le lien lors de sa création."
+      "resend": "Renvoyer"
     },
     "inviteDialog": {
       "title": "Inviter des personnes",
@@ -679,7 +655,6 @@
   "ComingSoon": {
     "description": "Nous construisons cette page. Elle sera bientôt prête.",
     "backToHome": "Retour à l’accueil de l’espace",
-    "backToProfile": "Retour au profil",
     "backToDashboard": "Retour au tableau de bord",
     "features": {
       "leave": "Mes congés",
@@ -697,6 +672,7 @@
       "deleteAccount": "Supprimer le compte",
       "search": "Recherche",
       "dashboardRequests": "Vos demandes"
-    }
+    },
+    "backToProfile": "Retour au profil"
   }
 }

@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import type { MeSpace } from '@work-hub/contracts';
 import { useTranslations } from 'next-intl';
 import { COVER_PRESET_STYLES } from '@/lib/cover-presets';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 import { PostAuthRedirect } from '@/components/dashboard/post-auth-redirect';
 import { PageHeader } from '@/components/shell/page-header';
 import { SpaceLogo } from '@/components/spaces/space-logo';
@@ -30,10 +30,10 @@ export function DashboardHome() {
 
   if (authPending || !isSignedIn || isPending) {
     return (
-      <div className="flex justify-center py-12">
-        <LogoLoader size="lg" showLabel label={tAuth('checkingSession')} />
+      <>
+        <PageLoader fill="parent" label={tAuth('checkingSession')} />
         <PostAuthRedirect />
-      </div>
+      </>
     );
   }
 

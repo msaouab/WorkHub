@@ -69,12 +69,12 @@ function SpaceSettingsBody() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <PageHeader title={t('title')} description={t('description')} />
 
       <nav
         aria-label={t('sectionNav')}
-        className="sticky top-0 z-10 -mx-1 flex gap-0.5 overflow-x-auto border-b border-border/60 bg-background/90 px-1 pb-px backdrop-blur"
+        className="sticky top-0 z-10 flex flex-wrap gap-1 overflow-x-auto border-b border-border bg-background"
       >
         {visible.map((s) => {
           const active = activeId === s.id;
@@ -84,24 +84,20 @@ function SpaceSettingsBody() {
               href={`#${s.id}`}
               aria-current={active ? 'true' : undefined}
               className={cn(
-                'relative flex shrink-0 items-center gap-2 rounded-t-lg px-3 py-2.5 text-sm font-medium outline-none transition-colors',
+                '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors outline-none',
                 'focus-visible:ring-2 focus-visible:ring-ring',
                 active
                   ? s.danger
-                    ? 'bg-destructive/15 text-destructive'
-                    : 'bg-accent text-accent-foreground'
+                    ? 'border-destructive text-destructive'
+                    : 'border-foreground text-foreground'
                   : s.danger
-                    ? 'text-destructive/80 hover:bg-destructive/10 hover:text-destructive'
-                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
-                active &&
-                  'after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full',
-                active &&
-                  (s.danger ? 'after:bg-destructive' : 'after:bg-foreground')
+                    ? 'border-transparent text-destructive/80 hover:text-destructive'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
               <span>{s.label}</span>
               {s.soon ? (
-                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                   {tShell('soon')}
                 </span>
               ) : null}
@@ -111,7 +107,9 @@ function SpaceSettingsBody() {
       </nav>
 
       <section id="general" className="flex scroll-mt-28 flex-col gap-3">
-        <h2 className="text-lg font-semibold">{t('sections.general')}</h2>
+        <h2 className="text-sm font-medium text-foreground">
+          {t('sections.general')}
+        </h2>
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-muted-foreground">{t('nameLabel')}</dt>
@@ -128,21 +126,25 @@ function SpaceSettingsBody() {
       </section>
 
       <section id="branding" className="flex scroll-mt-28 flex-col gap-3">
-        <h2 className="text-lg font-semibold">{t('brandingTitle')}</h2>
+        <h2 className="text-sm font-medium text-foreground">
+          {t('brandingTitle')}
+        </h2>
         <p className="text-sm text-muted-foreground">{t('brandingDescription')}</p>
         <SpaceBranding space={space} variant="settings" />
       </section>
 
       {canBilling ? (
         <section id="billing" className="flex scroll-mt-28 flex-col gap-3">
-          <h2 className="text-lg font-semibold">{t('sections.billing')}</h2>
+          <h2 className="text-sm font-medium text-foreground">
+            {t('sections.billing')}
+          </h2>
           <p className="text-sm text-muted-foreground">{t('billingSoon')}</p>
         </section>
       ) : null}
 
       {canDelete ? (
         <section id="danger" className="flex scroll-mt-28 flex-col gap-3">
-          <h2 className="text-lg font-semibold text-destructive">
+          <h2 className="text-sm font-medium text-destructive">
             {t('sections.danger')}
           </h2>
           <p className="text-sm text-muted-foreground">{t('dangerSoon')}</p>

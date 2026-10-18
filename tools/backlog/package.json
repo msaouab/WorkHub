@@ -8,6 +8,12 @@
     "check": "node src/cli.mjs"
   },
   "nx": {
-    "tags": ["scope:shared", "type:tool"]
+    "tags": [
+      "scope:shared",
+      "type:tool"
+    ]
+  },
+  "exports": {
+    ".": "./src/backlog.mjs"
   }
 }

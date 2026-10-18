@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { SettingsAvatar } from '@/components/account/settings-avatar';
 import { SettingsProfileForm } from '@/components/account/settings-profile-form';
+import { PageHeader } from '@/components/shell/page-header';
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -22,15 +23,10 @@ export default async function SettingsProfilePage({ params }: PageProps) {
   const t = await getTranslations({ locale, namespace: 'Account.settings' });
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {t('profileTitle')}
-        </h1>
-        <p className="mt-2 text-muted-foreground">{t('description')}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t('profileTitle')} description={t('description')} />
       <SettingsAvatar />
-      <hr className="border-border/80" />
+      <hr className="border-border" />
       <SettingsProfileForm />
     </div>
   );

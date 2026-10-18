@@ -11,7 +11,9 @@
     "lint": "nx run-many -t lint --projects=@work-hub/client,server",
     "test": "nx run-many -t test --projects=@work-hub/client,server",
     "db:seed": "nx run @work-hub/seed:seed",
-    "backlog": "node tools/backlog/src/cli.mjs"
+    "backlog": "node tools/backlog/src/cli.mjs",
+    "quality": "node tools/quality/src/cli.mjs",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "private": true,
   "nx": {
@@ -56,7 +58,6 @@
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.0",
     "@vitest/coverage-v8": "~5.0.1",
     "@vitest/ui": "~5.0.1",
@@ -69,6 +70,7 @@
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "5.0.0",
     "jsdom": "^27.1.0",
+    "knip": "5.88.1",
     "nx": "23.3.0",
     "prettier": "~3.6.2",
     "tslib": "^2.3.0",

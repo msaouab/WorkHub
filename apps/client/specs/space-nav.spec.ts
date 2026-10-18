@@ -92,7 +92,7 @@ describe('SPACE_NAV_ITEMS readiness', () => {
 });
 
 describe('activeSettingsNavId', () => {
-  it('matches new settings routes', () => {
+  it('matches settings routes', () => {
     expect(activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings')).toBe('profile');
     expect(activeSettingsNavId(SETTINGS_NAV_ITEMS, '/settings/language')).toBe(
       'language'

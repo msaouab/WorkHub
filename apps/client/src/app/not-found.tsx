@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-literals -- rendered outside [locale], so no messages are loaded; English by design (WH-051). */
 import Link from 'next/link';
 
 /**

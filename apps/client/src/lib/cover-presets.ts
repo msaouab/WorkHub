@@ -1,4 +1,4 @@
-import { COVER_PRESETS, type CoverPreset } from '@work-hub/constants';
+import type { CoverPreset } from '@work-hub/constants';
 
 /** CSS backgrounds for named cover presets (WH-047). */
 export const COVER_PRESET_STYLES: Record<CoverPreset, string> = {
@@ -11,7 +11,3 @@ export const COVER_PRESET_STYLES: Record<CoverPreset, string> = {
   ember: 'linear-gradient(135deg, #7f1d1d 0%, #c2410c 50%, #b45309 100%)',
   lilac: 'linear-gradient(135deg, #4c1d95 0%, #7e22ce 45%, #a21caf 100%)',
 };
-
-export function isCoverPreset(value: string): value is CoverPreset {
-  return (COVER_PRESETS as readonly string[]).includes(value);
-}

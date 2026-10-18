@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useAuth } from '@/hooks/use-auth';
@@ -77,11 +77,7 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
   ]);
 
   if (preview.isLoading || authPending) {
-    return (
-      <div className="flex justify-center py-10">
-        <LogoLoader size="lg" showLabel label={t('loading')} />
-      </div>
-    );
+    return <PageLoader fill="parent" label={t('loading')} />;
   }
 
   if (preview.isError) {
@@ -135,11 +131,7 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
   }
 
   if (accept.isPending || (!accept.isError && !accept.isSuccess)) {
-    return (
-      <div className="flex justify-center py-10">
-        <LogoLoader size="lg" showLabel label={t('joining')} />
-      </div>
-    );
+    return <PageLoader fill="parent" label={t('joining')} />;
   }
 
   if (accept.isError) {
@@ -181,11 +173,7 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
     );
   }
 
-  return (
-    <div className="flex justify-center py-10">
-      <LogoLoader size="lg" showLabel label={t('joining')} />
-    </div>
-  );
+  return <PageLoader fill="parent" label={t('joining')} />;
 }
 
 function InviteMessage({ title, body }: { title: string; body: string }) {

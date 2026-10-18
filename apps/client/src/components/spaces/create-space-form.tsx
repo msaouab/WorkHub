@@ -178,7 +178,6 @@ export function CreateSpaceForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={t('namePlaceholder')}
-              className="h-10"
               aria-invalid={fieldState.invalid || undefined}
               required
               autoFocus
@@ -204,7 +203,7 @@ export function CreateSpaceForm() {
               onBlur={field.onBlur}
               ref={field.ref}
               placeholder={t('slugPlaceholder')}
-              className="h-10 font-mono text-sm"
+              className="font-mono text-sm"
               aria-invalid={fieldState.invalid || undefined}
               required
             />

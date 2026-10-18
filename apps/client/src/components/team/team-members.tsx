@@ -2,12 +2,13 @@
 
 import { PERMISSIONS, SYSTEM_ROLE_NAMES } from '@work-hub/constants';
 import type { SpaceMember } from '@work-hub/contracts';
-import { MoreHorizontalIcon } from 'lucide-react';
+import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { UserAvatar } from '@/components/account/user-avatar';
 import { LogoLoader } from '@/components/brand/logo-loader';
 import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -19,6 +20,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -41,6 +44,11 @@ import { useCurrentSpace } from '@/hooks/use-space';
 import { ApiError } from '@/lib/api/fetch';
 import { cn } from '@/lib/utils';
 
+const fieldTriggerClassName = cn(
+  buttonVariants({ variant: 'outline' }),
+  'min-w-40 justify-between gap-2 px-2.5 font-normal'
+);
+
 type PendingAction =
   | { type: 'deactivate' | 'reactivate' | 'remove'; member: SpaceMember }
   | { type: 'leave' }
@@ -58,9 +66,6 @@ type MemberErrorCode = (typeof ERROR_CODES)[number];
 function isMemberErrorCode(value: string): value is MemberErrorCode {
   return (ERROR_CODES as readonly string[]).includes(value);
 }
-
-const selectClassName =
-  'h-10 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50';
 
 export function TeamMembers() {
   const t = useTranslations('Spaces.members');
@@ -152,41 +157,56 @@ export function TeamMembers() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="team-member-status">{tTeam('filters.status')}</Label>
-          <select
-            id="team-member-status"
-            className={selectClassName}
-            value={status}
-            onChange={(event) =>
-              setStatus(event.target.value as '' | 'active' | 'deactivated')
-            }
-          >
-            <option value="">{tTeam('filters.allStatuses')}</option>
-            <option value="active">{tHome('statusValues.active')}</option>
-            <option value="deactivated">
-              {tHome('statusValues.deactivated')}
-            </option>
-          </select>
+          <Label id="team-member-status-label">{tTeam('filters.status')}</Label>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-labelledby="team-member-status-label"
+              className={fieldTriggerClassName}
+            >
+              <span>
+                {status === 'active'
+                  ? tHome('statusValues.active')
+                  : status === 'deactivated'
+                    ? tHome('statusValues.deactivated')
+                    : tTeam('filters.allStatuses')}
+              </span>
+              <ChevronDownIcon
+                className="size-3.5 shrink-0 opacity-70"
+                aria-hidden
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-40">
+              <DropdownMenuRadioGroup
+                value={status || 'all'}
+                onValueChange={(value) =>
+                  setStatus(
+                    value === 'all'
+                      ? ''
+                      : (value as 'active' | 'deactivated')
+                  )
+                }
+              >
+                <DropdownMenuRadioItem value="all">
+                  {tTeam('filters.allStatuses')}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="active">
+                  {tHome('statusValues.active')}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="deactivated">
+                  {tHome('statusValues.deactivated')}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="team-member-role">{tTeam('filters.role')}</Label>
-          <select
-            id="team-member-role"
-            className={selectClassName}
+          <Label id="team-member-role-label">{tTeam('filters.role')}</Label>
+          <RoleFilterSelect
+            labelledBy="team-member-role-label"
             value={role}
-            onChange={(event) => setRole(event.target.value)}
-          >
-            <option value="">{tTeam('filters.allRoles')}</option>
-            <option value={SYSTEM_ROLE_NAMES.OWNER}>
-              {SYSTEM_ROLE_NAMES.OWNER}
-            </option>
-            <option value={SYSTEM_ROLE_NAMES.ADMIN}>
-              {SYSTEM_ROLE_NAMES.ADMIN}
-            </option>
-            <option value={SYSTEM_ROLE_NAMES.MEMBER}>
-              {SYSTEM_ROLE_NAMES.MEMBER}
-            </option>
-          </select>
+            onValueChange={setRole}
+            allLabel={tTeam('filters.allRoles')}
+          />
         </div>
       </div>
 
@@ -276,6 +296,61 @@ export function TeamMembers() {
         t={t}
       />
     </div>
+  );
+}
+
+function RoleFilterSelect({
+  labelledBy,
+  value,
+  onValueChange,
+  allLabel,
+}: {
+  labelledBy: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  allLabel: string;
+}) {
+  const ownerLabel = useRoleLabel(SYSTEM_ROLE_NAMES.OWNER);
+  const adminLabel = useRoleLabel(SYSTEM_ROLE_NAMES.ADMIN);
+  const memberLabel = useRoleLabel(SYSTEM_ROLE_NAMES.MEMBER);
+  const selectedLabel =
+    value === SYSTEM_ROLE_NAMES.OWNER
+      ? ownerLabel
+      : value === SYSTEM_ROLE_NAMES.ADMIN
+        ? adminLabel
+        : value === SYSTEM_ROLE_NAMES.MEMBER
+          ? memberLabel
+          : allLabel;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-labelledby={labelledBy}
+        className={fieldTriggerClassName}
+      >
+        <span className="truncate">{selectedLabel}</span>
+        <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-40">
+        <DropdownMenuRadioGroup
+          value={value || 'all'}
+          onValueChange={(next) =>
+            onValueChange(next === 'all' ? '' : next)
+          }
+        >
+          <DropdownMenuRadioItem value="all">{allLabel}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value={SYSTEM_ROLE_NAMES.OWNER}>
+            {ownerLabel}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value={SYSTEM_ROLE_NAMES.ADMIN}>
+            {adminLabel}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value={SYSTEM_ROLE_NAMES.MEMBER}>
+            {memberLabel}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

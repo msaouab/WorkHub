@@ -3,7 +3,7 @@
 import { ArrowLeftIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { LogoLoader } from '@/components/brand/logo-loader';
+import { PageLoader } from '@/components/brand/logo-loader';
 import { AppFrame, AppMain } from '@/components/shell/app-frame';
 import { MobileNavDrawer } from '@/components/shell/mobile-nav-drawer';
 import { SettingsNav } from '@/components/shell/settings-nav';
@@ -24,9 +24,7 @@ export function SettingsShell({ children }: { children: ReactNode }) {
     return (
       <AppFrame breadcrumb={t('accountSettings')}>
         <AppMain>
-          <div className="flex justify-center py-12">
-            <LogoLoader size="lg" showLabel label={tAuth('checkingSession')} />
-          </div>
+          <PageLoader fill="parent" label={tAuth('checkingSession')} />
         </AppMain>
       </AppFrame>
     );

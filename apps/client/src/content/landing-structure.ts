@@ -14,8 +14,6 @@ export type LandingStatMetric = {
   prefix: string;
 };
 
-export type LandingStat = LandingStatMetric & { label: string; suffix: string };
-
 export function formatLandingStat(
   stat: Pick<LandingStatMetric, 'prefix' | 'target'> & { suffix: string }
 ): string {
@@ -29,7 +27,7 @@ export function formatStepNumber(index: number): string {
 export const landingStructure = {
   hero: {
     image: {
-      src: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2400&q=80',
+      src: '/hero-office.jpg',
     },
     primaryCtaHref: '#cta',
     secondaryCtaHref: '#product',

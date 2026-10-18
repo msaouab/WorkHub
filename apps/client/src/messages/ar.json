@@ -19,21 +19,16 @@
     "spaceDescription": "مساحة عمل WorkHub الخاصة بك.",
     "spaceSettingsTitle": "إعدادات المساحة — WorkHub",
     "spaceSettingsDescription": "المظهر والإعدادات لهذه المساحة.",
-    "spaceMembersTitle": "الأشخاص — WorkHub",
-    "spaceMembersDescription": "الأشخاص في مساحة العمل هذه.",
     "settingsTitle": "الإعدادات — WorkHub",
     "settingsDescription": "إدارة حساب WorkHub الخاص بك.",
     "spaceLeaveTitle": "إجازاتي — WorkHub",
     "spaceCalendarTitle": "تقويم الفريق — WorkHub",
     "spaceHolidaysTitle": "العطل — WorkHub",
     "spaceDocumentsTitle": "الوثائق — WorkHub",
-    "spacePeopleTitle": "الأشخاص — WorkHub",
     "spaceTeamTitle": "الفريق — WorkHub",
     "spaceApprovalsTitle": "الموافقات — WorkHub",
-    "spaceInvitesTitle": "الدعوات — WorkHub",
     "inviteAcceptTitle": "قبول الدعوة — WorkHub",
     "spaceRolesTitle": "الأدوار — WorkHub",
-    "spaceTeamsTitle": "الفرق — WorkHub",
     "spaceLeavePoliciesTitle": "سياسات الإجازة — WorkHub",
     "settingsSignInTitle": "طرق تسجيل الدخول — WorkHub",
     "settingsSessionsTitle": "الجلسات — WorkHub",
@@ -47,8 +42,8 @@
     "collapse": "طيّ",
     "expand": "توسيع",
     "workspaceNav": "مساحة العمل",
-    "settingsNavLabel": "إعدادات الحساب",
     "accountSettings": "إعدادات الحساب",
+    "settingsNavLabel": "إعدادات الحساب",
     "spaceNav": {
       "home": "الرئيسية",
       "leave": "إجازاتي",
@@ -92,8 +87,7 @@
     "allSpaces": "كل المساحات",
     "failed": "تعذّر تحميل مساحاتك.",
     "requestsTitle": "طلباتك في كل مكان",
-    "requestsDescription": "ستظهر هنا طلبات الإجازة والوثائق من كل مساحاتك.",
-    "requestsSoon": "نحن نبني هذه الصفحة. ستكون جاهزة قريبًا."
+    "requestsDescription": "ستظهر هنا طلبات الإجازة والوثائق من كل مساحاتك."
   },
   "NotFound": {
     "code": "404",
@@ -109,7 +103,6 @@
     "creatingAccount": "جارٍ إنشاء الحساب…",
     "sending": "جارٍ الإرسال…",
     "language": "اللغة",
-    "unavailable": "غير متاح",
     "saving": "جارٍ الحفظ…"
   },
   "Account": {
@@ -168,7 +161,6 @@
     "brand": "WorkHub",
     "nav": {
       "product": "المنتج",
-      "contact": "تواصل معنا",
       "signIn": "تسجيل الدخول",
       "signUp": "إنشاء حساب",
       "signOut": "تسجيل الخروج"
@@ -374,10 +366,7 @@
       "checkingSession": "جارٍ التحقق من الجلسة…",
       "name": "الاسم",
       "email": "البريد",
-      "locale": "اللغة",
-      "emailVerified": "البريد مؤكد",
-      "yes": "نعم",
-      "no": "لا"
+      "locale": "اللغة"
     }
   },
   "Spaces": {
@@ -431,18 +420,12 @@
     "invites": {
       "title": "الدعوات",
       "description": "ادعُ بالبريد أو شارك رابطًا. يحصل الأعضاء الجدد على الدور الافتراضي.",
-      "emailTitle": "دعوة بالبريد",
-      "emailLabel": "البريد الإلكتروني",
-      "emailPlaceholder": "name@company.com",
-      "sendEmail": "إرسال الدعوة",
       "sending": "جارٍ الإرسال…",
-      "linkTitle": "رابط الدعوة",
       "createLink": "إنشاء رابط",
       "linkCreated": "شارك هذا الرابط (يُعرض مرة واحدة):",
       "copyLink": "نسخ الرابط",
       "copied": "تم النسخ",
       "copyFailed": "تعذّر نسخ الرابط. حدّده وانسخه يدويًا.",
-      "listTitle": "الدعوات المعلّقة",
       "loading": "جارٍ تحميل الدعوات…",
       "loadingMore": "جارٍ التحميل…",
       "loadMore": "تحميل المزيد",
@@ -461,7 +444,6 @@
         "type": "النوع",
         "target": "إلى",
         "role": "الدور",
-        "uses": "الاستخدامات",
         "expires": "تنتهي",
         "actions": "إجراءات"
       },
@@ -498,7 +480,6 @@
       "slugLatinHint": "استخدم أحرفًا لاتينية وأرقامًا وشرطات للرابط (مثل acme).",
       "submit": "إنشاء المساحة",
       "submitting": "جارٍ الإنشاء…",
-      "invalid": "تحقق من الاسم والمعرّف.",
       "slugTaken": "هذا المعرّف مستخدم بالفعل.",
       "failed": "تعذّر إنشاء المساحة. حاول مرة أخرى.",
       "errors": {
@@ -540,9 +521,6 @@
       "description": "إدارة مظهر مساحة العمل هذه.",
       "brandingTitle": "الهوية البصرية",
       "brandingDescription": "الشعار والغلاف الظاهران في الصفحة الرئيسية وفي المبدّل.",
-      "noAccess": "لست عضوًا في «{slug}»، أو أنها غير موجودة.",
-      "back": "العودة إلى المساحات",
-      "backToSpace": "العودة إلى المساحة",
       "sectionNav": "أقسام الإعدادات",
       "sections": {
         "general": "عام",
@@ -600,7 +578,6 @@
     "nameMax": "الاسم طويل جدًا",
     "confirmPassword": "أكد كلمة المرور",
     "passwordMismatch": "كلمتا المرور غير متطابقتين",
-    "invalidInput": "إدخال غير صالح",
     "spaceNameMin": "أدخل اسم المساحة",
     "spaceNameMax": "الاسم طويل جدًا",
     "spaceSlugMin": "يجب أن يكون المعرّف حرفين على الأقل",
@@ -652,8 +629,7 @@
       "pastTitle": "دعوات سابقة",
       "pastEmpty": "لا توجد دعوات سابقة.",
       "invitedBy": "دعاها",
-      "resend": "إعادة الإرسال",
-      "copyUnavailable": "انسخ الرابط عند إنشائه."
+      "resend": "إعادة الإرسال"
     },
     "inviteDialog": {
       "title": "دعوة أشخاص",
@@ -679,7 +655,6 @@
   "ComingSoon": {
     "description": "نحن نبني هذه الصفحة. ستكون جاهزة قريبًا.",
     "backToHome": "العودة إلى الرئيسية",
-    "backToProfile": "العودة إلى الملف الشخصي",
     "backToDashboard": "العودة إلى لوحة التحكم",
     "features": {
       "leave": "إجازاتي",
@@ -697,6 +672,7 @@
       "deleteAccount": "حذف الحساب",
       "search": "البحث",
       "dashboardRequests": "طلباتك"
-    }
+    },
+    "backToProfile": "العودة إلى الملف الشخصي"
   }
 }

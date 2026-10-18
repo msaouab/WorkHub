@@ -99,10 +99,24 @@ export function LogoLoader({
   );
 }
 
-/** Full-screen centred loader for route-level loading states (`loading.tsx`). */
-export function PageLoader({ label }: { label?: string }) {
+type PageLoaderProps = {
+  label?: string;
+  /**
+   * `viewport` — full screen (`loading.tsx`).
+   * `parent` — centre in the current layout panel (e.g. AppMain).
+   */
+  fill?: 'viewport' | 'parent';
+};
+
+/** Centred loader for route-level and in-app loading states. */
+export function PageLoader({ label, fill = 'viewport' }: PageLoaderProps) {
   return (
-    <div className="flex min-h-svh items-center justify-center px-6">
+    <div
+      className={cn(
+        'flex items-center justify-center px-6',
+        fill === 'viewport' ? 'min-h-svh' : 'min-h-full flex-1 py-12'
+      )}
+    >
       <LogoLoader size="lg" showLabel label={label} />
     </div>
   );

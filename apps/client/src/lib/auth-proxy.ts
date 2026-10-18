@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from '@work-hub/constants';
+import type { Locale } from '@work-hub/constants';
 import { isAppLocale } from '@/i18n/locale';
 import { ROUTES } from '@/lib/routes';
 import { safeNextPath } from '@/lib/safe-next-path';
@@ -107,9 +107,4 @@ export function authRedirectPath(input: AuthRedirectInput): string | null {
   }
 
   return null;
-}
-
-/** Locale to use when building absolute callback URLs. */
-export function callbackLocale(urlLocale: string): Locale {
-  return isAppLocale(urlLocale) ? urlLocale : DEFAULT_LOCALE;
 }

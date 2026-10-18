@@ -26,7 +26,7 @@ start ──▶ in progress ──▶ under-review ──▶ done ──▶ comm
 ```
 
 **Review rules (Claude's job):** for each ticket with status `under-review`:
-1. Check every acceptance criterion and the Definition of Done: read the code, run `pnpm quality`, and check the running app for user-facing work.
+1. Check every acceptance criterion and the Definition of Done: read the code, run `pnpm quality`, and check the running app for user-facing work. For **user-facing** tickets (client routes, nav, pages that replace a coming-soon placeholder), also run `pnpm nx e2e @work-hub/client-e2e` against a local `pnpm dev` (or confirm the PR's **Playwright e2e** check is green) so a page moving from coming-soon to real cannot slip through.
 2. **No feedback at all** → status **`done`**, its Review tracker row deleted, and Claude **gives the commit message** for the done tickets. The ticket **stays in the file** until it's committed.
 3. **Any feedback** → back to **`in progress`**, with a dated **Review** entry marked 🔁 *changes requested* (a checklist), and its tracker row deleted. When the fixes land, set it to `under-review` again.
 4. **After the commit** that carries a ticket as `done` (it's `done` in `HEAD`'s copy of this file), Claude **deletes** it, and **moves the next implementations from `start` to `in progress`**: every `start` ticket at the highest remaining priority (the current milestone), in planned order. The deletion and the move go into the next commit.
@@ -56,7 +56,7 @@ The git hooks (`.githooks/`, enabled by `pnpm install`) add two gates:
 
 Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also lists committed `done` tickets to delete, and catches format mistakes: unknown status, duplicate ID, wrong order, stale tracker.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-079**.
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-080**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -121,6 +121,23 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 ## Tickets
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
+
+### WH-079 · Bug: CI e2e fails on the WH-011 PR, and the branch carries an unrelated `develop` commit
+- **Type:** bug · **Priority:** P0 · **Status:** done · **Area:** tooling (e2e, git)
+- **Why:** the PR for `wh-011-permissions` can't merge. **CI / Playwright e2e** fails 1 of 13 tests: `app-shell.spec.ts:7` "owner sees full nav and every item opens its route" waits for "We're building this. It'll be ready soon." on `/en/s/acme/roles`, but **WH-011 made Roles a real page** (`space-nav.ts` `roles` → `status: 'ready'`). The test kept the old coming-soon list (failed with 2 retries; the other 12 passed). The reviews missed it because `pnpm quality` doesn't run e2e and the WH-011 review didn't run it either.
+  - Also found: `ec7f2af` merged `origin/develop` into the branch. `develop` holds only `2e37e4c` "Initial commit: Spring Boot project setup", **unrelated history** from another project. It changed no files, but it puts a foreign root commit in the PR.
+- **Scope:**
+  - [x] `apps/client-e2e/src/app-shell.spec.ts`: remove `/en/s/acme/roles` from `comingSoonRoutes`; after the loop, assert the real Roles page (heading "Roles and permissions", and no coming-soon text: `toHaveCount(0)`).
+  - [x] Drop the stray merge from the feature branch (`git reset --hard cb49b24` before the fix, then `git push --force-with-lease`; the ruleset only protects `main`).
+  - [x] Decide on `origin/develop`: deleted (`git push origin --delete develop`) — leftover Spring Boot initial commit only.
+  - [x] Run `pnpm nx e2e @work-hub/client-e2e` locally against `pnpm dev`: 13/13.
+  - [x] **Process:** add "run e2e for user-facing tickets" to the review rules (Workflow → Review rules, step 1), so a page moving from coming-soon to real can't slip through again.
+- **Acceptance criteria:**
+  - [ ] The PR's **Playwright e2e** and **Quality + integration** checks are green; the PR history shows no `develop` commit.
+  - [ ] The PR can be squash-merged (ruleset satisfied).
+- **Blocks:** merging WH-011, WH-058, WH-077 and WH-078 (all `done` on this branch).
+- **Progress (2026-10-18):** reset branch to `cb49b24` (dropped `ec7f2af` + foreign `2e37e4c`); fixed `app-shell.spec.ts` Roles assertion; review rule updated; `origin/develop` deleted; local e2e **13/13**.
+- **Commit message:** `WH-079: Fix Roles e2e after WH-011 and drop the stray develop merge`
 
 ### WH-011 · Permissions management
 - **Type:** feature · **Priority:** P1 · **Status:** done · **Area:** api + client

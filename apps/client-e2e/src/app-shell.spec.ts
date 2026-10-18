@@ -26,7 +26,6 @@ test.describe('app shell (WH-053) — owner', () => {
       { path: '/en/s/acme/holidays', heading: 'Holidays' },
       { path: '/en/s/acme/documents', heading: 'Documents' },
       { path: '/en/s/acme/approvals', heading: 'Approvals' },
-      { path: '/en/s/acme/roles', heading: 'Roles and permissions' },
       { path: '/en/s/acme/leave-policies', heading: 'Leave policies' },
     ] as const;
 
@@ -39,6 +38,15 @@ test.describe('app shell (WH-053) — owner', () => {
         page.getByText("We're building this. It'll be ready soon.")
       ).toBeVisible();
     }
+
+    // WH-011: Roles is a real page (not coming soon).
+    await page.goto('/en/s/acme/roles');
+    await expect(
+      page.getByRole('heading', { name: 'Roles and permissions' })
+    ).toBeVisible();
+    await expect(
+      page.getByText("We're building this. It'll be ready soon.")
+    ).toHaveCount(0);
 
     await page.goto('/en/s/acme/team');
     await expect(page.getByRole('heading', { name: 'Team' })).toBeVisible();

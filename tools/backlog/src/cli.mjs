@@ -11,7 +11,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { hookContext, markReviewed, parseTickets, pendingReviews, validate } from './backlog.mjs';
+import { committedDoneTickets, hookContext, markReviewed, parseTickets, pendingReviews, validate } from './backlog.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
 const backlogFile = resolve(root, 'BACKLOG.md');
@@ -23,6 +23,15 @@ function currentHead() {
     return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   } catch {
     return 'no-commit';
+  }
+}
+
+/** BACKLOG.md as of the last commit, to know which `done` tickets are committed. */
+function headBacklog() {
+  try {
+    return execFileSync('git', ['show', 'HEAD:BACKLOG.md'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return '';
   }
 }
 
@@ -49,6 +58,7 @@ if (hookIndex !== -1) {
       tickets,
       problems: validate(markdown),
       pending: pendingReviews(tickets, head, readState()),
+      committedDone: committedDoneTickets(tickets, headBacklog()),
     });
     if (context) {
       const hookEventName = event === 'session-start' ? 'SessionStart' : 'UserPromptSubmit';
@@ -97,6 +107,11 @@ for (const t of tickets) counts[t.status] = (counts[t.status] ?? 0) + 1;
 const summary = Object.entries(counts).map(([status, n]) => `${n} ${status}`).join(' · ');
 console.log(`\nALL TICKETS BY PRIORITY, THEN STATUS (${tickets.length}: ${summary})`);
 tickets.forEach((t) => console.log(line(t)));
+
+const committedDone = committedDoneTickets(tickets, headBacklog());
+if (committedDone.length) {
+  console.log(`\nCOMMITTED AS DONE, delete from BACKLOG.md: ${committedDone.map((t) => t.id).join(', ')}`);
+}
 
 const problems = validate(markdown);
 if (problems.length) {

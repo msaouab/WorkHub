@@ -1,22 +1,39 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { findUnusedMessageKeys, gateProblems, messageKeyPaths, summaryLine } from './checks.mjs';
+import { findUnusedMessageKeys, gateProblems, messageKeyPaths, pushGateProblems, summaryLine, ticketIdsInMessages } from './checks.mjs';
 
 const ticket = (id, status) => ({ id, status });
 
 describe('gateProblems', () => {
-  it('passes when nothing is in progress and every review is done', () => {
-    assert.deepEqual(gateProblems([ticket('WH-001', 'start'), ticket('WH-002', 'under-review')], []), []);
+  it('passes when worked tickets are done', () => {
+    assert.deepEqual(gateProblems([ticket('WH-001', 'start'), ticket('WH-002', 'done')]), []);
   });
 
-  it('blocks on tickets in progress and on unreviewed tickets', () => {
-    const problems = gateProblems(
-      [ticket('WH-001', 'in progress'), ticket('WH-002', 'under-review')],
-      [{ ticket: ticket('WH-002', 'under-review'), reason: 'never reviewed' }]
-    );
+  it('blocks on tickets in progress or still under review', () => {
+    const problems = gateProblems([ticket('WH-001', 'in progress'), ticket('WH-002', 'under-review')]);
     assert.equal(problems.length, 2);
     assert.match(problems[0], /WH-001 is in progress/);
-    assert.match(problems[1], /WH-002 is under review but not reviewed \(never reviewed\)/);
+    assert.match(problems[1], /WH-002 is under review/);
+  });
+});
+
+describe('pushGateProblems', () => {
+  const tickets = [ticket('WH-001', 'start'), ticket('WH-002', 'in progress'), ticket('WH-003', 'under-review')];
+
+  it('blocks when an outgoing commit names a ticket that is not done', () => {
+    const problems = pushGateProblems(tickets, ['WH-003', 'WH-009']);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /^WH-003 is under-review/);
+  });
+
+  it('ignores unfinished tickets that no outgoing commit mentions', () => {
+    assert.deepEqual(pushGateProblems(tickets, ['WH-009']), []);
+  });
+});
+
+describe('ticketIdsInMessages', () => {
+  it('finds unique ticket IDs in commit messages', () => {
+    assert.deepEqual(ticketIdsInMessages('WH-073, WH-074: x\nRefs: WH-073, WH-016'), ['WH-073', 'WH-074', 'WH-016']);
   });
 });
 

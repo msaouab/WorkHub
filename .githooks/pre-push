@@ -1,0 +1,6 @@
+#!/bin/sh
+# WorkHub push gate: push only finished work. Every check passes and no outgoing
+# commit names a ticket that is still in progress or under review
+# (commit -> review deletes done tickets -> push). See tools/quality/src/cli.mjs.
+# Emergency bypass (avoid): git push --no-verify
+exec pnpm -s quality --push

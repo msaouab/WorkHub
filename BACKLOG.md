@@ -7,42 +7,49 @@ _Last updated: 2026-10-18_
 
 ## Workflow
 
-All tickets are in **one list, sorted by priority** (P0 → P3), **then by status** (`start` → `in progress` → `under-review`), then by planned order. Each ticket's **Status** line says where it is:
+All tickets are in **one list, sorted by priority** (P0 → P3), **then by status** (`start` → `in progress` → `under-review` → `done`), then by planned order. Each ticket's **Status** line says where it is:
 
 | Status | Meaning | Who sets it |
 |---|---|---|
-| `start` | Created, not touched yet | Whoever creates the ticket |
-| `in progress` | Someone started, or touched code in this ticket's scope | You, or Claude when it sees changes in that scope |
+| `start` | Planned: the **next implementations**, in priority and planned order | Whoever creates the ticket |
+| `in progress` | The **current** implementation | Claude, right after the previous commit (or you, when you start one) |
 | `under-review` | You consider it finished and want it reviewed | **You** |
-| `done` | Reviewed with no feedback against the Definition of Done **and committed** | **Claude**, which then **deletes the ticket from this file** |
+| `done` | Reviewed with no feedback; **Claude gives the commit message**; waiting to be committed | **Claude**, after the review |
 
 ```
-start ──▶ in progress ──▶ under-review ──▶ done  (ticket deleted; history lives in git)
-                ▲               │
-                └── changes ────┘   (review found issues: the ticket goes back to
-                    requested        `in progress` with a dated feedback checklist)
+start ──▶ in progress ──▶ under-review ──▶ done ──▶ commit ──▶ delete ──┐
+(next)    (current)          │ review     (+ commit       (history     │
+  ▲             ▲            │            message)        lives in git)│
+  │             └─ feedback ─┘                                        │
+  └────────── after the commit, the next start ticket(s) ─────────────┘
+              move to in progress
 ```
 
 **Review rules (Claude's job):** for each ticket with status `under-review`:
-1. Check every acceptance criterion and the Definition of Done: read the code, run `pnpm nx run-many -t typecheck lint test`, and check the running app for user-facing work.
-2. **Correct, committed, and no feedback at all** → the ticket is **deleted** from this file, along with its Review tracker row. Its history stays in git through the ticket ID in the commit message.
-3. **Any feedback** → the ticket goes back to **`in progress`**, gets a dated **Review** entry marked 🔁 *changes requested* with a checklist, and its Review tracker row is deleted. When the fixes land, set it to `under-review` again and it gets reviewed again.
-4. New problems outside the ticket's scope become new `start` tickets, placed by priority.
+1. Check every acceptance criterion and the Definition of Done: read the code, run `pnpm quality`, and check the running app for user-facing work.
+2. **No feedback at all** → status **`done`**, its Review tracker row deleted, and Claude **gives the commit message** for the done tickets. The ticket **stays in the file** until it's committed.
+3. **Any feedback** → back to **`in progress`**, with a dated **Review** entry marked 🔁 *changes requested* (a checklist), and its tracker row deleted. When the fixes land, set it to `under-review` again.
+4. **After the commit** that carries a ticket as `done` (it's `done` in `HEAD`'s copy of this file), Claude **deletes** it, and **moves the next implementation from `start` to `in progress`** (the first `start` ticket(s) by priority and planned order, following the Roadmap). The deletion and the move go into the next commit.
+5. New problems outside the ticket's scope become new `start` tickets, placed by priority.
 
-**Automatic tracking:** Claude Code hooks (`.claude/settings.json`) run the tracker at the start of each session and on every message. When a ticket is `under-review` and hasn't been reviewed since its last change, or the file breaks a rule, Claude is told and reviews it. Each review either deletes the ticket or sends it back to `in progress`. (`pnpm backlog --mark-reviewed <IDs>` is still there for the rare ticket that has to stay under review, e.g. while waiting on a commit.)
+**Automatic tracking:** Claude Code hooks (`.claude/settings.json`) run the tracker at the start of each session and on every message. Claude is told when a ticket is `under-review` and hasn't been reviewed since its last change, when `done` tickets are committed and ready to delete, or when the file breaks a rule.
 
-**Quality pipeline and commit gate:** `pnpm quality` runs every check and prints a summary:
+**Quality pipeline and gates:** `pnpm quality` runs every check and prints a summary:
 1. the backlog rules;
 2. `nx sync:check`;
 3. typecheck, lint and test for all projects (lint includes **no hard-coded UI text**, via `react/jsx-no-literals`, and the module-boundary rules);
 4. **knip** for unused files, exports and dependencies;
 5. **unused translation keys**.
 
-The git **pre-commit hook** (`.githooks/pre-commit`, enabled by `pnpm install`) runs `pnpm quality --gate`, which also enforces the team rule: **you can commit only when no ticket is `in progress` and every `under-review` ticket has been reviewed** (Claude records reviews with `pnpm backlog --mark-reviewed`). A ticket you started but won't finish before the commit goes back to `start`. Bypassing with `git commit --no-verify` is for emergencies only.
+The git hooks (`.githooks/`, enabled by `pnpm install`) add two gates:
+- **Commit gate**, `pre-commit` → `pnpm quality --gate`: you can commit only when **no ticket is `in progress` or `under-review`**. Everything you worked on has been reviewed and is `done`. A ticket you started but won't finish goes back to `start`.
+- **Push gate**, `pre-push` → `pnpm quality --push`: push only finished work. It blocks when an outgoing commit names (`WH-###` in its message) a ticket that is still `in progress` or `under-review`.
 
-Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also catches format mistakes: unknown or `done` status, duplicate ID, wrong order, stale tracker.
+`git commit/push --no-verify` bypasses them, for emergencies only.
 
-**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-076**.
+Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks what's pending) and every ticket by priority. It also lists committed `done` tickets to delete, and catches format mistakes: unknown status, duplicate ID, wrong order, stale tracker.
+
+**Ticket ID:** `WH-###`, never reused (not even after a ticket is deleted). New tickets take the next free number: **next free is WH-077**.
 **Priority:** **P0** broken or insecure, fix first · **P1** current milestone · **P2** planned · **P3** nice to have / cleanup.
 **Type:** `feature` · `bug` · `security` · `tech-debt` · `chore`
 
@@ -54,8 +61,9 @@ Run `pnpm backlog` yourself to see the review queue (`⟳ needs review` marks wh
 
 **Roadmap (one feature at a time, backend and frontend together):**
 1. ~~Login UI + frontend foundation~~ · ~~workspaces, roles, memberships + isolation~~ · ~~app shell~~ · ~~members~~ (done)
-2. **Invites + the Team page** (WH-010, WH-073), with the quality gate (WH-074, WH-075). **Current milestone**
-3. Permissions management (WH-011), then teams/groups and the Manager role (WH-058)
+2. ~~Invites + the Team page + quality gate~~ (done in `d9b04ab`, `8ded723`)
+2b. **Foundations: reliable e2e (WH-072) + CI (WH-069).** **Current milestone**
+3. **Permissions management (WH-011), next**, then teams/groups and the Manager role (WH-058)
 4. Workspace setup and holidays (WH-056, WH-063), then leave (WH-060 → WH-061 → WH-062 → WH-064)
 5. Documents (WH-065), notifications and emails in the user's language (WH-066, WH-013)
 6. OAuth sign-in (WH-012), profiles, sessions, 2FA; CI (WH-069) as early as possible
@@ -102,61 +110,44 @@ One row per ticket whose status is `under-review`. Updated after every review; a
 
 | Ticket | Under review since | Last review | Result | Open feedback |
 |---|---|---|---|---|
-| WH-073 | 2026-10-18 | 2026-10-18 | ready | commit |
-| WH-074 | 2026-10-18 | 2026-10-18 | ready | commit |
-| WH-075 | 2026-10-18 | 2026-10-18 | ready | commit |
 
 ## Tickets
 
 Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress` → `under-review`), then by planned order. Done tickets are deleted.
 
-### WH-074 · Fix the first quality-pipeline findings (unused code, deps and translation keys)
-- **Type:** tech-debt · **Priority:** P1 · **Status:** under-review · **Area:** client + api + tooling
-- **Why:** the first run of `pnpm quality` (WH-075, 2026-10-18) passes typecheck, lint and tests, but fails two checks. The commit gate blocks commits until they pass. Each item was checked by hand; false positives are already excluded in `knip.json`.
+### WH-072 · E2E stability: sign in once per role, not through the form in every test
+- **Type:** tech-debt · **Priority:** P1 · **Status:** start · **Area:** tooling (e2e)
+- **Why:** found while reviewing WH-053 (2026-10-17). Three runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev` gave three different results: 5 passed / 2 failed (`toHaveURL` after sign-in, `ERR_ABORTED`), then 3 passed / 4 timed out, then the API on `:3333` was down. Causes:
+  - **Sign-in rate limit.** `app-shell.spec.ts` signs in through the form in each test (owner, member, admin), and the sign-up test adds more. Better Auth allows **5 sign-ins per minute**, and on localhost every request shares one key (`no-trusted-ip`), so a full run (plus any manual sign-in) hits 429 and `signIn()` never reaches `/dashboard`.
+  - **Load.** Playwright runs tests in parallel against a single `next dev`; with compiles on first visit, `page.goto` exceeded 90 s at load average about 18.
 - **Scope:**
-  - [x] **Unused dependencies:** `@aws-sdk/client-s3` and `sharp` in `libs/api/spaces/package.json`. Image processing moved to `libs/api/storage` (WH-047), which declares both. Remove them from `spaces`.
-  - [x] **Duplicate devDependency:** `@types/react-dom` in the root `package.json`. Check whether the web app needs it; if so, declare it in `apps/client/package.json`, otherwise remove it.
-  - [x] **Dead code:** `callbackLocale()` (`lib/auth-proxy.ts:113`) and `isCoverPreset()` (`lib/cover-presets.ts:15`). Delete them (and any spec that only tests them).
-  - [x] **Unused exports:** `redirect` and `getPathname` from `i18n/navigation.ts` (only export what's used), the `LandingStat` type (`content/landing-structure.ts`) and the `AppRoute` type (`lib/routes.ts`). Un-export, or delete if unused internally.
-  - [x] **23 unused translation keys**, left over from the People/Invites/AppHome rewrites. Delete each from **all three** message files (`en`, `fr`, `ar`), keeping them in sync:
-    - `Metadata.spaceMembersTitle`, `Metadata.spaceMembersDescription`, `Metadata.spacePeopleTitle`, `Metadata.spaceInvitesTitle`, `Metadata.spaceTeamsTitle`;
-    - `Dashboard.requestsSoon`, `Common.unavailable`, `Site.nav.contact`;
-    - `Auth.appShell.emailVerified`, `Auth.appShell.yes`, `Auth.appShell.no`;
-    - `Spaces.invites.emailTitle`, `Spaces.invites.emailPlaceholder`, `Spaces.invites.sendEmail`, `Spaces.invites.linkTitle`, `Spaces.invites.listTitle`, `Spaces.invites.columns.uses`;
-    - `Spaces.create.invalid`, `Spaces.settings.noAccess`, `Spaces.settings.back`, `Spaces.settings.backToSpace`;
-    - `Validation.invalidInput`, `Team.invitations.copyUnavailable`.
+  - [ ] A Playwright **setup project** signs in once per seed role (owner, admin, member) through the API (`POST /api/auth/sign-in/email`) and saves `storageState` to `playwright/.auth/{role}.json` (gitignored). Tests use `test.use({ storageState })` instead of `signIn()`. One test still covers the real sign-in form.
+  - [ ] `workers: 1` when `reuseExistingServer` hits a dev server (keep parallel in CI against built apps, WH-069).
+  - [ ] When the API isn't reachable, fail fast with a clear message ("start `pnpm dev` first") instead of trying to launch a second `nx serve server` next to `pnpm dev`.
+- **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
+  - [ ] Add the Team e2e test (from WH-073): Owner invites by email → the pending row appears with its badge → revoke → the preview answers "revoked". Uses the Owner storage state.
 
-    Before deleting one, make sure it isn't read dynamically (`t(variable)`); if it is, add its prefix to `DYNAMIC_MESSAGE_PREFIXES` in `tools/quality/src/cli.mjs` instead.
-  - [x] Minor: the landing hero image is a hot-linked Unsplash URL (`content/landing-structure.ts:32`). Move it to `apps/client/public/` (local, cacheable, and no third-party request on the home page).
-- **Done when:** `pnpm quality` prints "✓ All checks passed".
-- **Progress (2026-10-18):** Cleared knip/i18n findings; hero is local (`/hero-office.jpg`); `pnpm quality` prints "✓ All checks passed".
-- **Review (2026-10-18):** ✅ verified:
-  - `sharp` and `@aws-sdk/client-s3` are gone from `libs/api/spaces`;
-  - `@types/react-dom` moved to `apps/client/package.json`;
-  - `callbackLocale()` and `isCoverPreset()` are deleted;
-  - `i18n/navigation.ts` exports only `Link`, `usePathname`, `useRouter`; the unused types are un-exported;
-  - the message files are in sync at **506 keys each** (was 530);
-  - the hero image is local (`public/hero-office.jpg`, `/hero-office.jpg`), and Unsplash is removed from `remotePatterns`;
-  - `pnpm quality`: knip ✓, translation keys ✓, typecheck/lint/test ✓. **Ready to commit.**
-
-### WH-075 · Quality pipeline and commit gate (`pnpm quality`)
-- **Type:** chore · **Priority:** P1 · **Status:** under-review · **Area:** tooling
-- **Why:** reviews kept finding the same kinds of problems by hand: dead code, leftover dependencies, unused translations, hard-coded text, lint left failing, and commits made while work was half done. The team rule is now: **commit only when every ticket we worked on is done**.
-- **What was built (2026-10-18, by Claude):**
-  - `tools/quality` (`@work-hub/quality`, `type:tool`) with `pnpm quality` [`--gate`]. Its steps: backlog rules; the commit gate; `nx sync:check`; `nx run-many -t typecheck lint test`; **knip** (pinned `5.88.1`, config in `knip.json` with the false positives documented: runtime-only server deps, root-level devDeps, generated Prisma client, vendored `components/ui`); unused translation keys (a heuristic: a key counts as used if its leaf is quoted or its parent is read with `${…}`; `Locale.*` is allowlisted because it's read with a variable). It prints a ✓ / ! / ✗ summary and exits 1 on failure.
-  - The **commit gate** (`gateProblems()`): no ticket `in progress`, and no `under-review` ticket pending review (reuses `pendingReviews()` and the review state from `@work-hub/backlog`, which now exports its API).
-  - The **git pre-commit hook** `.githooks/pre-commit` → `pnpm -s quality --gate`; the root `prepare` script sets `core.hooksPath` on `pnpm install`.
-  - **No hard-coded UI text:** `react/jsx-no-literals` in `apps/client/eslint.config.mjs` (props ignored; punctuation allowed). The one exception is `app/not-found.tsx` (outside `[locale]`, English by design, WH-051), with a documented `eslint-disable`.
-  - Module boundaries: `type:tool` may now depend on `type:tool` (`docs/architecture.md` updated).
-  - Unit tests: `tools/quality/src/checks.test.mjs` (6).
-- **Acceptance criteria:**
-  - [x] `pnpm quality` runs all 6 steps and shows a summary; typecheck, lint and test are green with the new rule.
-  - [x] `git commit` runs the gate; it fails while any ticket is `in progress` or an under-review ticket isn't reviewed.
-  - [x] Every false positive excluded in `knip.json` was checked by hand (see WH-074 for the real findings).
-  - [ ] When CI exists (WH-069), run `pnpm quality` there too (without `--gate`, which depends on the local review state).
+### WH-069 · CI: run the checks on every push and pull request
+- **Type:** chore · **Priority:** P1 · **Status:** start · **Area:** tooling
+- **Why:** there is **no `.github/` folder**: nothing runs `typecheck/lint/test`, the integration tests or e2e except by hand (SRS §9). Reviews have caught lint failures that a pipeline would have blocked.
+- **Scope:** GitHub Actions on Node 22 + pnpm cache:
+  - `pnpm nx affected -t typecheck lint test` (with a `nx sync:check` step);
+  - a Postgres 16 service for the `*.integration.spec.ts` files (migrate deploy first);
+  - Playwright e2e against built apps, with Mailpit + MinIO services;
+  - `pnpm backlog` must print ✓.
+- **Done when:** a PR that breaks lint, a test or an RLS integration test shows a red check.
+- **Plan (2026-10-18):** the repo is on GitHub (`origin`, `main` 5 commits ahead, not pushed).
+  - Workflow `.github/workflows/ci.yml` on `push` to `main` and on `pull_request`:
+    1. **checks:** Node 22 (`.nvmrc`) + `pnpm/action-setup` + pnpm store cache; `pnpm install --frozen-lockfile`; `nx-set-shas`; `pnpm quality` (**without `--gate`**: the review state is local);
+    2. **integration:** a Postgres 16 service + `prisma migrate deploy` (the app role and its grants come from the migrations; the `workhub_app` role itself from `docker/postgres/init`, so replicate that SQL as a CI step), then the `*.integration.spec.ts` suites;
+    3. **e2e:** after WH-072, build both apps, start them plus Mailpit and MinIO (`docker compose` or service containers), seed, and run Playwright (`workers` > 1 allowed against built apps).
+  - Secrets: only test values (a `BETTER_AUTH_SECRET` generated per run); no real credentials in the workflow.
+  - [ ] the workflow file;
+  - [ ] a red check proven on a throwaway branch (a lint error, a failing RLS test);
+  - [ ] a README badge + "how CI works" note (feeds WH-027).
 
 ### WH-011 · Permissions management
-- **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
+- **Type:** feature · **Priority:** P1 · **Status:** start · **Area:** api + client
 - **Why:** your original requirement. Workspace admins set what each member can do and can change anyone's role.
 - **Scope:**
   - change a member's role;
@@ -166,7 +157,28 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - hook WH-019.
 - **Depends on:** WH-009 (done in `d39d25a`).
 - **UI rule (from WH-019, hook done in `d395684`):** "Change role" / role editing render only when `useCan(PERMISSIONS.ROLES_WRITE)`; the API still returns 403.
+- **Plan (2026-10-18), next after WH-072/WH-069.** Split when started:
+  1. **API: change a member's role.** `PATCH /spaces/{id}/members/{membershipId}` `{ roleId }` (`roles.write`). Rules:
+     - you can't change your own role;
+     - nobody can change the Owner's role, or make someone Owner (that's ownership transfer, WH-057);
+     - you can only grant a role whose permissions are a **subset of your own** (no escalation).
+  2. **API: custom roles.** `GET/POST/PATCH/DELETE /spaces/{id}/roles` (`roles.write`). A name plus permissions from `PERMISSIONS`; system roles can't be renamed or deleted (Owner's permissions are locked; Admin and Member editable?, decide); deleting a role in use → 409 or reassign to the default role; set the default role.
+  3. **UI:** a role select per row in Team → Members (`useCan(ROLES_WRITE)`); the **Roles and permissions** page replaces its placeholder (a list of roles, plus an editor with permission checkboxes grouped by area and a "used by N members" count); the invite dialog lists custom roles automatically.
+  - Tests: an escalation attempt → 403; self-change → 403; Owner untouchable; cross-workspace role id → 404; RLS on roles writes.
 
+### WH-076 · Workflow: a `done` status (delete after commit) and a push gate
+- **Type:** chore · **Priority:** P1 · **Status:** done · **Area:** tooling
+- **Why:** team rules from 2026-10-18: (0) `start` = next implementations, `in progress` = current; a clean review → `done` + a commit message; after the commit → delete + move the next `start` ticket(s) to `in progress`; (1) the order is **start → in progress → under-review → done → commit → delete**, so a reviewed ticket stays in the file as `done` until a commit carries it; (2) **push only done work**, never commits whose tickets are still under review.
+- **What changed (by Claude):**
+  - `@work-hub/backlog`: `done` is a valid status, sorted last within a priority (`STATUSES`); `committedDoneTickets()` (`done` here and `done` in `HEAD:BACKLOG.md`) → `pnpm backlog` and the hooks ask Claude to delete those tickets; the hook's review instruction says "no feedback → `done`, keep it until committed".
+  - `nextStartTickets()`: after a commit closes done tickets, the hook names the next implementation to move to `in progress`; the review instruction asks for a commit message.
+  - `@work-hub/quality`: commit gate = no ticket `in progress` or `under-review` (no more review-state lookup); **push gate** `pnpm quality --push`, which blocks when an outgoing commit (`@{upstream}..HEAD`) names a ticket still `in progress` or `under-review`; `.githooks/pre-push`.
+  - BACKLOG.md "Workflow": the status table, diagram, review rules and both gates rewritten.
+  - Tests: backlog 15 + quality 9 passing; `pnpm quality` green.
+- **Acceptance criteria:**
+  - [x] A ticket can be `done`; `done` sorts after `under-review`; unknown statuses are still rejected.
+  - [x] After a commit with a ticket as `done`, `pnpm backlog` lists it under "COMMITTED AS DONE, delete".
+  - [x] `pnpm quality --gate` blocks on `in progress` / `under-review`; `--push` blocks only for tickets named by outgoing commits (verified: the 5 unpushed commits → "Push allowed").
 
 ### WH-012 · Sign in with Google, GitHub, Microsoft and GitLab
 - **Type:** feature · **Priority:** P2 · **Status:** start · **Area:** api + client
@@ -281,92 +293,6 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - ⚠️ These files are **private**: use a **separate private bucket** (or a private prefix with no anonymous policy), never the public-read branding bucket from WH-047.
   - "Documents" replaces its placeholder.
 - **Done when:** a ready document downloads with a signed URL that expires after 10 min; anonymous access to the private bucket → 403.
-
-### WH-069 · CI: run the checks on every push and pull request
-- **Type:** chore · **Priority:** P2 · **Status:** start · **Area:** tooling
-- **Why:** there is **no `.github/` folder**: nothing runs `typecheck/lint/test`, the integration tests or e2e except by hand (SRS §9). Reviews have caught lint failures that a pipeline would have blocked.
-- **Scope:** GitHub Actions on Node 22 + pnpm cache:
-  - `pnpm nx affected -t typecheck lint test` (with a `nx sync:check` step);
-  - a Postgres 16 service for the `*.integration.spec.ts` files (migrate deploy first);
-  - Playwright e2e against built apps, with Mailpit + MinIO services;
-  - `pnpm backlog` must print ✓.
-- **Done when:** a PR that breaks lint, a test or an RLS integration test shows a red check.
-
-### WH-072 · E2E stability: sign in once per role, not through the form in every test
-- **Type:** tech-debt · **Priority:** P2 · **Status:** start · **Area:** tooling (e2e)
-- **Why:** found while reviewing WH-053 (2026-10-17). Three runs of `pnpm nx e2e @work-hub/client-e2e` against `pnpm dev` gave three different results: 5 passed / 2 failed (`toHaveURL` after sign-in, `ERR_ABORTED`), then 3 passed / 4 timed out, then the API on `:3333` was down. Causes:
-  - **Sign-in rate limit.** `app-shell.spec.ts` signs in through the form in each test (owner, member, admin), and the sign-up test adds more. Better Auth allows **5 sign-ins per minute**, and on localhost every request shares one key (`no-trusted-ip`), so a full run (plus any manual sign-in) hits 429 and `signIn()` never reaches `/dashboard`.
-  - **Load.** Playwright runs tests in parallel against a single `next dev`; with compiles on first visit, `page.goto` exceeded 90 s at load average about 18.
-- **Scope:**
-  - [ ] A Playwright **setup project** signs in once per seed role (owner, admin, member) through the API (`POST /api/auth/sign-in/email`) and saves `storageState` to `playwright/.auth/{role}.json` (gitignored). Tests use `test.use({ storageState })` instead of `signIn()`. One test still covers the real sign-in form.
-  - [ ] `workers: 1` when `reuseExistingServer` hits a dev server (keep parallel in CI against built apps, WH-069).
-  - [ ] When the API isn't reachable, fail fast with a clear message ("start `pnpm dev` first") instead of trying to launch a second `nx serve server` next to `pnpm dev`.
-- **Done when:** three consecutive `pnpm nx e2e @work-hub/client-e2e` runs pass against a running `pnpm dev`, with no 429s in the API log.
-  - [ ] Add the Team e2e test (from WH-073): Owner invites by email → the pending row appears with its badge → revoke → the preview answers "revoked". Uses the Owner storage state.
-
-### WH-073 · Team page: one place for members and invitations
-- **Type:** feature · **Priority:** P2 · **Status:** under-review · **Area:** client
-- **Why:** members (WH-046) and invites (WH-010) are two sidebar items and two pages today, so you invite people on one page and then go elsewhere to see them. People think of this as one job: *who's in my workspace, and who's coming*. GitHub (People + Invitations), Linear, Slack and Notion (Members + Groups) all put it on one page with tabs.
-- **Naming:** sidebar label **"Team"** (singular: the whole workspace roster). The groups feature (WH-058, `teams` table) is shown as **"Groups"** inside this page, so "Team" and "teams" never mean two things in the UI.
-- **Design** (mockup 2026-10-17):
-  - **Route:** `/{locale}/s/{slug}/team`, with tabs as query params so they're shareable and survive a reload: `?tab=members` (default), `?tab=invitations`, `?tab=groups`. 308 redirects from `/people` and `/invites` (`/invites` → `?tab=invitations`).
-  - **Header:** title "Team", one line ("Everyone in {workspace}, and who's been invited"), and the **one primary action**, "Invite people", top-right (shown with `invites.write`). It opens the invite dialog from any tab.
-  - **Members tab** (the current People list, moved as is): search (debounced), filters for role and status (Active / Deactivated / All), and rows with avatar, name, "(you)", email, role and status pills, plus a "…" menu (Deactivate / Reactivate / Remove; Leave on your own row; hidden for the last Owner). A count in the tab label.
-  - **Invitations tab** (`invites.write` only, otherwise the tab is hidden): one list for email and link invites.
-    - Email rows: address, role, "invited by", "expires in N days", with **Resend** and **Revoke**.
-    - Link rows: role, "N of M uses", expiry, with **Copy link** and **Revoke**.
-    - Expired, revoked and used-up invites go under a collapsed "Past invitations" section, and expired ones get **Resend** (creates a fresh invite).
-    - A badge with the pending count in the tab label.
-  - **Groups tab:** a "coming soon" panel until WH-058 ships, then teams with their managers and members.
-  - **Invite dialog** (Base UI `Dialog`), with a segmented control at the top:
-    - **By email:** a chip input. Paste or type several addresses (comma, space or newline separated); invalid ones turn red with an inline error and are skipped; duplicates and existing members are flagged before sending. One **Role** select (default: the workspace's default role; no Owner; only roles the inviter can grant once WH-011 exists). Button "Send N invitations". The result shows sent / already a member / failed per address, from the per-address results.
-    - **Share a link:** role, expiry (1, 7 or 30 days), max uses (1–100), then **Create link** → the URL in a read-only field with **Copy** (and a "Copied" toast). The token is shown once; the list later shows the link without the token unless re-copied right after creation.
-  - **Empty states:** no pending invites → "Invite your team" with the primary button; a search with no match → "No one matches '{q}'".
-- **Sidebar** (`space-nav.ts`): replace **People** and **Invites** with one **Team** item (`users` icon, visible with `members.read`) in *main*. Remove the separate **Teams** item from *Manage* (it becomes the Groups tab). The sidebar gets 2 items shorter.
-- **API needs:**
-  - a bulk email invite, `POST /spaces/{id}/invites` with `emails: string[]` (max 50 per request, FR-MEM-02 later allows CSV up to 500), returning a per-address result (`created` / `already_member` / `already_invited` / `invalid`);
-  - `POST /invites/{id}/resend` (new token, new expiry; the old one revoked);
-  - both under `invites.write`, plus tests.
-- **Text, RTL, accessibility:**
-  - `Team.*` keys in `en`, `fr` and `ar`;
-  - the tabs use `role="tablist"`, arrow-key navigation and `aria-selected`;
-  - the chip input is keyboard-editable (Backspace removes the last chip), each chip has a remove button labelled "Remove {email}", and email chips stay `dir="ltr"` inside RTL;
-  - "Copied" is announced (`aria-live`).
-- **Acceptance criteria:**
-  - [x] One "Team" item in the sidebar; `/people` and `/invites` redirect (308) to the right tab.
-  - [x] Bulk email create returns per-address results; invite dialog + chip parser (unit-tested).
-  - [x] Creating a link shows Copy with `aria-live` "Copied"; Resend/Revoke on invitations; past section collapsed.
-  - [x] A Member sees the Members tab only: no "Invite people" button and no Invitations tab.
-  - [x] Tabs use `?tab=` (survive reload) and keyboard arrows; `Team.*` in en/fr/ar; email chips `dir="ltr"`.
-  - [x] e2e: invite-by-email → pending → revoke (**blocked by WH-072** — do not invent a flaky form-based e2e now). _(moved to WH-072, 2026-10-18)_
-- **Progress (2026-10-18):** Team page at `/s/{slug}/team` with members/invitations/groups tabs; API bulk email, resend, list `status` + `createdBy`, `GET /roles`; nav collapsed to Team; 308 from `/people`, `/invites`, `/teams`.
-- **Depends on:** WH-010 (done in `d9b04ab`), WH-046 (done in `d67afda`). **Feeds:** WH-058 (Groups tab), WH-011 (role options in the dialog).
-- **Review (2026-10-18):** 🔁 well built; four fixes. Verified in code and tests:
-  - `/s/{slug}/team` with `?tab=members|invitations|groups`; `/people`, `/invites` and `/teams` redirect permanently to the right tab;
-  - the sidebar has one **Team** item (People, Invites and Teams removed);
-  - `TeamMembers` / `TeamInvitations` / `InvitePeopleDialog`; the roles list excludes Owner;
-  - bulk `emails` (max 50) with per-address results; `POST /invites/{id}/resend` (revokes the old invite, new token, 7 days);
-  - tabs with `role="tablist"`, `aria-selected` and arrow keys; the chip input with Backspace, "Remove {email}" labels and `dir="ltr"`; "Copied" announced with `aria-live`;
-  - `parse-invite-emails.spec` (3) and `space-nav.spec` (6); all 16 projects pass.
-  - [x] 🔴 **The dialog pre-selects "Admin".** `GET /roles` now returns `isDefault`; the dialog selects the workspace default role.
-  - [x] **No stricter rate limit on sending invites.** `@Throttle` 10/min on create and resend; per-workspace daily cap of 500 email invites (UTC day) → 429 `RATE_LIMITED`.
-  - [x] **Arrow keys in RTL.** Tab delta flips with `useDirection()` so ArrowLeft advances in `ar`.
-  - [x] `/members` redirects straight to `/team?tab=members` in `next.config.js` (no `/people` hop).
-  - [x] Missing AC: the e2e test "invite by email → pending row → revoke" (blocked by WH-072's per-role sign-in). _(moved to WH-072, 2026-10-18)_
-  - [x] Browser check (API up): Owner sees Invite dialog (By email / Share a link); `?tab=invitations` survives reload; Member sees Members + Groups only (no Invite button, no Invitations tab). Phone/`ar` full-screen not re-checked this pass.
-- **Progress (2026-10-18):** Review fixes for default role, invite rate limits, RTL tabs, and `/members` redirect.
-  - Note: the contract uses `emails: z.array(z.email())`, so one bad address rejects the whole request with 400, and the server's per-address `invalid` result can't happen. Fine while the dialog filters invalid chips first; either accept `z.string()` and report `invalid` per address, or drop that status.
-- **Progress (2026-10-18):** Browser sanity on Acme; e2e left open for WH-072; ticket moved to under-review.
-- **Review (2026-10-18, 2nd pass):** ✅ all feedback fixed:
-  - `pnpm quality` passes every check;
-  - **default role** = `isDefault` from `GET /spaces/{id}/roles` (live: Admin, **Member\***), and the dialog pre-selects Member ("عضو");
-  - **sending limit:** `@Throttle` 10/min on create and resend (live: the 11th create → **429**), plus a per-workspace daily email cap (`assertEmailInviteBudget`, with a unit test);
-  - **RTL tabs:** in `ar`, ArrowLeft moves to the next tab and updates `?tab=`;
-  - `/members` → 308 straight to `/team?tab=members`.
-  - **Browser checks:** `?tab=invitations` opens on that tab after a reload; at 375 px there's no horizontal overflow and the dialog opens in RTL at 343 px (the screen minus margins, not edge-to-edge full-screen, which is fine); a **Member** sees only the Members and Groups tabs, with no "Invite people" button, even on `?tab=invitations`.
-  - The e2e test moved to WH-072 (it needs the per-role sign-in).
-  - Minor, not blocking: a Member on `?tab=invitations` keeps that query in the URL while seeing Members; consider normalising it to `?tab=members`.
-  - **Ready to commit.**
 
 ### WH-042 · Dark mode: decide, then implement or remove the unused styles
 - **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** client

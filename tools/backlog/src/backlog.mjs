@@ -7,14 +7,15 @@
 import { createHash } from 'node:crypto';
 
 /**
- * Statuses a ticket can have while it is in the file, in list order: within a priority,
- * tickets are sorted start → in progress → under-review. `done` tickets are deleted.
+ * Every status, in list order: within a priority, tickets are sorted
+ * start → in progress → under-review → done. A ticket is deleted only after the
+ * commit that carries it as `done` (see `committedDoneTickets`).
  */
-export const ACTIVE_STATUSES = ['start', 'in progress', 'under-review'];
+export const STATUSES = ['start', 'in progress', 'under-review', 'done'];
 
 /** Negative when `a` must come before `b`: priority first (P0 first), then status. */
 export function compareOrder(a, b) {
-  return a.priority - b.priority || ACTIVE_STATUSES.indexOf(a.status) - ACTIVE_STATUSES.indexOf(b.status);
+  return a.priority - b.priority || STATUSES.indexOf(a.status) - STATUSES.indexOf(b.status);
 }
 
 export const TICKETS_SECTION = 'Tickets';
@@ -86,21 +87,19 @@ export function validate(markdown) {
       problems.push(`${label}: missing Type/Priority/Status line`);
       continue;
     }
-    if (ticket.status === 'done') {
-      problems.push(`${label}: status is done, so delete the ticket (its history lives in git)`);
-    } else if (!ACTIVE_STATUSES.includes(ticket.status)) {
-      problems.push(`${label}: unknown status "${ticket.status}" (use: ${ACTIVE_STATUSES.join(', ')})`);
+    if (!STATUSES.includes(ticket.status)) {
+      problems.push(`${label}: unknown status "${ticket.status}" (use: ${STATUSES.join(', ')})`);
     }
   }
 
   const listed = tickets.filter(
-    (t) => t.section === TICKETS_SECTION && t.priority !== null && ACTIVE_STATUSES.includes(t.status)
+    (t) => t.section === TICKETS_SECTION && t.priority !== null && STATUSES.includes(t.status)
   );
   listed.forEach((ticket, i) => {
     const previous = listed[i - 1];
     if (previous && compareOrder(ticket, previous) < 0) {
       problems.push(
-        `${ticket.id} (P${ticket.priority}, ${ticket.status}) comes after ${previous.id} (P${previous.priority}, ${previous.status}): sort by priority, then status (${ACTIVE_STATUSES.join(' → ')})`
+        `${ticket.id} (P${ticket.priority}, ${ticket.status}) comes after ${previous.id} (P${previous.priority}, ${previous.status}): sort by priority, then status (${STATUSES.join(' → ')})`
       );
     }
   });
@@ -121,6 +120,24 @@ export function validate(markdown) {
   }
 
   return [...new Set(problems)];
+}
+
+/**
+ * `done` tickets that are already committed as `done` (also `done` in HEAD's BACKLOG.md):
+ * the commit carried them, so they can now be deleted. Their history stays in git.
+ */
+export function committedDoneTickets(tickets, headMarkdown) {
+  if (!headMarkdown) return [];
+  const doneAtHead = new Set(parseTickets(headMarkdown).filter((t) => t.status === 'done').map((t) => t.id));
+  return tickets.filter((t) => t.status === 'done' && doneAtHead.has(t.id));
+}
+
+/**
+ * The next implementation: the first `start` ticket(s) in list order (priority, then
+ * planned order), moved to `in progress` right after a commit closes the done tickets.
+ */
+export function nextStartTickets(tickets, count = 1) {
+  return tickets.filter((t) => t.status === 'start').slice(0, count);
 }
 
 /**
@@ -170,23 +187,31 @@ export function markReviewed(state, tickets, ids, head, at) {
  * Text injected into Claude's context by the Claude Code hooks, or null when there's
  * nothing to say (so `prompt` hooks stay silent on most turns).
  */
-export function hookContext({ event, tickets, problems, pending }) {
+export function hookContext({ event, tickets, problems, pending, committedDone = [] }) {
   const queue = tickets.filter((t) => t.status === 'under-review');
-  if (event === 'prompt' && pending.length === 0 && problems.length === 0) return null;
-  if (event === 'session-start' && queue.length === 0 && problems.length === 0) return null;
+  const quiet = pending.length === 0 && problems.length === 0 && committedDone.length === 0;
+  if (event === 'prompt' && quiet) return null;
+  if (event === 'session-start' && queue.length === 0 && quiet) return null;
 
   const lines = ['[WorkHub backlog tracker]'];
   if (pending.length) {
     lines.push(`${pending.length} under-review ticket(s) need review per BACKLOG.md "Review rules":`);
     for (const { ticket, reason } of pending) lines.push(`- ${ticket.id} (P${ticket.priority}) ${ticket.title}: ${reason}`);
     lines.push(
-      'For each: check acceptance criteria + Definition of Done (code, `pnpm nx run-many -t typecheck lint test`, running app).',
-      'Correct, committed and passing with no feedback → delete the ticket + its Review tracker row.',
+      'For each: check acceptance criteria + Definition of Done (code, `pnpm quality`, running app).',
+      'Correct and passing with no feedback → set its status to `done` (keep it in the file until it is committed), delete its tracker row, and give the user a commit message for the done tickets.',
       'Otherwise → set its status to `in progress`, add a dated 🔁 Review entry with a checklist, and delete its tracker row.',
       'Then run `pnpm backlog` (must print ✓). Tell the user what you found.'
     );
   } else if (event === 'session-start' && queue.length) {
     lines.push(`${queue.length} ticket(s) under review, all reviewed since their last change: ${queue.map((t) => t.id).join(', ')}.`);
+  }
+  if (committedDone.length) {
+    const next = nextStartTickets(tickets);
+    lines.push(
+      `${committedDone.length} done ticket(s) are committed (done in HEAD's BACKLOG.md): delete them from BACKLOG.md now: ${committedDone.map((t) => t.id).join(', ')}.`,
+      `Then move the next implementation from \`start\` to \`in progress\` (first start ticket by priority and planned order${next.length ? `: ${next.map((t) => t.id).join(', ')}` : ''}), and tell the user what's next.`
+    );
   }
   if (problems.length) {
     lines.push(`BACKLOG.md breaks ${problems.length} workflow rule(s); fix them:`);

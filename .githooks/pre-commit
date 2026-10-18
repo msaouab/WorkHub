@@ -1,5 +1,5 @@
 #!/bin/sh
-# WorkHub commit gate: every check passes, no ticket is in progress,
-# and every under-review ticket has been reviewed. See tools/quality/src/cli.mjs.
-# Emergency bypass (avoid): git commit --no-verify
+# WorkHub commit gate: every check passes and no ticket is in progress or under
+# review (flow: start -> in progress -> under-review -> done -> commit -> delete).
+# See tools/quality/src/cli.mjs. Emergency bypass (avoid): git commit --no-verify
 exec pnpm -s quality --gate

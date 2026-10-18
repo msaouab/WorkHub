@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { hookContext, markReviewed, parseTickets, pendingReviews, validate } from './backlog.mjs';
+import { committedDoneTickets, hookContext, nextStartTickets, markReviewed, parseTickets, pendingReviews, validate } from './backlog.mjs';
 
 const ticket = (id, priority, status, extra = '') =>
   `### ${id} · Title ${id}\n- **Type:** bug · **Priority:** P${priority} · **Status:** ${status} · **Area:** client\n${extra}`;
@@ -65,10 +65,12 @@ describe('validate', () => {
     assert.ok(problems.some((p) => p.includes('WH-003 (P1, start) comes after WH-002 (P1, in progress)')));
   });
 
-  it('requires done tickets to be deleted, and rejects unknown statuses', () => {
+  it('accepts done tickets sorted last within a priority, and rejects unknown statuses', () => {
+    assert.deepEqual(validate(backlog({ tickets: [ticket('WH-002', 1, 'start'), ticket('WH-001', 1, 'done')] })), []);
     const problems = validate(backlog({ tickets: [ticket('WH-001', 1, 'done'), ticket('WH-002', 1, 'ready')] }));
-    assert.ok(problems.some((p) => p.includes('WH-001') && p.includes('delete the ticket')));
     assert.ok(problems.some((p) => p.includes('unknown status "ready"')));
+    const misordered = validate(backlog({ tickets: [ticket('WH-001', 1, 'done'), ticket('WH-002', 1, 'start')] }));
+    assert.ok(misordered.some((p) => p.includes('WH-002 (P1, start) comes after WH-001 (P1, done)')));
   });
 
   it('requires every ticket to be under ## Tickets', () => {
@@ -86,6 +88,23 @@ describe('validate', () => {
     assert.ok(problems.some((p) => p.includes('duplicate ticket ID')));
     assert.ok(problems.some((p) => p.includes('WH-001: under-review but missing')));
     assert.ok(problems.some((p) => p.includes('WH-009: in the Review tracker but not under-review')));
+  });
+});
+
+describe('nextStartTickets', () => {
+  it('returns the first start tickets in list order', () => {
+    const tickets = parseTickets(backlog({ tickets: [ticket('WH-002', 1, 'in progress'), ticket('WH-003', 1, 'start'), ticket('WH-001', 2, 'start')] }));
+    assert.deepEqual(nextStartTickets(tickets).map((t) => t.id), ['WH-003']);
+    assert.deepEqual(nextStartTickets(tickets, 2).map((t) => t.id), ['WH-003', 'WH-001']);
+  });
+});
+
+describe('committedDoneTickets', () => {
+  it('lists done tickets that HEAD already has as done', () => {
+    const working = parseTickets(backlog({ tickets: [ticket('WH-001', 1, 'done'), ticket('WH-002', 1, 'done')] }));
+    const head = backlog({ tickets: [ticket('WH-001', 1, 'done'), ticket('WH-002', 1, 'under-review')] });
+    assert.deepEqual(committedDoneTickets(working, head).map((t) => t.id), ['WH-001']);
+    assert.deepEqual(committedDoneTickets(working, ''), []);
   });
 });
 
@@ -126,7 +145,14 @@ describe('review tracking', () => {
     const loud = hookContext({ event: 'prompt', tickets, problems: ['WH-005: bad'], pending: pendingReviews(tickets, 'c1') });
     assert.match(loud, /1 under-review ticket\(s\) need review/);
     assert.match(loud, /status to `in progress`/);
+    assert.match(loud, /status to `done` \(keep it in the file until it is committed\)/);
     assert.match(loud, /WH-005: bad/);
     assert.match(hookContext({ event: 'session-start', tickets, problems: [], pending: [] }), /all reviewed since their last change: WH-001/);
+    const done = parseTickets(backlog({ tickets: [ticket('WH-004', 2, 'done')] }));
+    const withNext = parseTickets(backlog({ tickets: [ticket('WH-005', 1, 'start'), ticket('WH-004', 2, 'done')] }));
+    const text = hookContext({ event: 'prompt', tickets: withNext, problems: [], pending: [], committedDone: done });
+    assert.match(text, /delete them from BACKLOG.md now: WH-004/);
+    assert.match(text, /move the next implementation from `start` to `in progress`.*: WH-005/);
+    assert.match(loud, /give the user a commit message/);
   });
 });

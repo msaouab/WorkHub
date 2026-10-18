@@ -2,10 +2,11 @@
 /**
  * `pnpm quality`        run every check and print a summary (exit 1 if a check fails)
  * `pnpm quality --gate` the same, plus the commit gate; used by the git pre-commit hook
+ * `pnpm quality --push` the same, plus the push gate (outgoing commits name only done tickets); pre-push hook
  *
  * Steps:
  *   1. backlog rules       BACKLOG.md structure (same rules as `pnpm backlog`)
- *   2. commit gate         no ticket in progress; every under-review ticket reviewed (--gate only)
+ *   2. commit gate         no ticket in progress or under review: reviewed work is `done` (--gate)
  *   3. nx sync             tsconfig project references up to date
  *   4. typecheck/lint/test every project (Nx cache keeps reruns fast)
  *   5. unused code         knip: unused files, exports and dependencies
@@ -16,29 +17,30 @@
 import { spawnSync, execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { parseTickets, pendingReviews, validate } from '@work-hub/backlog';
-import { findUnusedMessageKeys, gateProblems, summaryLine } from './checks.mjs';
+import { parseTickets, validate } from '@work-hub/backlog';
+import { findUnusedMessageKeys, gateProblems, pushGateProblems, summaryLine, ticketIdsInMessages } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
-const gate = process.argv.includes('--gate');
+const push = process.argv.includes('--push');
+const gate = push || process.argv.includes('--gate');
 
 /** Message keys read with a variable (e.g. `t(locale)`), which the key check can't see. */
 const DYNAMIC_MESSAGE_PREFIXES = ['Locale'];
 
-function head() {
-  try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-  } catch {
-    return 'no-commit';
+/** Messages of the commits not on the upstream yet (what `git push` would send). */
+function outgoingCommitMessages() {
+  for (const base of ['@{upstream}', 'origin/main']) {
+    try {
+      return execFileSync('git', ['log', `${base}..HEAD`, '--format=%B'], {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+    } catch {
+      // try the next base
+    }
   }
-}
-
-function reviewState() {
-  try {
-    return JSON.parse(readFileSync(resolve(root, '.claude/backlog-review-state.json'), 'utf8'));
-  } catch {
-    return {};
-  }
+  return '';
 }
 
 function sourceFiles(dir) {
@@ -72,11 +74,17 @@ const steps = [
     },
   },
   {
-    label: gate ? 'Commit gate (tickets done and reviewed)' : 'Commit gate (report only)',
+    label: push
+      ? 'Push gate (outgoing tickets done)'
+      : gate
+        ? 'Commit gate (worked tickets done)'
+        : 'Commit gate (report only)',
     advisory: !gate,
     run: () => {
       const tickets = parseTickets(markdown);
-      const problems = gateProblems(tickets, pendingReviews(tickets, head(), reviewState()));
+      const problems = push
+        ? pushGateProblems(tickets, ticketIdsInMessages(outgoingCommitMessages()))
+        : gateProblems(tickets);
       return { ok: problems.length === 0, output: problems.join('\n') };
     },
   },
@@ -124,7 +132,7 @@ for (const result of results) console.log(summaryLine(result));
 
 const failed = results.filter((r) => r.status === 'fail');
 if (failed.length > 0) {
-  console.log(`\n✗ ${failed.length} check(s) failed.${gate ? ' Commit blocked.' : ''}`);
+  console.log(`\n✗ ${failed.length} check(s) failed.${push ? ' Push blocked.' : gate ? ' Commit blocked.' : ''}`);
   process.exit(1);
 }
-console.log(`\n✓ All checks passed.${gate ? ' Commit allowed.' : ''}`);
+console.log(`\n✓ All checks passed.${push ? ' Push allowed.' : gate ? ' Commit allowed.' : ''}`);

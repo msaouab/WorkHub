@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import { PERMISSIONS } from '@work-hub/constants';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { SpaceFeaturePage } from '@/components/shell/space-feature-page';
+import { SpaceRoles } from '@/components/spaces/space-roles';
 
 type PageProps = {
   params: Promise<{ locale: string; slug: string }>;
@@ -20,11 +19,5 @@ export async function generateMetadata({
 export default async function Page({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return (
-    <SpaceFeaturePage
-      feature="roles"
-      icon="shield"
-      permission={PERMISSIONS.ROLES_WRITE}
-    />
-  );
+  return <SpaceRoles />;
 }

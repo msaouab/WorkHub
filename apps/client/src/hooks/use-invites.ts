@@ -14,12 +14,13 @@ import {
   acceptInvite,
   createSpaceInvite,
   fetchSpaceInvites,
-  fetchSpaceRoles,
   previewInvite,
   resendSpaceInvite,
   revokeSpaceInvite,
 } from '@/lib/api/invites';
 import { queryKeys } from '@/lib/api/query-keys';
+
+export { useSpaceRoles } from '@/hooks/use-roles';
 
 /** Cursor-paginated invites for a workspace. */
 export function useInvites(
@@ -40,19 +41,6 @@ export function useInvites(
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    enabled: Boolean(spaceId),
-  });
-}
-
-export function useSpaceRoles(spaceId: string | undefined) {
-  return useQuery({
-    queryKey: queryKeys.invites.roles(spaceId ?? ''),
-    queryFn: () => {
-      if (!spaceId) {
-        throw new Error('spaceId is required');
-      }
-      return fetchSpaceRoles(spaceId);
-    },
     enabled: Boolean(spaceId),
   });
 }

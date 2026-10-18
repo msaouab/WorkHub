@@ -3,4 +3,19 @@
 # commit names a ticket that is still in progress or under review
 # (commit -> review deletes done tickets -> push). See tools/quality/src/cli.mjs.
 # Emergency bypass (avoid): git push --no-verify
+
+# git passes one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+# A local sha of all zeros means "delete the remote ref": no commits leave the
+# machine, so there is nothing to check. Run the gate only if a ref sends commits.
+sends_commits=false
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+  case "$local_sha" in
+    *[!0]*) sends_commits=true ;;
+  esac
+done
+
+if [ "$sends_commits" = false ]; then
+  exit 0
+fi
+
 exec pnpm -s quality --push

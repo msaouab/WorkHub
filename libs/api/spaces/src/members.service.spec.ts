@@ -3,7 +3,11 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { ErrorCode, SYSTEM_ROLE_NAMES } from '@work-hub/constants';
+import {
+  ErrorCode,
+  PERMISSIONS,
+  SYSTEM_ROLE_NAMES,
+} from '@work-hub/constants';
 import type { PrismaService } from '@work-hub/database';
 import { describe, expect, it, vi } from 'vitest';
 import { MembersService } from './members.service';
@@ -13,15 +17,23 @@ const actorId = '01936b3c-0000-7000-8000-0000000000bb';
 const memberUserId = '01936b3c-0000-7000-8000-0000000000cc';
 const membershipId = '01936b3c-0000-7000-8000-0000000000dd';
 const ownerMembershipId = '01936b3c-0000-7000-8000-0000000000ee';
+const adminRoleId = '01936b3c-0000-7000-8000-0000000000a1';
+const memberRoleId = '01936b3c-0000-7000-8000-0000000000a2';
+const ownerRoleId = '01936b3c-0000-7000-8000-0000000000a3';
 
 const access = {
   spaceId,
   userId: actorId,
   membershipId: '01936b3c-0000-7000-8000-0000000000ff',
   membershipStatus: 'active' as const,
-  roleId: 'role-admin',
+  roleId: adminRoleId,
   roleName: SYSTEM_ROLE_NAMES.ADMIN,
-  permissions: [],
+  permissions: [
+    PERMISSIONS.MEMBERS_READ,
+    PERMISSIONS.MEMBERS_WRITE,
+    PERMISSIONS.ROLES_WRITE,
+    PERMISSIONS.INVITES_WRITE,
+  ],
 };
 
 function memberRow(overrides: Record<string, unknown> = {}) {
@@ -36,7 +48,11 @@ function memberRow(overrides: Record<string, unknown> = {}) {
       email: 'member@workhub.test',
       image: null,
     },
-    role: { id: 'role-member', name: SYSTEM_ROLE_NAMES.MEMBER },
+    role: {
+      id: memberRoleId,
+      name: SYSTEM_ROLE_NAMES.MEMBER,
+      permissions: [PERMISSIONS.MEMBERS_READ],
+    },
     ...overrides,
   };
 }
@@ -47,6 +63,7 @@ function mockPrisma(handlers: {
   update?: ReturnType<typeof vi.fn>;
   delete?: ReturnType<typeof vi.fn>;
   count?: ReturnType<typeof vi.fn>;
+  roleFindFirst?: ReturnType<typeof vi.fn>;
 }) {
   const tx = {
     membership: {
@@ -55,6 +72,9 @@ function mockPrisma(handlers: {
       update: handlers.update ?? vi.fn(),
       delete: handlers.delete ?? vi.fn(),
       count: handlers.count ?? vi.fn(),
+    },
+    role: {
+      findFirst: handlers.roleFindFirst ?? vi.fn(),
     },
   };
   const withTenant = vi.fn(
@@ -129,7 +149,11 @@ describe('MembersService.deactivate', () => {
     const findFirst = vi.fn().mockResolvedValue(
       memberRow({
         id: ownerMembershipId,
-        role: { id: 'role-owner', name: SYSTEM_ROLE_NAMES.OWNER },
+        role: {
+          id: 'role-owner',
+          name: SYSTEM_ROLE_NAMES.OWNER,
+          permissions: [PERMISSIONS.SPACE_DELETE],
+        },
       })
     );
     const { prisma } = mockPrisma({ findFirst });
@@ -204,6 +228,161 @@ describe('MembersService.remove', () => {
     await expect(service.remove(access, membershipId)).rejects.toBeInstanceOf(
       NotFoundException
     );
+  });
+});
+
+describe('MembersService.updateRole', () => {
+  it('forbids changing your own role', async () => {
+    const findFirst = vi.fn().mockResolvedValue(
+      memberRow({ userId: actorId, id: access.membershipId })
+    );
+    const { prisma } = mockPrisma({ findFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.updateRole(access, access.membershipId, adminRoleId)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.CANNOT_CHANGE_OWN_ROLE },
+    });
+  });
+
+  it('forbids changing the Owner', async () => {
+    const findFirst = vi.fn().mockResolvedValue(
+      memberRow({
+        id: ownerMembershipId,
+        role: {
+          id: ownerRoleId,
+          name: SYSTEM_ROLE_NAMES.OWNER,
+          permissions: [PERMISSIONS.SPACE_DELETE],
+        },
+      })
+    );
+    const { prisma } = mockPrisma({ findFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.updateRole(access, ownerMembershipId, memberRoleId)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.CANNOT_MODIFY_OWNER },
+    });
+  });
+
+  it('forbids assigning Owner', async () => {
+    const findFirst = vi.fn().mockResolvedValue(memberRow());
+    const roleFindFirst = vi.fn().mockResolvedValue({
+      id: ownerRoleId,
+      name: SYSTEM_ROLE_NAMES.OWNER,
+      permissions: [PERMISSIONS.SPACE_DELETE],
+    });
+    const { prisma } = mockPrisma({ findFirst, roleFindFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.updateRole(access, membershipId, ownerRoleId)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.CANNOT_ASSIGN_OWNER },
+    });
+  });
+
+  it('forbids escalation beyond the actor permissions', async () => {
+    const findFirst = vi.fn().mockResolvedValue(memberRow());
+    const roleFindFirst = vi.fn().mockResolvedValue({
+      id: adminRoleId,
+      name: SYSTEM_ROLE_NAMES.ADMIN,
+      permissions: [PERMISSIONS.SPACE_DELETE, PERMISSIONS.ROLES_WRITE],
+    });
+    const { prisma } = mockPrisma({ findFirst, roleFindFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.updateRole(access, membershipId, adminRoleId)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.ROLE_ESCALATION },
+    });
+  });
+
+  it('returns 404 for a role in another workspace', async () => {
+    const findFirst = vi.fn().mockResolvedValue(memberRow());
+    const roleFindFirst = vi.fn().mockResolvedValue(null);
+    const { prisma } = mockPrisma({ findFirst, roleFindFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.updateRole(access, membershipId, adminRoleId)
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('updates the role when the grant is a subset', async () => {
+    const findFirst = vi.fn().mockResolvedValue(memberRow());
+    const roleFindFirst = vi.fn().mockResolvedValue({
+      id: adminRoleId,
+      name: SYSTEM_ROLE_NAMES.ADMIN,
+      permissions: [PERMISSIONS.MEMBERS_READ, PERMISSIONS.ROLES_WRITE],
+    });
+    const update = vi.fn().mockResolvedValue(
+      memberRow({
+        role: {
+          id: adminRoleId,
+          name: SYSTEM_ROLE_NAMES.ADMIN,
+          permissions: [PERMISSIONS.MEMBERS_READ, PERMISSIONS.ROLES_WRITE],
+        },
+      })
+    );
+    const { prisma } = mockPrisma({ findFirst, roleFindFirst, update });
+    const service = new MembersService(prisma);
+
+    const result = await service.updateRole(access, membershipId, adminRoleId);
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: membershipId },
+      data: { roleId: adminRoleId },
+      include: expect.any(Object),
+    });
+    expect(result.role).toEqual({
+      id: adminRoleId,
+      name: SYSTEM_ROLE_NAMES.ADMIN,
+      permissions: [PERMISSIONS.MEMBERS_READ, PERMISSIONS.ROLES_WRITE],
+    });
+  });
+
+  it('forbids demoting a member whose current role is above the actor', async () => {
+    const findFirst = vi.fn().mockResolvedValue(
+      memberRow({
+        role: {
+          id: 'co-owner',
+          name: 'Co-owner',
+          permissions: [PERMISSIONS.SPACE_DELETE, PERMISSIONS.MEMBERS_READ],
+        },
+      })
+    );
+    const { prisma } = mockPrisma({ findFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.updateRole(access, membershipId, memberRoleId)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.ROLE_ESCALATION },
+    });
+  });
+
+  it('forbids deactivating a member whose current role is above the actor', async () => {
+    const findFirst = vi.fn().mockResolvedValue(
+      memberRow({
+        role: {
+          id: 'co-owner',
+          name: 'Co-owner',
+          permissions: [PERMISSIONS.SPACE_DELETE],
+        },
+      })
+    );
+    const { prisma } = mockPrisma({ findFirst });
+    const service = new MembersService(prisma);
+
+    await expect(
+      service.deactivate(access, membershipId)
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.ROLE_ESCALATION },
+    });
   });
 });
 

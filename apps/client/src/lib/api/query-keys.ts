@@ -20,4 +20,7 @@ export const queryKeys = {
     roles: (spaceId: string) => ['invites', spaceId, 'roles'] as const,
     preview: (token: string) => ['invites', 'preview', token] as const,
   },
+  teams: {
+    all: (spaceId: string) => ['teams', spaceId] as const,
+  },
 } as const;

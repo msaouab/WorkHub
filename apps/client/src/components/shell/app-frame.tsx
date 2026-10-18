@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { TopBar } from '@/components/shell/top-bar';
+import { cn } from '@/lib/utils';
 
 type AppFrameProps = {
   children: ReactNode;
@@ -42,6 +43,11 @@ export function AppFrame({
   );
 }
 
+/**
+ * Primary scroll column for signed-in pages.
+ * End clearance comes from `--app-scroll-end` (global.css) via a trailing spacer —
+ * more reliable than padding alone on flex overflow containers.
+ */
 export function AppMain({
   children,
   wide = false,
@@ -53,20 +59,23 @@ export function AppMain({
 }) {
   return (
     <main
-      className={
-        className ??
-        'relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-8 pb-16 sm:px-6 sm:pt-10 sm:pb-24'
-      }
+      className={cn(
+        'app-scroll-region relative flex min-h-0 flex-1 flex-col overflow-y-auto',
+        className
+      )}
     >
       <div
-        className={
-          wide
-            ? 'mx-auto flex min-h-full w-full max-w-5xl flex-1 flex-col'
-            : 'mx-auto flex min-h-full w-full max-w-xl flex-1 flex-col'
-        }
+        className={cn(
+          'mx-auto flex w-full flex-1 flex-col pt-(--app-scroll-pad-top)',
+          wide ? 'max-w-5xl' : 'max-w-xl'
+        )}
       >
         {children}
       </div>
+      <div
+        className="h-(--app-scroll-end) w-full shrink-0"
+        aria-hidden
+      />
     </main>
   );
 }

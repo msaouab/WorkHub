@@ -102,7 +102,7 @@ export const SPACE_NAV_ITEMS: readonly SpaceNavItem[] = [
     icon: 'shield',
     labelKey: 'roles',
     section: 'manage',
-    status: 'soon',
+    status: 'ready',
     permission: PERMISSIONS.ROLES_WRITE,
   },
   {

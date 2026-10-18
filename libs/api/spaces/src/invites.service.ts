@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { SpaceAccess } from '@work-hub/access';
-import { ErrorCode, SYSTEM_ROLE_NAMES } from '@work-hub/constants';
+import {
+  ErrorCode,
+  SYSTEM_ROLE_NAMES,
+  permissionsAreSubset,
+} from '@work-hub/constants';
 import type {
   AcceptInviteResponse,
   CreateSpaceEmailInvitesResponse,
@@ -20,7 +24,6 @@ import type {
   InvitePreview,
   ListSpaceInvitesQuery,
   ListSpaceInvitesResponse,
-  ListSpaceRolesResponse,
   SpaceInvite,
 } from '@work-hub/contracts';
 import { Prisma, PrismaService } from '@work-hub/database';
@@ -132,33 +135,6 @@ export class InvitesService {
     };
   }
 
-  async listRoles(access: SpaceAccess): Promise<ListSpaceRolesResponse> {
-    return this.prisma.withTenant(
-      { spaceId: access.spaceId, userId: access.userId },
-      async (tx) => {
-        const space = await tx.space.findFirstOrThrow({
-          where: { id: access.spaceId },
-          select: { defaultRoleId: true },
-        });
-        const rows = await tx.role.findMany({
-          where: {
-            spaceId: access.spaceId,
-            name: { not: SYSTEM_ROLE_NAMES.OWNER },
-          },
-          select: { id: true, name: true },
-          orderBy: { name: 'asc' },
-        });
-        return {
-          items: rows.map((row) => ({
-            id: row.id,
-            name: row.name,
-            isDefault: row.id === space.defaultRoleId,
-          })),
-        };
-      }
-    );
-  }
-
   async create(
     access: SpaceAccess,
     input: CreateSpaceInvite
@@ -195,6 +171,8 @@ export class InvitesService {
         if (existing.kind !== 'email' || !existing.email) {
           throw new BadRequestException('Only email invites can be resent');
         }
+
+        await this.assertInviteRoleGrantable(tx, access, existing.roleId);
 
         await assertEmailInviteBudget(tx, access.spaceId, 1);
 
@@ -385,7 +363,7 @@ export class InvitesService {
     const row = await this.prisma.withTenant(
       { spaceId: access.spaceId, userId: access.userId },
       async (tx) => {
-        const roleId = await this.resolveRoleId(tx, access.spaceId, input.roleId);
+        const roleId = await this.resolveRoleId(tx, access, input.roleId);
         const expiresAt = addDays(new Date(), input.expiresInDays);
         return tx.invite.create({
           data: {
@@ -423,7 +401,7 @@ export class InvitesService {
       async (tx) => {
         await assertEmailInviteBudget(tx, access.spaceId, addresses.length);
 
-        const roleId = await this.resolveRoleId(tx, access.spaceId, input.roleId);
+        const roleId = await this.resolveRoleId(tx, access, input.roleId);
         const space = await tx.space.findFirstOrThrow({
           where: { id: access.spaceId },
           select: { id: true, name: true, slug: true },
@@ -568,34 +546,52 @@ export class InvitesService {
 
   private async resolveRoleId(
     tx: Prisma.TransactionClient,
-    spaceId: string,
+    access: SpaceAccess,
     roleId: string | undefined
   ): Promise<string> {
     if (roleId) {
       if (!isUuid(roleId)) {
         throw new BadRequestException('Invalid roleId');
       }
-      const role = await tx.role.findFirst({
-        where: { id: roleId, spaceId },
-        select: { id: true, name: true },
-      });
-      if (!role) {
-        throw new BadRequestException('Role not found in this workspace');
-      }
-      if (role.name === SYSTEM_ROLE_NAMES.OWNER) {
-        throw new BadRequestException('Cannot invite as Owner');
-      }
-      return role.id;
+      await this.assertInviteRoleGrantable(tx, access, roleId);
+      return roleId;
     }
 
     const space = await tx.space.findFirstOrThrow({
-      where: { id: spaceId },
+      where: { id: access.spaceId },
       select: { defaultRoleId: true },
     });
     if (!space.defaultRoleId) {
       throw new BadRequestException('Workspace has no default role');
     }
+    await this.assertInviteRoleGrantable(tx, access, space.defaultRoleId);
     return space.defaultRoleId;
+  }
+
+  /**
+   * Invite role (or default) must exist, not be Owner, and be ⊆ actor permissions.
+   */
+  private async assertInviteRoleGrantable(
+    tx: Prisma.TransactionClient,
+    access: SpaceAccess,
+    roleId: string
+  ): Promise<void> {
+    const role = await tx.role.findFirst({
+      where: { id: roleId, spaceId: access.spaceId },
+      select: { id: true, name: true, permissions: true },
+    });
+    if (!role) {
+      throw new BadRequestException('Role not found in this workspace');
+    }
+    if (role.name === SYSTEM_ROLE_NAMES.OWNER) {
+      throw new BadRequestException('Cannot invite as Owner');
+    }
+    if (!permissionsAreSubset(role.permissions, access.permissions)) {
+      throw new ForbiddenException({
+        message: 'You cannot invite with permissions you do not have',
+        code: ErrorCode.ROLE_ESCALATION,
+      });
+    }
   }
 
   private toInvite(row: InviteWithRole): SpaceInvite {

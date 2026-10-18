@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { SpaceAccess } from '@work-hub/access';
-import { ErrorCode, SYSTEM_ROLE_NAMES } from '@work-hub/constants';
+import {
+  ErrorCode,
+  PERMISSIONS,
+  SYSTEM_ROLE_NAMES,
+} from '@work-hub/constants';
 import type { PrismaService } from '@work-hub/database';
 import type { MailService } from '@work-hub/mail';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,7 +29,17 @@ const access: SpaceAccess = {
   membershipStatus: 'active',
   roleId,
   roleName: SYSTEM_ROLE_NAMES.ADMIN,
-  permissions: [],
+  permissions: [
+    PERMISSIONS.MEMBERS_READ,
+    PERMISSIONS.INVITES_WRITE,
+    PERMISSIONS.ROLES_WRITE,
+  ],
+};
+
+const grantableRole = {
+  id: roleId,
+  name: SYSTEM_ROLE_NAMES.MEMBER,
+  permissions: [PERMISSIONS.MEMBERS_READ],
 };
 
 function inviteRow(overrides: Record<string, unknown> = {}) {
@@ -253,7 +267,7 @@ describe('InvitesService.create', () => {
         findFirst: vi.fn(),
       },
       membership: { findFirst: vi.fn() },
-      role: { findFirst: vi.fn() },
+      role: { findFirst: vi.fn().mockResolvedValue(grantableRole) },
     });
 
     const result = await service.create(access, {
@@ -267,6 +281,30 @@ describe('InvitesService.create', () => {
     });
     expect('token' in result && result.token).toBeTruthy();
     expect(mail.sendSpaceInvite).not.toHaveBeenCalled();
+  });
+
+  it('rejects inviting into a role above the actor', async () => {
+    const elevatedRoleId = '01936b3c-0000-7000-8000-0000000000ef';
+    const { service } = createService({
+      role: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: elevatedRoleId,
+          name: 'Co-owner',
+          permissions: [PERMISSIONS.SPACE_DELETE],
+        }),
+      },
+    });
+
+    await expect(
+      service.create(access, {
+        kind: 'link',
+        roleId: elevatedRoleId,
+        maxUses: 5,
+        expiresInDays: 3,
+      })
+    ).rejects.toMatchObject({
+      response: { code: ErrorCode.ROLE_ESCALATION },
+    });
   });
 
   it('returns per-address bulk results for email invites', async () => {
@@ -297,7 +335,7 @@ describe('InvitesService.create', () => {
           .mockResolvedValueOnce(null)
           .mockResolvedValueOnce({ id: 'm1' }),
       },
-      role: { findFirst: vi.fn() },
+      role: { findFirst: vi.fn().mockResolvedValue(grantableRole) },
     });
 
     const result = await service.create(access, {
@@ -344,31 +382,6 @@ describe('InvitesService.create', () => {
   });
 });
 
-describe('InvitesService.listRoles', () => {
-  it('marks the workspace default role', async () => {
-    const memberRole = { id: roleId, name: SYSTEM_ROLE_NAMES.MEMBER };
-    const adminRole = {
-      id: '01936b3c-0000-7000-8000-0000000000ad',
-      name: SYSTEM_ROLE_NAMES.ADMIN,
-    };
-    const { service } = createService({
-      space: {
-        findFirstOrThrow: vi.fn().mockResolvedValue({ defaultRoleId: roleId }),
-      },
-      role: {
-        findMany: vi.fn().mockResolvedValue([adminRole, memberRole]),
-      },
-    });
-
-    await expect(service.listRoles(access)).resolves.toEqual({
-      items: [
-        { ...adminRole, isDefault: false },
-        { ...memberRole, isDefault: true },
-      ],
-    });
-  });
-});
-
 describe('InvitesService.resend', () => {
   it('revokes the old invite and creates a fresh email invite', async () => {
     const existing = inviteRow({
@@ -395,6 +408,7 @@ describe('InvitesService.resend', () => {
       space: {
         findFirstOrThrow: vi.fn().mockResolvedValue({ name: 'Acme' }),
       },
+      role: { findFirst: vi.fn().mockResolvedValue(grantableRole) },
     });
 
     const result = await service.resend(access, inviteId);
@@ -404,6 +418,31 @@ describe('InvitesService.resend', () => {
     expect(mail.sendSpaceInvite).toHaveBeenCalledWith(
       expect.objectContaining({ to: 'mia@workhub.test' })
     );
+  });
+
+  it('rejects resend when the invite role is above the actor', async () => {
+    const existing = inviteRow({
+      kind: 'email',
+      email: 'mia@workhub.test',
+      maxUses: 1,
+      revokedAt: null,
+    });
+    const { service } = createService({
+      invite: {
+        findFirst: vi.fn().mockResolvedValue(existing),
+      },
+      role: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: roleId,
+          name: 'Co-owner',
+          permissions: [PERMISSIONS.SPACE_DELETE],
+        }),
+      },
+    });
+
+    await expect(service.resend(access, inviteId)).rejects.toMatchObject({
+      response: { code: ErrorCode.ROLE_ESCALATION },
+    });
   });
 });
 

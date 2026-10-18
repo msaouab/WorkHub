@@ -3,6 +3,7 @@ import {
   spaceMemberSchema,
   type ListSpaceMembersQuery,
   type ListSpaceMembersResponse,
+  type PatchSpaceMember,
   type SpaceMember,
 } from '@work-hub/contracts';
 import { apiFetch } from '@/lib/api/fetch';
@@ -32,6 +33,18 @@ export async function fetchSpaceMembers(
     `spaces/${spaceId}/members${qs ? `?${qs}` : ''}`
   );
   return listSpaceMembersResponseSchema.parse(data);
+}
+
+export async function patchSpaceMember(
+  spaceId: string,
+  membershipId: string,
+  body: PatchSpaceMember
+): Promise<SpaceMember> {
+  const data = await apiFetch<unknown>(
+    `spaces/${spaceId}/members/${membershipId}`,
+    { method: 'PATCH', body }
+  );
+  return spaceMemberSchema.parse(data);
 }
 
 export async function deactivateMember(

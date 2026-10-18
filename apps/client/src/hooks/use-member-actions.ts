@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import {
   deactivateMember,
   leaveSpace,
+  patchSpaceMember,
   reactivateMember,
   removeMember,
 } from '@/lib/api/members';
@@ -18,7 +19,7 @@ function invalidateMembers(queryClient: ReturnType<typeof useQueryClient>, space
   });
 }
 
-/** Deactivate / reactivate / remove / leave for a workspace (WH-046 UI). */
+/** Deactivate / reactivate / remove / leave / change role for a workspace. */
 export function useMemberActions(spaceId: string) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -40,6 +41,17 @@ export function useMemberActions(spaceId: string) {
     onSuccess: () => invalidateMembers(queryClient, spaceId),
   });
 
+  const updateRole = useMutation({
+    mutationFn: ({
+      membershipId,
+      roleId,
+    }: {
+      membershipId: string;
+      roleId: string;
+    }) => patchSpaceMember(spaceId, membershipId, { roleId }),
+    onSuccess: () => invalidateMembers(queryClient, spaceId),
+  });
+
   const leave = useMutation({
     mutationFn: () => leaveSpace(spaceId),
     onSuccess: () => {
@@ -51,5 +63,5 @@ export function useMemberActions(spaceId: string) {
     },
   });
 
-  return { deactivate, reactivate, remove, leave };
+  return { deactivate, reactivate, remove, updateRole, leave };
 }

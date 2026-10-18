@@ -133,11 +133,15 @@ export function committedDoneTickets(tickets, headMarkdown) {
 }
 
 /**
- * The next implementation: the first `start` ticket(s) in list order (priority, then
- * planned order), moved to `in progress` right after a commit closes the done tickets.
+ * The next implementations: every `start` ticket at the highest remaining priority (the
+ * current milestone), in planned order. They move to `in progress` right after a commit
+ * closes the done tickets.
  */
-export function nextStartTickets(tickets, count = 1) {
-  return tickets.filter((t) => t.status === 'start').slice(0, count);
+export function nextStartTickets(tickets) {
+  const starts = tickets.filter((t) => t.status === 'start' && t.priority !== null);
+  if (starts.length === 0) return [];
+  const top = Math.min(...starts.map((t) => t.priority));
+  return starts.filter((t) => t.priority === top);
 }
 
 /**
@@ -210,7 +214,7 @@ export function hookContext({ event, tickets, problems, pending, committedDone =
     const next = nextStartTickets(tickets);
     lines.push(
       `${committedDone.length} done ticket(s) are committed (done in HEAD's BACKLOG.md): delete them from BACKLOG.md now: ${committedDone.map((t) => t.id).join(', ')}.`,
-      `Then move the next implementation from \`start\` to \`in progress\` (first start ticket by priority and planned order${next.length ? `: ${next.map((t) => t.id).join(', ')}` : ''}), and tell the user what's next.`
+      `Then move the next implementations from \`start\` to \`in progress\` (every start ticket at the highest remaining priority${next.length ? `: ${next.map((t) => t.id).join(', ')}` : ''}), and tell the user what's next.`
     );
   }
   if (problems.length) {

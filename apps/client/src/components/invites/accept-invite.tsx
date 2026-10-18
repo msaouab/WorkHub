@@ -1,12 +1,12 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useRef } from 'react';
 import { PageLoader } from '@/components/brand/logo-loader';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useAuth } from '@/hooks/use-auth';
 import { useAcceptInvite, useInvitePreview } from '@/hooks/use-invites';
+import { useRoleLabel } from '@/hooks/use-role-label';
 import { Link, useRouter } from '@/i18n/navigation';
 import { ApiError } from '@/lib/api/fetch';
 import { ROUTES } from '@/lib/routes';
@@ -31,6 +31,10 @@ type AcceptInviteProps = {
   token: string;
 };
 
+/**
+ * Invite landing: preview the workspace, then the user must approve before joining.
+ * Signed-out users sign in / sign up first; signed-in users confirm explicitly (no auto-accept).
+ */
 export function AcceptInvite({ token }: AcceptInviteProps) {
   const t = useTranslations('InviteAccept');
   const locale = useLocale();
@@ -38,43 +42,11 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
   const { isSignedIn, isPending: authPending } = useAuth();
   const preview = useInvitePreview(token);
   const accept = useAcceptInvite();
-  const autoTried = useRef(false);
+  const roleLabel = useRoleLabel(preview.data?.roleName ?? '');
 
-  const signedIn = isSignedIn;
   const nextPath = `/invite/${encodeURIComponent(token)}`;
   const signInHref = `${ROUTES.signIn}?next=${encodeURIComponent(nextPath)}`;
   const signUpHref = `${ROUTES.signUp}?next=${encodeURIComponent(nextPath)}`;
-
-  const acceptMutate = accept.mutateAsync;
-
-  useEffect(() => {
-    if (
-      !signedIn ||
-      !preview.data ||
-      accept.isSuccess ||
-      accept.isPending ||
-      autoTried.current
-    ) {
-      return;
-    }
-    autoTried.current = true;
-    void acceptMutate(token)
-      .then((result) => {
-        router.replace(`${ROUTES.space}/${result.spaceSlug}`);
-        router.refresh();
-      })
-      .catch(() => {
-        // Surface via accept.error below.
-      });
-  }, [
-    signedIn,
-    preview.data,
-    accept.isSuccess,
-    accept.isPending,
-    acceptMutate,
-    token,
-    router,
-  ]);
 
   if (preview.isLoading || authPending) {
     return <PageLoader fill="parent" label={t('loading')} />;
@@ -94,22 +66,18 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
     return null;
   }
 
-  if (!signedIn) {
+  if (!isSignedIn) {
     return (
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            {t('title', { space: data.spaceName })}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t('description', { role: data.roleName })}
-          </p>
-          {data.kind === 'email' && data.email ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              {t('emailHint', { email: data.email })}
-            </p>
-          ) : null}
-        </div>
+        <InviteSummary
+          title={t('title', { space: data.spaceName })}
+          description={t('description', { role: roleLabel })}
+          emailHint={
+            data.kind === 'email' && data.email
+              ? t('emailHint', { email: data.email })
+              : null
+          }
+        />
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href={signInHref}
@@ -130,7 +98,7 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
     );
   }
 
-  if (accept.isPending || (!accept.isError && !accept.isSuccess)) {
+  if (accept.isSuccess) {
     return <PageLoader fill="parent" label={t('joining')} />;
   }
 
@@ -162,10 +130,7 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
           type="button"
           variant="outline"
           className="self-start"
-          onClick={() => {
-            autoTried.current = false;
-            accept.reset();
-          }}
+          onClick={() => accept.reset()}
         >
           {t('tryAgain')}
         </Button>
@@ -173,7 +138,66 @@ export function AcceptInvite({ token }: AcceptInviteProps) {
     );
   }
 
-  return <PageLoader fill="parent" label={t('joining')} />;
+  return (
+    <div className="flex flex-col gap-6">
+      <InviteSummary
+        title={t('title', { space: data.spaceName })}
+        description={t('confirmDescription', { role: roleLabel })}
+        emailHint={
+          data.kind === 'email' && data.email
+            ? t('emailHintSignedIn', { email: data.email })
+            : null
+        }
+      />
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          type="button"
+          disabled={accept.isPending}
+          onClick={() => {
+            void accept
+              .mutateAsync(token)
+              .then((result) => {
+                router.replace(`${ROUTES.space}/${result.spaceSlug}`);
+                router.refresh();
+              })
+              .catch(() => {
+                /* surfaced via accept.error */
+              });
+          }}
+        >
+          {accept.isPending ? t('joining') : t('accept')}
+        </Button>
+        <Link
+          href={ROUTES.dashboard}
+          className={cn(buttonVariants({ variant: 'outline' }))}
+        >
+          {t('decline')}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function InviteSummary({
+  title,
+  description,
+  emailHint,
+}: {
+  title: string;
+  description: string;
+  emailHint: string | null;
+}) {
+  return (
+    <div>
+      <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+        {title}
+      </h1>
+      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      {emailHint ? (
+        <p className="mt-2 text-sm text-muted-foreground">{emailHint}</p>
+      ) : null}
+    </div>
+  );
 }
 
 function InviteMessage({ title, body }: { title: string; body: string }) {

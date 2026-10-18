@@ -55,6 +55,11 @@ describe('findUnusedMessageKeys', () => {
     assert.deepEqual(findUnusedMessageKeys(messages, code, ['Locale']), ['Shell.old']);
   });
 
+  it('treats a subtree as used when an ancestor is read with a dotted variable', () => {
+    const perms = { Roles: { permissions: { space: { settings: { write: 'Edit' } }, members: { read: 'View' } } } };
+    assert.deepEqual(findUnusedMessageKeys(perms, 't(`permissions.${permission}`)'), []);
+  });
+
   it('matches a leaf inside a dotted key', () => {
     assert.deepEqual(findUnusedMessageKeys({ A: { b: 'x' } }, "t('A.b')"), []);
   });

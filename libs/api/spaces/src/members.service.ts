@@ -5,13 +5,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { SpaceAccess } from '@work-hub/access';
-import { ErrorCode, SYSTEM_ROLE_NAMES } from '@work-hub/constants';
+import {
+  ErrorCode,
+  PERMISSION_LIST,
+  SYSTEM_ROLE_NAMES,
+  permissionsAreSubset,
+  type Permission,
+} from '@work-hub/constants';
 import type {
   ListSpaceMembersQuery,
   ListSpaceMembersResponse,
   SpaceMember,
 } from '@work-hub/contracts';
 import { Prisma, PrismaService } from '@work-hub/database';
+
+const PERMISSION_CATALOG = new Set<string>(PERMISSION_LIST);
 
 type MembershipWithUserRole = {
   id: string;
@@ -27,6 +35,7 @@ type MembershipWithUserRole = {
   role: {
     id: string;
     name: string;
+    permissions: string[];
   };
 };
 
@@ -78,7 +87,7 @@ export class MembersService {
             user: {
               select: { id: true, name: true, email: true, image: true },
             },
-            role: { select: { id: true, name: true } },
+            role: { select: { id: true, name: true, permissions: true } },
           },
           orderBy: { id: 'asc' },
           take: limit + 1,
@@ -116,6 +125,7 @@ export class MembersService {
             code: ErrorCode.CANNOT_DEACTIVATE_SELF,
           });
         }
+        this.assertRoleWithinReach(target.role.permissions, access.permissions);
 
         if (target.status === 'deactivated') {
           return this.toMember(target);
@@ -128,7 +138,7 @@ export class MembersService {
             user: {
               select: { id: true, name: true, email: true, image: true },
             },
-            role: { select: { id: true, name: true } },
+            role: { select: { id: true, name: true, permissions: true } },
           },
         });
         return this.toMember(updated);
@@ -151,6 +161,7 @@ export class MembersService {
             code: ErrorCode.CANNOT_MODIFY_OWNER,
           });
         }
+        this.assertRoleWithinReach(target.role.permissions, access.permissions);
 
         if (target.status === 'active') {
           return this.toMember(target);
@@ -163,7 +174,7 @@ export class MembersService {
             user: {
               select: { id: true, name: true, email: true, image: true },
             },
-            role: { select: { id: true, name: true } },
+            role: { select: { id: true, name: true, permissions: true } },
           },
         });
         return this.toMember(updated);
@@ -189,6 +200,7 @@ export class MembersService {
             code: ErrorCode.CANNOT_REMOVE_SELF,
           });
         }
+        this.assertRoleWithinReach(target.role.permissions, access.permissions);
 
         await tx.membership.delete({ where: { id: target.id } });
       }
@@ -222,6 +234,75 @@ export class MembersService {
     );
   }
 
+  /**
+   * Change a member's role (WH-011). Caller must have `roles.write`.
+   * No self-change, Owner role untouchable, no escalation beyond actor perms.
+   */
+  async updateRole(
+    access: SpaceAccess,
+    membershipId: string,
+    roleId: string
+  ): Promise<SpaceMember> {
+    return this.prisma.withTenant(
+      { spaceId: access.spaceId, userId: access.userId },
+      async (tx) => {
+        const target = await this.requireMembership(
+          tx,
+          access.spaceId,
+          membershipId
+        );
+
+        if (target.userId === access.userId) {
+          throw new ForbiddenException({
+            message: 'You cannot change your own role',
+            code: ErrorCode.CANNOT_CHANGE_OWN_ROLE,
+          });
+        }
+        if (target.role.name === SYSTEM_ROLE_NAMES.OWNER) {
+          throw new ForbiddenException({
+            message: 'The Owner role cannot be changed',
+            code: ErrorCode.CANNOT_MODIFY_OWNER,
+          });
+        }
+        this.assertRoleWithinReach(target.role.permissions, access.permissions);
+        if (!isUuid(roleId)) {
+          throw new NotFoundException('Role not found');
+        }
+
+        const nextRole = await tx.role.findFirst({
+          where: { id: roleId, spaceId: access.spaceId },
+          select: { id: true, name: true, permissions: true },
+        });
+        if (!nextRole) {
+          throw new NotFoundException('Role not found');
+        }
+        if (nextRole.name === SYSTEM_ROLE_NAMES.OWNER) {
+          throw new ForbiddenException({
+            message: 'Use ownership transfer to make someone Owner',
+            code: ErrorCode.CANNOT_ASSIGN_OWNER,
+          });
+        }
+        this.assertRoleWithinReach(nextRole.permissions, access.permissions);
+
+        if (target.role.id === nextRole.id) {
+          return this.toMember(target);
+        }
+
+        const updated = await tx.membership.update({
+          where: { id: target.id },
+          data: { roleId: nextRole.id },
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, image: true },
+            },
+            role: { select: { id: true, name: true, permissions: true } },
+          },
+        });
+        return this.toMember(updated);
+      }
+    );
+  }
+
   private async requireMembership(
     tx: Prisma.TransactionClient,
     spaceId: string,
@@ -237,7 +318,7 @@ export class MembersService {
         user: {
           select: { id: true, name: true, email: true, image: true },
         },
-        role: { select: { id: true, name: true } },
+        role: { select: { id: true, name: true, permissions: true } },
       },
     });
 
@@ -245,6 +326,19 @@ export class MembersService {
       throw new NotFoundException('Member not found');
     }
     return row;
+  }
+
+  /** Actor may only manage members whose current role is ⊆ actor permissions. */
+  private assertRoleWithinReach(
+    rolePermissions: readonly string[],
+    actorPermissions: readonly string[]
+  ): void {
+    if (!permissionsAreSubset(rolePermissions, actorPermissions)) {
+      throw new ForbiddenException({
+        message: 'You cannot manage a role with permissions you do not have',
+        code: ErrorCode.ROLE_ESCALATION,
+      });
+    }
   }
 
   private toMember(row: MembershipWithUserRole): SpaceMember {
@@ -257,11 +351,19 @@ export class MembersService {
       role: {
         id: row.role.id,
         name: row.role.name,
+        permissions: catalogPermissions(row.role.permissions),
       },
       membershipStatus: row.status,
       createdAt: row.createdAt.toISOString(),
     };
   }
+}
+
+/** Drop unknown DB strings so the response matches the Permission catalog. */
+function catalogPermissions(values: readonly string[]): Permission[] {
+  return values.filter((value): value is Permission =>
+    PERMISSION_CATALOG.has(value)
+  );
 }
 
 const UUID_RE =

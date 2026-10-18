@@ -391,6 +391,7 @@
         "email": "E-mail",
         "role": "Rôle",
         "status": "Statut",
+        "joined": "Rejoint le",
         "actions": "Actions"
       },
       "actions": "Actions du membre",
@@ -414,7 +415,88 @@
         "CANNOT_MODIFY_OWNER": "Les propriétaires ne peuvent pas être modifiés ainsi.",
         "CANNOT_DEACTIVATE_SELF": "Vous ne pouvez pas vous désactiver.",
         "CANNOT_REMOVE_SELF": "Utilisez « quitter » pour vous retirer.",
-        "LAST_OWNER": "Transférez la propriété avant de quitter en tant que dernier propriétaire."
+        "LAST_OWNER": "Transférez la propriété avant de quitter en tant que dernier propriétaire.",
+        "CANNOT_CHANGE_OWN_ROLE": "Vous ne pouvez pas modifier votre propre rôle.",
+        "CANNOT_ASSIGN_OWNER": "Utilisez le transfert de propriété pour nommer un propriétaire.",
+        "ROLE_ESCALATION": "Vous ne pouvez pas accorder des permissions que vous n'avez pas."
+      }
+    },
+    "roles": {
+      "title": "Rôles et permissions",
+      "description": "Rôles intégrés et jusqu'à 3 modèles de permissions personnalisés à attribuer.",
+      "loading": "Chargement des rôles…",
+      "failed": "Impossible de charger les rôles. Réessayez.",
+      "empty": "Sélectionnez un rôle pour le modifier.",
+      "listHeading": "Rôles",
+      "create": "Nouveau modèle",
+      "createTitle": "Nouveau modèle de permissions",
+      "templateCount": "{count} sur {max} modèles personnalisés",
+      "limitReached": "Vous pouvez créer jusqu'à {max} modèles de permissions personnalisés.",
+      "nameLabel": "Nom du rôle",
+      "systemNameHint": "Les rôles intégrés conservent leur nom.",
+      "permissionsHeading": "Permissions",
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "expandBranch": "Développer {name}",
+      "collapseBranch": "Réduire {name}",
+      "ownerLocked": "Le rôle Propriétaire a toujours toutes les permissions.",
+      "ownRoleLocked": "Vous ne pouvez pas modifier le rôle que vous détenez.",
+      "aboveActorLocked": "Vous ne pouvez modifier que des rôles dont les permissions sont inférieures ou égales aux vôtres.",
+      "defaultLabel": "Rôle par défaut pour les nouvelles invitations",
+      "defaultBadge": "Par défaut",
+      "memberCount": "{count, plural, =0 {Utilisé par aucun membre} one {Utilisé par # membre} other {Utilisé par # membres}}",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "cancel": "Annuler",
+      "delete": "Supprimer le rôle",
+      "confirmDeleteTitle": "Supprimer ce rôle ?",
+      "confirmDeleteDescription": "« {name} » sera supprimé. Les membres doivent d'abord être déplacés vers un autre rôle.",
+      "actionFailed": "Cette action a échoué. Réessayez.",
+      "tree": {
+        "space": "Espace",
+        "settings": "Paramètres",
+        "billing": "Facturation",
+        "members": "Membres",
+        "roles": "Rôles",
+        "teams": "Équipes",
+        "invites": "Invitations",
+        "leave_types": "Types de congés",
+        "holidays": "Jours fériés",
+        "balances": "Soldes",
+        "leave": "Congés",
+        "documents": "Documents",
+        "calendar": "Calendrier",
+        "requests": "Demandes",
+        "profile": "Profil"
+      },
+      "permissions": {
+        "space": {
+          "settings": { "write": "Modifier les paramètres de l'espace" },
+          "delete": "Supprimer l'espace",
+          "billing": { "write": "Gérer la facturation" }
+        },
+        "members": {
+          "read": "Voir les membres",
+          "write": "Gérer les membres"
+        },
+        "roles": { "write": "Gérer les rôles et permissions" },
+        "teams": { "write": "Gérer les équipes" },
+        "invites": { "write": "Inviter des personnes" },
+        "leave_types": { "write": "Gérer les types de congés" },
+        "holidays": { "write": "Gérer les jours fériés" },
+        "balances": { "adjust": "Ajuster les soldes de congés" },
+        "leave": { "approve": "Approuver les demandes de congés" },
+        "documents": { "fulfil": "Traiter les demandes de documents" },
+        "calendar": { "read": "Voir le calendrier d'équipe" },
+        "requests": { "create": "Créer des demandes de congés et documents" },
+        "profile": { "write": "Modifier son propre profil" }
+      },
+      "errors": {
+        "ROLE_ESCALATION": "Vous ne pouvez pas accorder des permissions que vous n'avez pas.",
+        "SYSTEM_ROLE_LOCKED": "Les rôles intégrés ne peuvent pas être modifiés ainsi.",
+        "ROLE_IN_USE": "Déplacez les membres et invitations avant de supprimer ce rôle.",
+        "ROLE_LIMIT_REACHED": "Vous pouvez créer jusqu'à 3 modèles de permissions personnalisés.",
+        "CONFLICT": "Ce changement entre en conflit avec le rôle par défaut ou le nom."
       }
     },
     "invites": {
@@ -498,6 +580,7 @@
       "roles": {
         "Owner": "Propriétaire",
         "Admin": "Admin",
+        "Manager": "Manager",
         "Member": "Membre"
       },
       "statusValues": {
@@ -520,7 +603,7 @@
       "title": "Paramètres de l'espace",
       "description": "Gérez l'apparence de cet espace.",
       "brandingTitle": "Apparence",
-      "brandingDescription": "Logo et couverture affichés sur l'accueil et dans le sélecteur.",
+      "brandingDescription": "Logo et couverture utilisés dans le sélecteur et les paramètres.",
       "sectionNav": "Sections des paramètres",
       "sections": {
         "general": "Général",
@@ -588,8 +671,12 @@
     "loading": "Chargement de l'invitation…",
     "joining": "Rejoindre l'espace…",
     "title": "Rejoindre {space}",
-    "description": "Vous rejoindrez en tant que {role}.",
+    "description": "Vous rejoindrez en tant que {role}. Connectez-vous ou créez un compte pour continuer.",
+    "confirmDescription": "Vous êtes invité(e) en tant que {role}. Acceptez pour ajouter cet espace à votre compte.",
     "emailHint": "Connectez-vous avec {email} pour accepter cette invitation.",
+    "emailHintSignedIn": "Cette invitation a été envoyée à {email}.",
+    "accept": "Accepter l'invitation",
+    "decline": "Pas maintenant",
     "signIn": "Se connecter",
     "signUp": "Créer un compte",
     "unavailableTitle": "Invitation indisponible",
@@ -650,6 +737,41 @@
       "send": "Envoyer les invitations",
       "close": "Fermer",
       "failed": "Impossible d'envoyer les invitations. Réessayez."
+    },
+    "groups": {
+      "description": "Organisez les personnes en groupes avec des managers qui approuvent les congés.",
+      "newGroup": "Nouveau groupe",
+      "loading": "Chargement des groupes…",
+      "failed": "Impossible de charger les groupes. Réessayez.",
+      "empty": "Aucun groupe pour l’instant.",
+      "emptyWritable": "Aucun groupe. Créez-en un pour assigner managers et membres.",
+      "counts": "{members, plural, one {# membre} other {# membres}} · {managers, plural, one {# manager} other {# managers}}",
+      "managers": "Managers",
+      "members": "Membres",
+      "noManagers": "Aucun manager assigné.",
+      "noMembers": "Aucun membre assigné.",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "createTitle": "Nouveau groupe",
+      "editTitle": "Modifier le groupe",
+      "editorDescription": "Nommez le groupe et choisissez managers et membres.",
+      "name": "Nom",
+      "nameRequired": "Entrez un nom de groupe.",
+      "managersHint": "Les managers approuvent les congés des personnes du groupe. Seules les personnes dont le rôle inclut l’approbation des congés sont listées.",
+      "managersEmpty": "Personne n’a l’approbation des congés. Attribuez d’abord Manager, Admin ou Owner.",
+      "membersHint": "Personnes qui appartiennent à ce groupe.",
+      "create": "Créer le groupe",
+      "save": "Enregistrer",
+      "confirmDeleteTitle": "Supprimer le groupe ?",
+      "confirmDeleteDescription": "« {name} » sera supprimé. Les adhésions ne sont pas effacées.",
+      "errors": {
+        "TEAM_NAME_TAKEN": "Un groupe porte déjà ce nom.",
+        "MEMBERSHIP_NOT_IN_SPACE": "Une ou plusieurs personnes ne sont pas actives dans cet espace.",
+        "VALIDATION_FAILED": "Le rôle de cette personne ne permet pas d’approuver les demandes.",
+        "CONFLICT": "Ce changement est en conflit. Réessayez.",
+        "failed": "Impossible d’enregistrer le groupe. Réessayez."
+      }
     }
   },
   "ComingSoon": {
@@ -664,7 +786,6 @@
       "people": "Personnes",
       "approvals": "Approbations",
       "roles": "Rôles et permissions",
-      "teams": "Groupes",
       "leavePolicies": "Politiques de congés",
       "signInMethods": "Méthodes de connexion",
       "sessions": "Sessions",

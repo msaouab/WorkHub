@@ -25,10 +25,17 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 export const PERMISSION_LIST = Object.values(PERMISSIONS);
 
-/** Built-in roles created with every workspace (WH-038 / WH-039). */
+/**
+ * Max custom permission templates (non-system roles) per workspace.
+ * Owner and Admin create these via `roles.write` (WH-011).
+ */
+export const MAX_CUSTOM_ROLES = 3;
+
+/** Built-in roles created with every workspace (WH-038 / WH-039 / WH-058). */
 export const SYSTEM_ROLE_NAMES = {
   OWNER: 'Owner',
   ADMIN: 'Admin',
+  MANAGER: 'Manager',
   MEMBER: 'Member',
 } as const;
 
@@ -50,6 +57,13 @@ const MEMBER_PERMISSIONS: readonly Permission[] = [
   PERMISSIONS.PROFILE_WRITE,
 ];
 
+/** Manager = Member + leave/document approval (PRD §4 / WH-058). */
+const MANAGER_PERMISSIONS: readonly Permission[] = [
+  ...MEMBER_PERMISSIONS,
+  PERMISSIONS.LEAVE_APPROVE,
+  PERMISSIONS.DOCUMENTS_FULFIL,
+];
+
 /** Permissions granted to each system role (PRD §4 Roles). */
 export const SYSTEM_ROLE_PERMISSIONS: Record<
   SystemRoleName,
@@ -57,10 +71,14 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
 > = {
   [SYSTEM_ROLE_NAMES.OWNER]: PERMISSION_LIST,
   [SYSTEM_ROLE_NAMES.ADMIN]: PERMISSION_LIST.filter((p) => !OWNER_ONLY.has(p)),
+  [SYSTEM_ROLE_NAMES.MANAGER]: MANAGER_PERMISSIONS,
   [SYSTEM_ROLE_NAMES.MEMBER]: MEMBER_PERMISSIONS,
 };
 
-/** True when every preset permission is in the catalog (and Member ⊆ Admin ⊆ Owner). */
+/**
+ * True when every preset permission is in the catalog and
+ * Member ⊆ Manager ⊆ Admin ⊆ Owner.
+ */
 export function systemRolePresetsAreConsistent(): boolean {
   const catalog = new Set<Permission>(PERMISSION_LIST);
   const owner = new Set<Permission>(
@@ -68,6 +86,9 @@ export function systemRolePresetsAreConsistent(): boolean {
   );
   const admin = new Set<Permission>(
     SYSTEM_ROLE_PERMISSIONS[SYSTEM_ROLE_NAMES.ADMIN]
+  );
+  const manager = new Set<Permission>(
+    SYSTEM_ROLE_PERMISSIONS[SYSTEM_ROLE_NAMES.MANAGER]
   );
   const member = new Set<Permission>(
     SYSTEM_ROLE_PERMISSIONS[SYSTEM_ROLE_NAMES.MEMBER]
@@ -96,8 +117,14 @@ export function systemRolePresetsAreConsistent(): boolean {
     }
   }
 
-  for (const permission of member) {
+  for (const permission of manager) {
     if (!admin.has(permission)) {
+      return false;
+    }
+  }
+
+  for (const permission of member) {
+    if (!manager.has(permission)) {
       return false;
     }
   }

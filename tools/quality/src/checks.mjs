@@ -59,7 +59,7 @@ function escapeRegExp(value) {
 
 /**
  * Keys whose last segment never appears as a quoted string in the code.
- * A key also counts as used when its parent is read dynamically (`t(\`parent.${x}\`)`)
+ * A key also counts as used when one of its ancestors is read dynamically (`t(\`parent.${x}\`)`)
  * or when it matches an allowlisted prefix (keys read with a variable, e.g. `t(locale)`).
  * Heuristic by design: it can miss an unused key, but it doesn't flag a used one.
  */
@@ -74,14 +74,11 @@ export function findUnusedMessageKeys(messages, code, allowPrefixes = []) {
     if (quoted.test(code)) {
       return false;
     }
-    const parent = segments[segments.length - 2];
-    if (parent) {
-      const dynamic = new RegExp(`['"\`]([\\w.]*\\.)?${escapeRegExp(parent)}\\.\\$\\{`);
-      if (dynamic.test(code)) {
-        return false;
-      }
-    }
-    return true;
+    // Any ancestor read with a template (`t(\`permissions.${p}\`)` where `p` itself
+    // contains dots, e.g. `space.settings.write`) makes the whole subtree used.
+    return !segments.slice(0, -1).some((ancestor) =>
+      new RegExp(`['"\`]([\\w.]*\\.)?${escapeRegExp(ancestor)}\\.\\$\\{`).test(code)
+    );
   });
 }
 

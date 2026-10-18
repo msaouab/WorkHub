@@ -1,12 +1,20 @@
+import { PERMISSION_LIST, type Permission } from '@work-hub/constants';
 import { z } from 'zod';
 import { cursorPageSchema } from './pagination';
 import { membershipStatusSchema } from './spaces';
 
-/** Role summary on a member row (full permissions live on space access / WH-011). */
+const permissionTuple = PERMISSION_LIST as unknown as [
+  Permission,
+  ...Permission[],
+];
+const permissionSchema = z.enum(permissionTuple);
+
+/** Role summary on a member row (includes permissions for client-side filters, e.g. team managers). */
 export const spaceMemberRoleSchema = z
   .object({
     id: z.uuid(),
     name: z.string(),
+    permissions: z.array(permissionSchema),
   })
   .meta({ id: 'SpaceMemberRole' });
 export type SpaceMemberRole = z.infer<typeof spaceMemberRoleSchema>;
@@ -45,3 +53,13 @@ export const listSpaceMembersResponseSchema = cursorPageSchema(
 export type ListSpaceMembersResponse = z.infer<
   typeof listSpaceMembersResponseSchema
 >;
+
+/**
+ * PATCH /spaces/:spaceId/members/:membershipId — change role (WH-011).
+ * Plain object (no `.meta({ id })`): nestjs-zod rejects named/$ref for bodies
+ * that createZodDto extends in some Nest versions.
+ */
+export const patchSpaceMemberSchema = z.object({
+  roleId: z.uuid(),
+});
+export type PatchSpaceMember = z.infer<typeof patchSpaceMemberSchema>;

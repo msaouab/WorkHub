@@ -22,14 +22,10 @@ const ACCEPTED = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 type SpaceBrandingProps = {
   space: MeSpace;
-  /** Compact home layout vs settings section. */
-  variant?: 'home' | 'settings';
 };
 
-export function SpaceBranding({
-  space,
-  variant = 'home',
-}: SpaceBrandingProps) {
+/** Logo + cover editor for workspace settings (not space home). */
+export function SpaceBranding({ space }: SpaceBrandingProps) {
   const t = useTranslations('Spaces.branding');
   const canEdit = space.permissions.includes(PERMISSIONS.SPACE_SETTINGS_WRITE);
   const updateLogo = useUpdateSpaceLogo(space.id);
@@ -148,7 +144,7 @@ export function SpaceBranding({
   const coverStyle = coverBackground(space, reposition ? draftY : space.coverPositionY);
 
   return (
-    <div className={cn('flex flex-col', variant === 'home' ? 'gap-0' : 'gap-4')}>
+    <div className="flex flex-col gap-4">
       <div className="group relative overflow-hidden rounded-2xl border border-border/60">
         <div
           className="relative h-[30vh] min-h-36 w-full bg-muted"
@@ -265,12 +261,7 @@ export function SpaceBranding({
       ) : null}
 
       {canEdit ? (
-        <div
-          className={cn(
-            'flex flex-col gap-3',
-            variant === 'home' ? 'mt-4' : 'mt-0'
-          )}
-        >
+        <div className="flex flex-col gap-3">
           <p className="text-sm font-medium text-foreground">{t('presets')}</p>
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
             {COVER_PRESETS.map((preset) => (

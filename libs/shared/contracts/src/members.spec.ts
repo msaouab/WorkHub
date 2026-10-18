@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   listSpaceMembersQuerySchema,
   listSpaceMembersResponseSchema,
+  patchSpaceMemberSchema,
   spaceMemberSchema,
 } from './members';
 
@@ -14,6 +15,12 @@ const sampleMember = {
   role: {
     id: '01936b1e-8c0a-7b2e-9f3d-4a5b6c7d8e91',
     name: 'Member',
+    permissions: [
+      'members.read',
+      'calendar.read',
+      'requests.create',
+      'profile.write',
+    ],
   },
   membershipStatus: 'active' as const,
   createdAt: '2026-10-17T12:00:00.000Z',
@@ -57,5 +64,19 @@ describe('listSpaceMembersResponseSchema', () => {
         nextCursor: null,
       })
     ).toEqual({ items: [sampleMember], nextCursor: null });
+  });
+});
+
+describe('patchSpaceMemberSchema', () => {
+  it('requires a roleId uuid', () => {
+    expect(
+      patchSpaceMemberSchema.parse({
+        roleId: '01936b1e-8c0a-7b2e-9f3d-4a5b6c7d8e91',
+      })
+    ).toEqual({ roleId: '01936b1e-8c0a-7b2e-9f3d-4a5b6c7d8e91' });
+    expect(() => patchSpaceMemberSchema.parse({})).toThrow();
+    expect(() =>
+      patchSpaceMemberSchema.parse({ roleId: 'not-a-uuid' })
+    ).toThrow();
   });
 });

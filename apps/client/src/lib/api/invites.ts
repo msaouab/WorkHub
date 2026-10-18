@@ -4,7 +4,6 @@ import {
   createSpaceInviteResponseSchema,
   invitePreviewSchema,
   listSpaceInvitesResponseSchema,
-  listSpaceRolesResponseSchema,
   spaceInviteSchema,
   type AcceptInviteResponse,
   type CreateSpaceEmailInvitesResponse,
@@ -13,10 +12,10 @@ import {
   type InvitePreview,
   type ListSpaceInvitesQuery,
   type ListSpaceInvitesResponse,
-  type ListSpaceRolesResponse,
   type SpaceInvite,
 } from '@work-hub/contracts';
 import { apiFetch } from '@/lib/api/fetch';
+export { fetchSpaceRoles } from '@/lib/api/roles';
 
 export async function fetchSpaceInvites(
   spaceId: string,
@@ -37,13 +36,6 @@ export async function fetchSpaceInvites(
     `spaces/${spaceId}/invites${qs ? `?${qs}` : ''}`
   );
   return listSpaceInvitesResponseSchema.parse(data);
-}
-
-export async function fetchSpaceRoles(
-  spaceId: string
-): Promise<ListSpaceRolesResponse> {
-  const data = await apiFetch<unknown>(`spaces/${spaceId}/roles`);
-  return listSpaceRolesResponseSchema.parse(data);
 }
 
 export async function createSpaceInvite(

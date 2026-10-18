@@ -93,6 +93,8 @@ On every push to `main` and every pull request, GitHub Actions runs:
 1. **Quality + integration** — `pnpm quality` (backlog rules, `nx sync:check`, typecheck/lint/test, knip, unused translation keys) against Postgres 16 with migrations applied. The commit gate (`--gate`) is **not** used in CI; review state is local.
 2. **Playwright e2e** — builds the client and API, starts Mailpit + MinIO, seeds Acme, and runs `@work-hub/client-e2e` against the built apps.
 
+`main` is protected by [`.github/rulesets/main.json`](.github/rulesets/main.json): changes arrive only by pull request, both checks must be green on an up-to-date branch, squash merge only. To apply or update it: Settings → Rules → Rulesets → Import a ruleset.
+
 Local e2e: start `pnpm dev`, then `pnpm nx e2e @work-hub/client-e2e` (one worker; signs in once per seed role via the API).
 
 ## Status

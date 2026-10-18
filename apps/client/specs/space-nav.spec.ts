@@ -86,8 +86,9 @@ describe('activeSpaceNavId', () => {
 });
 
 describe('SPACE_NAV_ITEMS readiness', () => {
-  it('marks Team as ready', () => {
+  it('marks Team and Roles as ready', () => {
     expect(SPACE_NAV_ITEMS.find((i) => i.id === 'team')?.status).toBe('ready');
+    expect(SPACE_NAV_ITEMS.find((i) => i.id === 'roles')?.status).toBe('ready');
   });
 });
 

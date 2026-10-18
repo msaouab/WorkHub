@@ -242,6 +242,13 @@
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
     --radius: 0.625rem;
+    /*
+     * Clearance below scrollable page content (AppMain, auth, etc.).
+     * Prefer this token over ad-hoc pb-* so every surface keeps the same end gap.
+     */
+    --app-scroll-end: max(7.5rem, calc(5rem + env(safe-area-inset-bottom, 0px)));
+    --app-scroll-pad-x: 1rem;
+    --app-scroll-pad-top: 2rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
@@ -250,6 +257,14 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --app-scroll-end: max(9rem, calc(6rem + env(safe-area-inset-bottom, 0px)));
+    --app-scroll-pad-x: 1.5rem;
+    --app-scroll-pad-top: 2.5rem;
+  }
 }
 
 .dark {
@@ -307,6 +322,19 @@
   .font-arabic .font-heading {
     font-family: var(--font-arabic);
   }
+}
+
+/**
+ * Scrollable page column: horizontal inset + end clearance.
+ * Top inset lives on AppMain’s inner wrapper (not here) so `position: sticky;
+ * top: 0` can sit flush with the scrollport — padding on the overflow element
+ * leaves a gap where scrolled content stays visible above sticky bars.
+ * Pair with a trailing `h-(--app-scroll-end)` spacer when the region is flex+overflow
+ * so the gap survives flex min-height quirks.
+ */
+@utility app-scroll-region {
+  padding-inline: var(--app-scroll-pad-x);
+  scroll-padding-bottom: var(--app-scroll-end);
 }
 
 /* Animation delays — Tailwind `delay-*` is transition-delay only. */

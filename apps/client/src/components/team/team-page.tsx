@@ -1,7 +1,6 @@
 'use client';
 
 import { PERMISSIONS } from '@work-hub/constants';
-import { NetworkIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   useCallback,
@@ -10,9 +9,9 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { ComingSoon } from '@/components/shell/coming-soon';
 import { PageHeader } from '@/components/shell/page-header';
 import { InvitePeopleDialog } from '@/components/team/invite-people-dialog';
+import { TeamGroups } from '@/components/team/team-groups';
 import { TeamInvitations } from '@/components/team/team-invitations';
 import { TeamMembers } from '@/components/team/team-members';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import { useDirection } from '@/hooks/use-direction';
 import { useInvites } from '@/hooks/use-invites';
 import { useMembers } from '@/hooks/use-members';
 import { useCurrentSpace } from '@/hooks/use-space';
+import { useSpaceTeams } from '@/hooks/use-teams';
 import { useRouter } from '@/i18n/navigation';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
@@ -42,7 +42,6 @@ type TeamPageProps = {
 
 export function TeamPage({ initialTab }: TeamPageProps) {
   const t = useTranslations('Team');
-  const tSoon = useTranslations('ComingSoon');
   const { space } = useCurrentSpace();
   const canInvite = useCan(PERMISSIONS.INVITES_WRITE);
   const direction = useDirection();
@@ -56,11 +55,13 @@ export function TeamPage({ initialTab }: TeamPageProps) {
     canInvite ? space?.id : undefined,
     'pending'
   );
+  const teamsQuery = useSpaceTeams(space?.id);
 
   const memberCount =
     membersQuery.data?.pages.reduce((n, p) => n + p.items.length, 0) ?? 0;
   const inviteCount =
     pendingInvites.data?.pages.reduce((n, p) => n + p.items.length, 0) ?? 0;
+  const groupCount = teamsQuery.data?.items.length ?? 0;
 
   useEffect(() => {
     setTab(parseTab(initialTab));
@@ -159,7 +160,7 @@ export function TeamPage({ initialTab }: TeamPageProps) {
             {
               id: 'groups' as const,
               label: t('tabs.groups'),
-              count: null as number | null,
+              count: groupCount,
               showPlus: false,
             },
           ] as const
@@ -201,14 +202,7 @@ export function TeamPage({ initialTab }: TeamPageProps) {
       >
         {activeTab === 'members' ? <TeamMembers /> : null}
         {activeTab === 'invitations' && canInvite ? <TeamInvitations /> : null}
-        {activeTab === 'groups' ? (
-          <ComingSoon
-            feature="teams"
-            icon={NetworkIcon}
-            backHref={`${ROUTES.space}/${space.slug}`}
-            backLabel={tSoon('backToHome')}
-          />
-        ) : null}
+        {activeTab === 'groups' ? <TeamGroups /> : null}
       </div>
 
       {canInvite ? (

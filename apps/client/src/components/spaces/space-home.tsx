@@ -2,13 +2,13 @@
 
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { SpaceBranding } from '@/components/spaces/space-branding';
 import { useCurrentSpace } from '@/hooks/use-space';
 import { useRoleLabel } from '@/hooks/use-role-label';
 import { setLastSpaceSlug } from '@/lib/last-space';
 
 /**
- * Workspace home content (WH-052). Access / paused / loading are handled by SpaceShell.
+ * Workspace home (WH-052). Branding lives in settings; home will grow into
+ * KPIs / charts. Access / paused / loading are handled by SpaceShell.
  */
 export function SpaceHome() {
   const t = useTranslations('Spaces.home');
@@ -32,8 +32,6 @@ export function SpaceHome() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SpaceBranding space={space} variant="home" />
-
       <div>
         <p className="text-sm text-muted-foreground">{t('eyebrow')}</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">

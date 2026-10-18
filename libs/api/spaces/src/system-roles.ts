@@ -16,7 +16,7 @@ export type SystemRoleRow = {
 };
 
 /**
- * Owner / Admin / Member rows for a new workspace (WH-038 / WH-040).
+ * Owner / Admin / Manager / Member rows for a new workspace (WH-038 / WH-058).
  * Shared by `SpacesService.create` and the Acme seed so permissions stay in sync.
  */
 export function systemRolesFor(spaceId: string): {
@@ -27,6 +27,7 @@ export function systemRolesFor(spaceId: string): {
   const roleIds = {
     [SYSTEM_ROLE_NAMES.OWNER]: uuidv7(),
     [SYSTEM_ROLE_NAMES.ADMIN]: uuidv7(),
+    [SYSTEM_ROLE_NAMES.MANAGER]: uuidv7(),
     [SYSTEM_ROLE_NAMES.MEMBER]: uuidv7(),
   } as const;
 

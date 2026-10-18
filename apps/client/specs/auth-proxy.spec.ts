@@ -51,19 +51,41 @@ describe('authRedirectPath', () => {
     ).toBe('/en/dashboard?land=1');
   });
 
-  it('sends signed-out users away from the dashboard', () => {
+  it('sends signed-out users away from the dashboard with a safe next path', () => {
     expect(
       authRedirectPath({
         pathname: '/en/dashboard',
         signedIn: false,
       })
-    ).toBe('/en/sign-in');
+    ).toBe(`/en/sign-in?next=${encodeURIComponent('/dashboard')}`);
     expect(
       authRedirectPath({
         pathname: '/ar/dashboard/settings',
         signedIn: false,
       })
-    ).toBe('/ar/sign-in');
+    ).toBe(`/ar/sign-in?next=${encodeURIComponent('/dashboard/settings')}`);
+  });
+
+  it('honours a safe next path when a signed-in user hits an auth page', () => {
+    expect(
+      authRedirectPath({
+        pathname: '/en/sign-in',
+        search: `?next=${encodeURIComponent('/invite/abc')}`,
+        signedIn: true,
+        userLocale: 'fr',
+      })
+    ).toBe('/fr/invite/abc');
+  });
+
+  it('ignores unsafe next values', () => {
+    expect(
+      authRedirectPath({
+        pathname: '/en/sign-in',
+        search: '?next=https://evil.example',
+        signedIn: true,
+        userLocale: 'en',
+      })
+    ).toBe('/en/dashboard?land=1');
   });
 
   it('leaves public routes alone in both states', () => {

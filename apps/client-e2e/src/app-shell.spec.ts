@@ -91,13 +91,15 @@ test.describe('app shell (WH-053)', () => {
     ).toBeVisible();
   });
 
-  test('members redirects to people; settings lists coming-soon items', async ({
+  test('members redirects to team; settings lists coming-soon items', async ({
     page,
     request,
   }) => {
     const res = await request.get('/en/s/acme/members', { maxRedirects: 0 });
     expect([301, 308]).toContain(res.status());
-    expect(res.headers()['location'] ?? '').toMatch(/\/en\/s\/acme\/people$/);
+    expect(res.headers()['location'] ?? '').toMatch(
+      /\/en\/s\/acme\/team(\?tab=members)?$/
+    );
 
     await signIn(page, 'member@workhub.test');
     await page.goto('/en/settings');

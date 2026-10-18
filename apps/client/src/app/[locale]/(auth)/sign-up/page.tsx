@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Suspense } from 'react';
 import { SignUpForm } from '@/components/auth/sign-up-form';
+import { LogoLoader } from '@/components/brand/logo-loader';
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -24,7 +26,9 @@ export default async function SignUpPage({ params }: PageProps) {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{t('description')}</p>
       </div>
-      <SignUpForm />
+      <Suspense fallback={<LogoLoader className="self-center py-6" />}>
+        <SignUpForm />
+      </Suspense>
     </div>
   );
 }

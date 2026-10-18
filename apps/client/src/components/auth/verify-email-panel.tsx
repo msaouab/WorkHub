@@ -8,12 +8,14 @@ import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
 import { appUrl } from '@/lib/env';
 import { ROUTES } from '@/lib/routes';
+import { safeNextPath } from '@/lib/safe-next-path';
 
 type VerifyEmailPanelProps = {
   email: string;
+  next?: string | null;
 };
 
-export function VerifyEmailPanel({ email }: VerifyEmailPanelProps) {
+export function VerifyEmailPanel({ email, next }: VerifyEmailPanelProps) {
   const t = useTranslations('Auth.verifyEmail');
   const tAuth = useTranslations('Auth');
   const tErrors = useTranslations('Auth.errors');
@@ -22,14 +24,16 @@ export function VerifyEmailPanel({ email }: VerifyEmailPanelProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const nextPath = safeNextPath(next);
 
   async function onResend() {
     setPending(true);
     setError(null);
     setMessage(null);
+    const callbackPath = nextPath ?? ROUTES.dashboard;
     const { error: authError } = await authClient.sendVerificationEmail({
       email,
-      callbackURL: appUrl(`/${locale}${ROUTES.dashboard}`),
+      callbackURL: appUrl(`/${locale}${callbackPath}`),
     });
     setPending(false);
 

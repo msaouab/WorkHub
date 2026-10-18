@@ -40,11 +40,9 @@ describe('filterSpaceNav', () => {
       'calendar',
       'holidays',
       'documents',
-      'people',
+      'team',
       'approvals',
-      'invites',
       'roles',
-      'teams',
       'leavePolicies',
       'settings',
     ]);
@@ -60,7 +58,7 @@ describe('filterSpaceNav', () => {
       'calendar',
       'holidays',
       'documents',
-      'people',
+      'team',
     ]);
     expect(member.every((i) => i.section === 'main')).toBe(true);
   });
@@ -83,15 +81,13 @@ describe('activeSpaceNavId', () => {
   it('highlights Home only on the workspace root', () => {
     expect(activeSpaceNavId(items, slug, '/s/acme')).toBe('home');
     expect(activeSpaceNavId(items, slug, '/s/acme/settings')).toBe('settings');
-    expect(activeSpaceNavId(items, slug, '/s/acme/people')).toBe('people');
+    expect(activeSpaceNavId(items, slug, '/s/acme/team')).toBe('team');
   });
 });
 
 describe('SPACE_NAV_ITEMS readiness', () => {
-  it('marks People as ready', () => {
-    expect(SPACE_NAV_ITEMS.find((i) => i.id === 'people')?.status).toBe(
-      'ready'
-    );
+  it('marks Team as ready', () => {
+    expect(SPACE_NAV_ITEMS.find((i) => i.id === 'team')?.status).toBe('ready');
   });
 });
 

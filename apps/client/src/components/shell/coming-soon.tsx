@@ -14,7 +14,6 @@ export type ComingSoonFeature =
   | 'documents'
   | 'people'
   | 'approvals'
-  | 'invites'
   | 'roles'
   | 'teams'
   | 'leavePolicies'

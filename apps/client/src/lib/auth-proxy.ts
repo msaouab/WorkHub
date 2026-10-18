@@ -1,6 +1,7 @@
 import { DEFAULT_LOCALE, type Locale } from '@work-hub/constants';
 import { isAppLocale } from '@/i18n/locale';
 import { ROUTES } from '@/lib/routes';
+import { safeNextPath } from '@/lib/safe-next-path';
 
 export type AuthGateKind = 'guest-only' | 'protected' | 'public';
 
@@ -53,6 +54,8 @@ export function parseLocalizedPath(pathname: string): LocalizedPath | null {
 
 export type AuthRedirectInput = {
   pathname: string;
+  /** Raw search including `?`, from `request.nextUrl.search`. */
+  search?: string;
   /** True only when get-session returned a real user. */
   signedIn: boolean;
   /** `session.user.locale` when signed in. */
@@ -62,6 +65,7 @@ export type AuthRedirectInput = {
 /**
  * Where the proxy should send the request, or `null` to continue to next-intl.
  * Prefer the user's saved language when redirecting a signed-in user off auth pages.
+ * Supports a safe `?next=` return path (WH-010).
  */
 export function authRedirectPath(input: AuthRedirectInput): string | null {
   const parsed = parseLocalizedPath(input.pathname);
@@ -75,12 +79,30 @@ export function authRedirectPath(input: AuthRedirectInput): string | null {
       ? input.userLocale
       : urlLocale;
 
+  const searchParams = new URLSearchParams(
+    input.search?.startsWith('?') ? input.search.slice(1) : (input.search ?? '')
+  );
+
   if (parsed.kind === 'guest-only' && input.signedIn) {
+    const next = safeNextPath(searchParams.get('next'));
+    if (next) {
+      return `/${preferredLocale}${next}`;
+    }
     // land=1: send them to their last workspace once (WH-052), not every /dashboard visit.
     return `/${preferredLocale}${ROUTES.dashboard}?land=1`;
   }
 
   if (parsed.kind === 'protected' && !input.signedIn) {
+    const returnPath =
+      parsed.segments.length > 0
+        ? `/${parsed.segments.join('/')}`
+        : '/';
+    searchParams.delete('next');
+    const qs = searchParams.toString();
+    const fullReturn = safeNextPath(qs ? `${returnPath}?${qs}` : returnPath);
+    if (fullReturn) {
+      return `/${urlLocale}${ROUTES.signIn}?next=${encodeURIComponent(fullReturn)}`;
+    }
     return `/${urlLocale}${ROUTES.signIn}`;
   }
 

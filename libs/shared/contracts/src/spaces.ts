@@ -12,6 +12,7 @@ export const spaceSlugSchema = z
   );
 
 export const membershipStatusSchema = z.enum(['active', 'deactivated']);
+export type MembershipStatus = z.infer<typeof membershipStatusSchema>;
 
 export const createSpaceSchema = z.strictObject({
   name: z.string().trim().min(1).max(80),

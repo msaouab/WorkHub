@@ -29,6 +29,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   memberships   Membership[]
+  invitesCreated Invite[] @relation("InviteCreatedBy")
 
   locale        Locale    @default(en)
 
@@ -56,6 +57,7 @@ model Space {
   defaultRole Role?         @relation("SpaceDefaultRole", fields: [defaultRoleId], references: [id], onDelete: Restrict)
   roles       Role[]        @relation("SpaceRoles")
   memberships Membership[]
+  invites     Invite[]
 
   @@map("spaces")
 }
@@ -72,10 +74,41 @@ model Role {
   space           Space         @relation("SpaceRoles", fields: [spaceId], references: [id], onDelete: Cascade)
   defaultForSpace Space?        @relation("SpaceDefaultRole")
   memberships     Membership[]
+  invites         Invite[]
 
   @@unique([spaceId, name])
   @@index([spaceId])
   @@map("roles")
+}
+
+enum InviteKind {
+  email
+  link
+}
+
+/** Workspace invite (email or link). Only `token_hash` is stored (WH-010). */
+model Invite {
+  id        String     @id @default(uuid(7)) @db.Uuid
+  spaceId   String     @map("space_id") @db.Uuid
+  roleId    String     @map("role_id") @db.Uuid
+  kind      InviteKind
+  email     String?    @db.Citext
+  tokenHash String     @unique @map("token_hash")
+  expiresAt DateTime   @map("expires_at") @db.Timestamptz(6)
+  maxUses   Int        @map("max_uses")
+  uses      Int        @default(0)
+  revokedAt DateTime?  @map("revoked_at") @db.Timestamptz(6)
+  createdBy String     @map("created_by") @db.Uuid
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  space   Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  role    Role  @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  creator User  @relation("InviteCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([spaceId])
+  @@index([spaceId, email])
+  @@map("invites")
 }
 
 model Membership {

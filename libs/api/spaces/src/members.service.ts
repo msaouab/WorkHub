@@ -53,6 +53,10 @@ export class MembersService {
           where: {
             spaceId: access.spaceId,
             ...(query.cursor ? { id: { gt: query.cursor } } : {}),
+            ...(query.status ? { status: query.status } : {}),
+            ...(query.role
+              ? { role: { name: { equals: query.role, mode: 'insensitive' } } }
+              : {}),
             ...(q
               ? {
                   OR: [

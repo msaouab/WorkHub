@@ -16,6 +16,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
 import { ROUTES } from '@/lib/routes';
+import { safeNextPath } from '@/lib/safe-next-path';
 import { createSignInSchema } from '@/lib/validators/auth';
 
 type SignInValues = z.infer<ReturnType<typeof createSignInSchema>>;
@@ -31,6 +32,7 @@ export function SignInForm() {
   const searchParams = useSearchParams();
   const verified = searchParams.get('verified') === '1';
   const reset = searchParams.get('reset') === '1';
+  const nextPath = safeNextPath(searchParams.get('next'));
   const schema = useMemo(() => createSignInSchema(tValidation), [tValidation]);
 
   const {
@@ -51,10 +53,11 @@ export function SignInForm() {
 
     if (authError) {
       if (authError.code === 'EMAIL_NOT_VERIFIED') {
-        router.replace(
-          `/verify-email?email=${encodeURIComponent(values.email)}`,
-          { locale }
-        );
+        const verifyQs = new URLSearchParams({ email: values.email });
+        if (nextPath) {
+          verifyQs.set('next', nextPath);
+        }
+        router.replace(`/verify-email?${verifyQs.toString()}`, { locale });
         return;
       }
       setError('root', { message: authErrorMessage(authError, tErrors) });
@@ -62,7 +65,7 @@ export function SignInForm() {
     }
 
     const savedLocale = data?.user.locale;
-    router.replace(ROUTES.dashboard, {
+    router.replace(nextPath ?? ROUTES.dashboard, {
       locale: savedLocale && isAppLocale(savedLocale) ? savedLocale : locale,
     });
     router.refresh();

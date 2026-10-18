@@ -28,6 +28,8 @@ describeRls('workspace RLS (workhub_app)', () => {
   const userB = randomUUID();
   const membershipA = randomUUID();
   const membershipB = randomUUID();
+  const inviteA = randomUUID();
+  const inviteB = randomUUID();
 
   beforeAll(async () => {
     await owner.connect();
@@ -81,6 +83,28 @@ describeRls('workspace RLS (workhub_app)', () => {
         roleB,
       ]
     );
+
+    await owner.query(
+      `INSERT INTO invites (
+         id, space_id, role_id, kind, email, token_hash,
+         expires_at, max_uses, uses, created_by
+       ) VALUES
+         ($1, $2, $3, 'email', $4, $5, NOW() + INTERVAL '7 days', 1, 0, $6),
+         ($7, $8, $9, 'link', NULL, $10, NOW() + INTERVAL '7 days', 10, 0, $11)`,
+      [
+        inviteA,
+        spaceA,
+        roleA,
+        `invite-a-${userA}@workhub.test`,
+        `hash-a-${inviteA}`,
+        userA,
+        inviteB,
+        spaceB,
+        roleB,
+        `hash-b-${inviteB}`,
+        userB,
+      ]
+    );
   });
 
   afterAll(async () => {
@@ -95,7 +119,11 @@ describeRls('workspace RLS (workhub_app)', () => {
   });
 
   async function asApp<T>(
-    settings: { spaceId?: string; userId?: string },
+    settings: {
+      spaceId?: string;
+      userId?: string;
+      inviteTokenHash?: string;
+    },
     fn: (client: pg.Client) => Promise<T>
   ): Promise<T> {
     await app.query('BEGIN');
@@ -109,6 +137,12 @@ describeRls('workspace RLS (workhub_app)', () => {
         await app.query(`SELECT set_config('app.user_id', $1, true)`, [
           settings.userId,
         ]);
+      }
+      if (settings.inviteTokenHash) {
+        await app.query(
+          `SELECT set_config('app.invite_token_hash', $1, true)`,
+          [settings.inviteTokenHash]
+        );
       }
       const result = await fn(app);
       await app.query('COMMIT');
@@ -135,10 +169,16 @@ describeRls('workspace RLS (workhub_app)', () => {
         [membershipA, membershipB],
       ])
     );
+    const invites = await asApp({}, (c) =>
+      c.query(`SELECT id FROM invites WHERE id = ANY($1::uuid[])`, [
+        [inviteA, inviteB],
+      ])
+    );
 
     expect(spaces.rowCount).toBe(0);
     expect(roles.rowCount).toBe(0);
     expect(memberships.rowCount).toBe(0);
+    expect(invites.rowCount).toBe(0);
   });
 
   it('with app.space_id = A, workspace B rows are invisible', async () => {
@@ -158,10 +198,18 @@ describeRls('workspace RLS (workhub_app)', () => {
         [[spaceA, spaceB]]
       )
     );
+    const invites = await asApp({ spaceId: spaceA }, (c) =>
+      c.query(
+        `SELECT id, space_id FROM invites WHERE space_id = ANY($1::uuid[])`,
+        [[spaceA, spaceB]]
+      )
+    );
 
     expect(spaces.rows.map((r) => r.id)).toEqual([spaceA]);
     expect(roles.rows.map((r) => r.space_id)).toEqual([spaceA]);
     expect(memberships.rows.map((r) => r.space_id)).toEqual([spaceA]);
+    expect(invites.rows.map((r) => r.space_id)).toEqual([spaceA]);
+    expect(invites.rows.map((r) => r.id)).toEqual([inviteA]);
   });
 
   it('with app.user_id, the user sees only their own memberships and spaces', async () => {
@@ -176,5 +224,48 @@ describeRls('workspace RLS (workhub_app)', () => {
 
     expect(memberships.rows.map((r) => r.space_id)).toEqual([spaceA]);
     expect(spaces.rows.map((r) => r.id)).toEqual([spaceA]);
+  });
+
+  it('with app.invite_token_hash, only that invite (and its space/role) is visible', async () => {
+    const tokenHash = `hash-a-${inviteA}`;
+    const invites = await asApp({ inviteTokenHash: tokenHash }, (c) =>
+      c.query(`SELECT id FROM invites WHERE id = ANY($1::uuid[])`, [
+        [inviteA, inviteB],
+      ])
+    );
+    const spaces = await asApp({ inviteTokenHash: tokenHash }, (c) =>
+      c.query(`SELECT id FROM spaces WHERE id = ANY($1::uuid[])`, [
+        [spaceA, spaceB],
+      ])
+    );
+    const roles = await asApp({ inviteTokenHash: tokenHash }, (c) =>
+      c.query(`SELECT id FROM roles WHERE id = ANY($1::uuid[])`, [
+        [roleA, roleB],
+      ])
+    );
+
+    expect(invites.rows.map((r) => r.id)).toEqual([inviteA]);
+    expect(spaces.rows.map((r) => r.id)).toEqual([spaceA]);
+    expect(roles.rows.map((r) => r.id)).toEqual([roleA]);
+  });
+
+  it('with only app.user_id, cannot insert a membership into another space', async () => {
+    const outsider = randomUUID();
+    await owner.query(
+      `INSERT INTO users (id, name, email, email_verified) VALUES ($1, 'Out', $2, true)`,
+      [outsider, `out-${outsider}@workhub.test`]
+    );
+
+    await expect(
+      asApp({ userId: outsider }, (c) =>
+        c.query(
+          `INSERT INTO memberships (id, space_id, user_id, role_id, status)
+           VALUES ($1, $2, $3, $4, 'active')`,
+          [randomUUID(), spaceA, outsider, roleA]
+        )
+      )
+    ).rejects.toThrow();
+
+    await owner.query(`DELETE FROM users WHERE id = $1`, [outsider]);
   });
 });

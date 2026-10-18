@@ -1,0 +1,405 @@
+'use client';
+
+import { CheckIcon, CopyIcon, XIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useInviteActions, useSpaceRoles } from '@/hooks/use-invites';
+import { useRoleLabel } from '@/hooks/use-role-label';
+import { ApiError } from '@/lib/api/fetch';
+import { parseInviteEmails } from '@/lib/team/parse-invite-emails';
+import { cn } from '@/lib/utils';
+
+const selectClassName =
+  'h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50';
+
+type InviteMode = 'email' | 'link';
+
+type InvitePeopleDialogProps = {
+  spaceId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export function InvitePeopleDialog({
+  spaceId,
+  open,
+  onOpenChange,
+}: InvitePeopleDialogProps) {
+  const t = useTranslations('Team.inviteDialog');
+  const tInvites = useTranslations('Spaces.invites');
+  const actions = useInviteActions(spaceId);
+  const rolesQuery = useSpaceRoles(open ? spaceId : undefined);
+  const baseId = useId();
+
+  const [mode, setMode] = useState<InviteMode>('email');
+  const [chipInput, setChipInput] = useState('');
+  const [emails, setEmails] = useState<string[]>([]);
+  const [roleId, setRoleId] = useState('');
+  const [expiresInDays, setExpiresInDays] = useState(7);
+  const [maxUses, setMaxUses] = useState(10);
+  const [error, setError] = useState<string | null>(null);
+  const [emailSummary, setEmailSummary] = useState<string | null>(null);
+  const [createdLink, setCreatedLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setMode('email');
+      setChipInput('');
+      setEmails([]);
+      setRoleId('');
+      setExpiresInDays(7);
+      setMaxUses(10);
+      setError(null);
+      setEmailSummary(null);
+      setCreatedLink(null);
+      setLinkCopied(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (roleId || !rolesQuery.data?.items.length) {
+      return;
+    }
+    const preferred =
+      rolesQuery.data.items.find((role) => role.isDefault) ??
+      rolesQuery.data.items[0];
+    if (preferred) {
+      setRoleId(preferred.id);
+    }
+  }, [roleId, rolesQuery.data]);
+
+  function commitChips(raw: string) {
+    const next = parseInviteEmails(raw);
+    if (next.length === 0) {
+      return;
+    }
+    setEmails((prev) => {
+      const seen = new Set(prev.map((e) => e.toLowerCase()));
+      const merged = [...prev];
+      for (const email of next) {
+        const key = email.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(email);
+        }
+      }
+      return merged;
+    });
+    setChipInput('');
+  }
+
+  function onChipKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter' || event.key === ',' || event.key === ' ') {
+      event.preventDefault();
+      commitChips(chipInput);
+    } else if (event.key === 'Backspace' && !chipInput && emails.length > 0) {
+      setEmails((prev) => prev.slice(0, -1));
+    }
+  }
+
+  async function onSubmitEmail(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setEmailSummary(null);
+    const pendingInput = parseInviteEmails(chipInput);
+    const all = [...emails];
+    for (const email of pendingInput) {
+      if (!all.some((e) => e.toLowerCase() === email.toLowerCase())) {
+        all.push(email);
+      }
+    }
+    if (all.length === 0) {
+      setError(t('emailRequired'));
+      return;
+    }
+    try {
+      const result = await actions.create.mutateAsync({
+        kind: 'email',
+        emails: all,
+        roleId: roleId || undefined,
+        maxUses: 1,
+        expiresInDays: 7,
+      });
+      if (!('results' in result)) {
+        return;
+      }
+      const created = result.results.filter((r) => r.status === 'created').length;
+      const skipped = result.results.length - created;
+      setEmailSummary(t('emailSummary', { created, skipped }));
+      setEmails([]);
+      setChipInput('');
+    } catch (err) {
+      setError(mapError(err, tInvites, t('failed')));
+    }
+  }
+
+  async function onCreateLink() {
+    setError(null);
+    setCreatedLink(null);
+    setLinkCopied(false);
+    try {
+      const result = await actions.create.mutateAsync({
+        kind: 'link',
+        roleId: roleId || undefined,
+        maxUses,
+        expiresInDays,
+      });
+      if ('url' in result && result.url) {
+        setCreatedLink(result.url);
+      }
+    } catch (err) {
+      setError(mapError(err, tInvites, t('failed')));
+    }
+  }
+
+  async function onCopyLink() {
+    if (!createdLink) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(createdLink);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setError(tInvites('copyFailed'));
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent variant="modal" className="max-w-lg">
+        <DialogTitle>{t('title')}</DialogTitle>
+        <DialogDescription className="mt-1">{t('description')}</DialogDescription>
+
+        <div
+          role="tablist"
+          aria-label={t('modeLabel')}
+          className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+        >
+          {(['email', 'link'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              id={`${baseId}-tab-${value}`}
+              aria-selected={mode === value}
+              aria-controls={`${baseId}-panel-${value}`}
+              className={cn(
+                'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                mode === value
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setMode(value)}
+            >
+              {value === 'email' ? t('byEmail') : t('shareLink')}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2">
+          <Label htmlFor={`${baseId}-role`}>{t('role')}</Label>
+          <select
+            id={`${baseId}-role`}
+            className={selectClassName}
+            value={roleId}
+            onChange={(event) => setRoleId(event.target.value)}
+            disabled={rolesQuery.isLoading}
+          >
+            {(rolesQuery.data?.items ?? []).map((role) => (
+              <RoleOption key={role.id} id={role.id} name={role.name} />
+            ))}
+          </select>
+        </div>
+
+        {mode === 'email' ? (
+          <form
+            id={`${baseId}-panel-email`}
+            role="tabpanel"
+            aria-labelledby={`${baseId}-tab-email`}
+            className="mt-4 flex flex-col gap-4"
+            onSubmit={(event) => void onSubmitEmail(event)}
+          >
+            <div className="flex flex-col gap-2">
+              <Label htmlFor={`${baseId}-emails`}>{t('emails')}</Label>
+              <div
+                className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border border-input px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50"
+                dir="ltr"
+              >
+                {emails.map((email) => (
+                  <span
+                    key={email}
+                    className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-foreground"
+                  >
+                    {email}
+                    <button
+                      type="button"
+                      className="rounded-sm text-muted-foreground hover:text-foreground"
+                      aria-label={t('removeEmail', { email })}
+                      onClick={() =>
+                        setEmails((prev) => prev.filter((e) => e !== email))
+                      }
+                    >
+                      <XIcon className="size-3" aria-hidden />
+                    </button>
+                  </span>
+                ))}
+                <Input
+                  id={`${baseId}-emails`}
+                  value={chipInput}
+                  onValueChange={setChipInput}
+                  onKeyDown={onChipKeyDown}
+                  onBlur={() => commitChips(chipInput)}
+                  placeholder={t('emailsPlaceholder')}
+                  className="h-7 min-w-40 flex-1 border-0 px-1 shadow-none focus-visible:ring-0"
+                  autoComplete="off"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">{t('emailsHint')}</p>
+            </div>
+            {emailSummary ? (
+              <p className="text-sm text-muted-foreground" role="status">
+                {emailSummary}
+              </p>
+            ) : null}
+            {error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                {t('close')}
+              </Button>
+              <Button type="submit" disabled={actions.create.isPending}>
+                {actions.create.isPending ? tInvites('sending') : t('send')}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div
+            id={`${baseId}-panel-link`}
+            role="tabpanel"
+            aria-labelledby={`${baseId}-tab-link`}
+            className="mt-4 flex flex-col gap-4"
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`${baseId}-expires`}>{t('expiresIn')}</Label>
+                <select
+                  id={`${baseId}-expires`}
+                  className={selectClassName}
+                  value={expiresInDays}
+                  onChange={(event) =>
+                    setExpiresInDays(Number(event.target.value))
+                  }
+                >
+                  <option value={1}>{t('days', { count: 1 })}</option>
+                  <option value={7}>{t('days', { count: 7 })}</option>
+                  <option value={30}>{t('days', { count: 30 })}</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`${baseId}-uses`}>{t('maxUses')}</Label>
+                <Input
+                  id={`${baseId}-uses`}
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={String(maxUses)}
+                  onValueChange={(value) => setMaxUses(Number(value) || 1)}
+                />
+              </div>
+            </div>
+            {createdLink ? (
+              <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm">
+                <p className="text-muted-foreground">{tInvites('linkCreated')}</p>
+                <p className="break-all font-medium" dir="ltr">
+                  {createdLink}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void onCopyLink()}
+                  >
+                    {linkCopied ? (
+                      <CheckIcon data-icon="inline-start" aria-hidden />
+                    ) : (
+                      <CopyIcon data-icon="inline-start" aria-hidden />
+                    )}
+                    {linkCopied ? tInvites('copied') : tInvites('copyLink')}
+                  </Button>
+                  <span className="sr-only" aria-live="polite">
+                    {linkCopied ? tInvites('copied') : ''}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+            {error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                {t('close')}
+              </Button>
+              <Button
+                type="button"
+                disabled={actions.create.isPending}
+                onClick={() => void onCreateLink()}
+              >
+                {actions.create.isPending
+                  ? tInvites('sending')
+                  : tInvites('createLink')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RoleOption({ id, name }: { id: string; name: string }) {
+  const label = useRoleLabel(name);
+  return <option value={id}>{label}</option>;
+}
+
+function mapError(
+  err: unknown,
+  tInvites: ReturnType<typeof useTranslations<'Spaces.invites'>>,
+  fallback: string
+): string {
+  if (err instanceof ApiError && err.problem?.code) {
+    const code = err.problem.code;
+    if (
+      code === 'ALREADY_MEMBER' ||
+      code === 'CONFLICT' ||
+      code === 'INVITE_NOT_FOUND'
+    ) {
+      return tInvites(`errors.${code}`);
+    }
+  }
+  return fallback;
+}

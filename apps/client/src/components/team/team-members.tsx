@@ -7,8 +7,8 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { UserAvatar } from '@/components/account/user-avatar';
 import { LogoLoader } from '@/components/brand/logo-loader';
-import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -59,15 +59,25 @@ function isMemberErrorCode(value: string): value is MemberErrorCode {
   return (ERROR_CODES as readonly string[]).includes(value);
 }
 
-export function PeopleMembers() {
+const selectClassName =
+  'h-10 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50';
+
+export function TeamMembers() {
   const t = useTranslations('Spaces.members');
+  const tTeam = useTranslations('Team');
   const tHome = useTranslations('Spaces.home');
   const { space } = useCurrentSpace();
   const { data: me } = useMe();
   const canWrite = useCan(PERMISSIONS.MEMBERS_WRITE);
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<'' | 'active' | 'deactivated'>('');
+  const [role, setRole] = useState('');
   const debouncedQ = useDebouncedValue(search.trim(), 300);
-  const membersQuery = useMembers(space?.id, debouncedQ);
+  const membersQuery = useMembers(space?.id, {
+    q: debouncedQ,
+    status: status || undefined,
+    role: role || undefined,
+  });
   const actions = useMemberActions(space?.id ?? '');
   const [pending, setPending] = useState<PendingAction>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -79,14 +89,20 @@ export function PeopleMembers() {
 
   /** When the full unfiltered list is loaded, hide Leave for the sole Owner. */
   const hideLeaveAsLastOwner = useMemo(() => {
-    if (debouncedQ || membersQuery.hasNextPage || !me?.id) {
+    if (
+      debouncedQ ||
+      status ||
+      role ||
+      membersQuery.hasNextPage ||
+      !me?.id
+    ) {
       return false;
     }
     const owners = items.filter(
       (m) => m.role.name === SYSTEM_ROLE_NAMES.OWNER
     );
     return owners.length === 1 && owners[0]?.userId === me.id;
-  }, [debouncedQ, membersQuery.hasNextPage, items, me?.id]);
+  }, [debouncedQ, status, role, membersQuery.hasNextPage, items, me?.id]);
 
   if (!space) {
     return null;
@@ -121,17 +137,57 @@ export function PeopleMembers() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={t('title')} description={t('description')} />
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={t('searchPlaceholder')}
-          aria-label={t('searchPlaceholder')}
-          className="sm:max-w-sm"
-        />
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-sm">
+          <Label htmlFor="team-member-search" className="sr-only">
+            {t('searchPlaceholder')}
+          </Label>
+          <Input
+            id="team-member-search"
+            type="search"
+            value={search}
+            onValueChange={setSearch}
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchPlaceholder')}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="team-member-status">{tTeam('filters.status')}</Label>
+          <select
+            id="team-member-status"
+            className={selectClassName}
+            value={status}
+            onChange={(event) =>
+              setStatus(event.target.value as '' | 'active' | 'deactivated')
+            }
+          >
+            <option value="">{tTeam('filters.allStatuses')}</option>
+            <option value="active">{tHome('statusValues.active')}</option>
+            <option value="deactivated">
+              {tHome('statusValues.deactivated')}
+            </option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="team-member-role">{tTeam('filters.role')}</Label>
+          <select
+            id="team-member-role"
+            className={selectClassName}
+            value={role}
+            onChange={(event) => setRole(event.target.value)}
+          >
+            <option value="">{tTeam('filters.allRoles')}</option>
+            <option value={SYSTEM_ROLE_NAMES.OWNER}>
+              {SYSTEM_ROLE_NAMES.OWNER}
+            </option>
+            <option value={SYSTEM_ROLE_NAMES.ADMIN}>
+              {SYSTEM_ROLE_NAMES.ADMIN}
+            </option>
+            <option value={SYSTEM_ROLE_NAMES.MEMBER}>
+              {SYSTEM_ROLE_NAMES.MEMBER}
+            </option>
+          </select>
+        </div>
       </div>
 
       {membersQuery.isPending ? (

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
 import type { EmailContent } from './templates/layout';
 import { resetPasswordEmail } from './templates/reset-password';
+import { spaceInviteEmail } from './templates/space-invite';
 import { verifyEmail } from './templates/verify-email';
 
 export type MailConfig = {
@@ -61,6 +62,25 @@ export class MailService implements OnModuleInit {
 
   sendPasswordReset(to: string, name: string, url: string): Promise<boolean> {
     return this.send(to, resetPasswordEmail({ name, url }));
+  }
+
+  /** English invite email (WH-010); per-locale copy is WH-013. */
+  sendSpaceInvite(input: {
+    to: string;
+    spaceName: string;
+    roleName: string;
+    url: string;
+    expiresAt: Date;
+  }): Promise<boolean> {
+    return this.send(
+      input.to,
+      spaceInviteEmail({
+        spaceName: input.spaceName,
+        roleName: input.roleName,
+        url: input.url,
+        expiresAt: input.expiresAt,
+      })
+    );
   }
 
   /**

@@ -17,6 +17,7 @@ export default async function proxy(request: NextRequest) {
     if (result.status !== 'unknown') {
       const redirectTo = authRedirectPath({
         pathname,
+        search: request.nextUrl.search,
         signedIn: result.status === 'signed-in',
         userLocale:
           result.status === 'signed-in' ? result.session.user.locale : undefined,

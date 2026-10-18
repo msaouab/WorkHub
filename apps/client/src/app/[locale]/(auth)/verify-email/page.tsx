@@ -5,7 +5,7 @@ import { Link } from '@/i18n/navigation';
 
 type PageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; next?: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -32,7 +32,7 @@ export default async function VerifyEmailPage({ params, searchParams }: PageProp
         </h1>
       </div>
       {email ? (
-        <VerifyEmailPanel email={email} />
+        <VerifyEmailPanel email={email} next={query.next} />
       ) : (
         <p className="text-sm text-muted-foreground">
           {t.rich('missingEmail', {

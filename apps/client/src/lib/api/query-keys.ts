@@ -6,6 +6,18 @@ export const queryKeys = {
   },
   members: {
     all: (spaceId: string) => ['members', spaceId] as const,
-    list: (spaceId: string, q: string) => ['members', spaceId, q] as const,
+    list: (
+      spaceId: string,
+      q: string,
+      status = '',
+      role = ''
+    ) => ['members', spaceId, q, status, role] as const,
+  },
+  invites: {
+    all: (spaceId: string) => ['invites', spaceId] as const,
+    list: (spaceId: string, status = 'pending') =>
+      ['invites', spaceId, 'list', status] as const,
+    roles: (spaceId: string) => ['invites', spaceId, 'roles'] as const,
+    preview: (token: string) => ['invites', 'preview', token] as const,
   },
 } as const;

@@ -21,6 +21,12 @@ export async function fetchSpaceMembers(
   if (query.q) {
     params.set('q', query.q);
   }
+  if (query.status) {
+    params.set('status', query.status);
+  }
+  if (query.role) {
+    params.set('role', query.role);
+  }
   const qs = params.toString();
   const data = await apiFetch<unknown>(
     `spaces/${spaceId}/members${qs ? `?${qs}` : ''}`

@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SIGNUP_LOCALE_HEADER } from '@work-hub/constants';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -16,6 +17,7 @@ import { authErrorMessage } from '@/lib/auth-errors';
 import { authClient } from '@/lib/auth-client';
 import { appUrl } from '@/lib/env';
 import { ROUTES } from '@/lib/routes';
+import { safeNextPath } from '@/lib/safe-next-path';
 import { createSignUpSchema } from '@/lib/validators/auth';
 
 type SignUpValues = z.infer<ReturnType<typeof createSignUpSchema>>;
@@ -28,6 +30,8 @@ export function SignUpForm() {
   const tCommon = useTranslations('Common');
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = safeNextPath(searchParams.get('next'));
   const schema = useMemo(() => createSignUpSchema(tValidation), [tValidation]);
 
   const {
@@ -41,11 +45,14 @@ export function SignUpForm() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    const afterVerify = nextPath
+      ? appUrl(`/${locale}${nextPath}`)
+      : appUrl(`/${locale}${ROUTES.dashboard}`);
     const { error: authError } = await authClient.signUp.email({
       name: values.name,
       email: values.email,
       password: values.password,
-      callbackURL: appUrl(`/${locale}${ROUTES.dashboard}`),
+      callbackURL: afterVerify,
       fetchOptions: {
         headers: {
           // Server reads this in databaseHooks.user.create (WH-032).
@@ -59,10 +66,11 @@ export function SignUpForm() {
       return;
     }
 
-    router.replace(
-      `/verify-email?email=${encodeURIComponent(values.email)}`,
-      { locale }
-    );
+    const verifyQs = new URLSearchParams({ email: values.email });
+    if (nextPath) {
+      verifyQs.set('next', nextPath);
+    }
+    router.replace(`/verify-email?${verifyQs.toString()}`, { locale });
   });
 
   return (

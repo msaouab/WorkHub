@@ -3,6 +3,7 @@
  * Add codes with their feature modules — do not invent ad-hoc strings in filters.
  */
 export const ErrorCode = {
+  // Server errors
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   VALIDATION_FAILED: 'VALIDATION_FAILED',
@@ -11,18 +12,24 @@ export const ErrorCode = {
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
+
+  // Client errors
   BAD_REQUEST: 'BAD_REQUEST',
   IMAGE_TOO_LARGE: 'IMAGE_TOO_LARGE',
   IMAGE_UNSUPPORTED_TYPE: 'IMAGE_UNSUPPORTED_TYPE',
   IMAGE_TOO_SMALL: 'IMAGE_TOO_SMALL',
-  /** Owner membership cannot be deactivated, reactivated, or removed. */
+
+  // Members errors
   CANNOT_MODIFY_OWNER: 'CANNOT_MODIFY_OWNER',
-  /** Actor tried to deactivate their own membership. */
   CANNOT_DEACTIVATE_SELF: 'CANNOT_DEACTIVATE_SELF',
-  /** Actor tried DELETE :id on themselves; use leave instead. */
   CANNOT_REMOVE_SELF: 'CANNOT_REMOVE_SELF',
-  /** Last Owner tried to leave before transferring ownership. */
   LAST_OWNER: 'LAST_OWNER',
+  INVITE_NOT_FOUND: 'INVITE_NOT_FOUND',
+  INVITE_EXPIRED: 'INVITE_EXPIRED',
+  INVITE_REVOKED: 'INVITE_REVOKED',
+  INVITE_EXHAUSTED: 'INVITE_EXHAUSTED',
+  INVITE_EMAIL_MISMATCH: 'INVITE_EMAIL_MISMATCH',
+  ALREADY_MEMBER: 'ALREADY_MEMBER',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

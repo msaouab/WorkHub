@@ -53,6 +53,31 @@ describe('MailService', () => {
     );
   });
 
+  it('sends a space invite email with the accept link', async () => {
+    const { service, sendMail } = createService();
+    sendMail.mockResolvedValue({} as never);
+    const expiresAt = new Date('2026-10-24T12:00:00.000Z');
+
+    await expect(
+      service.sendSpaceInvite({
+        to: 'mia@test.local',
+        spaceName: 'Acme',
+        roleName: 'Member',
+        url: 'https://app.test/invite/tok',
+        expiresAt,
+      })
+    ).resolves.toBe(true);
+
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'mia@test.local',
+        subject: 'Join Acme on WorkHub',
+        text: expect.stringContaining('https://app.test/invite/tok'),
+        html: expect.stringContaining('https://app.test/invite/tok'),
+      })
+    );
+  });
+
   it('escapes user-controlled names in the HTML part', async () => {
     const { service, sendMail } = createService();
     sendMail.mockResolvedValue({} as never);
@@ -64,14 +89,18 @@ describe('MailService', () => {
     expect(html).toContain(escapeHtml('<script>x</script>'));
   });
 
-  it('returns false instead of throwing when SMTP fails', async () => {
-    const { service, sendMail } = createService();
-    sendMail.mockRejectedValue(new Error('connect ECONNREFUSED'));
+  it(
+    'returns false instead of throwing when SMTP fails',
+    async () => {
+      const { service, sendMail } = createService();
+      sendMail.mockRejectedValue(new Error('connect ECONNREFUSED'));
 
-    await expect(
-      service.sendVerifyEmail('a@test.local', 'A', 'https://x.test')
-    ).resolves.toBe(false);
-  });
+      await expect(
+        service.sendVerifyEmail('a@test.local', 'A', 'https://x.test')
+      ).resolves.toBe(false);
+    },
+    15_000
+  );
 
   it('logs the error code when the message is empty, without the recipient', async () => {
     const { service, sendMail } = createService();

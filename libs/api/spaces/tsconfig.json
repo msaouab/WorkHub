@@ -17,12 +17,29 @@
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "references": [
-    { "path": "../../shared/constants" },
-    { "path": "../../shared/contracts" },
-    { "path": "../access" },
-    { "path": "../auth" },
-    { "path": "../core" },
-    { "path": "../database" },
-    { "path": "../storage" }
+    {
+      "path": "../storage"
+    },
+    {
+      "path": "../mail"
+    },
+    {
+      "path": "../database"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../../shared/contracts"
+    },
+    {
+      "path": "../../shared/constants"
+    },
+    {
+      "path": "../auth"
+    },
+    {
+      "path": "../access"
+    }
   ]
 }

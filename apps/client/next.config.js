@@ -35,15 +35,15 @@ const nextConfig = {
         destination: '/:locale/dashboard/:path*',
         permanent: true,
       },
-      // WH-053: People directory replaces /members
+      // WH-073: Team page replaces /members (and the interim /people hop)
       {
         source: '/:locale/s/:slug/members',
-        destination: '/:locale/s/:slug/people',
+        destination: '/:locale/s/:slug/team?tab=members',
         permanent: true,
       },
       {
         source: '/:locale/s/:slug/members/:path*',
-        destination: '/:locale/s/:slug/people/:path*',
+        destination: '/:locale/s/:slug/team?tab=members',
         permanent: true,
       },
     ];

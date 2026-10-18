@@ -37,6 +37,7 @@
     "@work-hub/contracts": "workspace:^",
     "@work-hub/core": "workspace:^",
     "@work-hub/database": "workspace:^",
+    "@work-hub/mail": "workspace:^",
     "@work-hub/storage": "workspace:^",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/throttler": "^6.7.1",

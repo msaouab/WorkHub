@@ -241,6 +241,41 @@ Sorted by **priority** (P0 → P3), then by **status** (`start` → `in progress
   - "Documents" replaces its placeholder.
 - **Done when:** a ready document downloads with a signed URL that expires after 10 min; anonymous access to the private bucket → 403.
 
+### WH-058 · Teams and the Manager role
+- **Type:** feature · **Priority:** P2 · **Status:** done · **Area:** api + client + database
+- **Why:** the PRD has four roles (Owner, Admin/HR, **Manager**, Employee) and FR-MEM-05/06 need teams with one or more managers who approve their team's leave. The code only has Owner, Admin and Member presets and no teams. Approvals (WH-062) can't route without this.
+- **Scope:**
+  - [x] a `Manager` system role preset (`leave.approve`, optional `documents.fulfil`, `calendar.read`, …);
+  - [x] `teams` + `team_members` + `team_managers` tables with RLS;
+  - [x] CRUD under `teams.write`;
+  - [x] assign a member's team and manager (FR-MEM-05);
+  - [x] the "Teams" page replaces its placeholder.
+- **Done when:** an Admin creates a team, adds members and managers; a manager sees only their teams' requests (once WH-062 exists).
+- **UI placement (2026-10-17, see WH-073):** teams appear as a **"Groups" tab inside the Team page**, not as a separate sidebar item. The user-facing word "Team" now means the whole workspace roster, so use "Groups" in the UI (keep `teams` as the table and permission name: `teams.write`).
+- **Progress (2026-10-18):** `SYSTEM_ROLE_NAMES.MANAGER` with Member + `leave.approve` + `documents.fulfil` (Member ⊆ Manager ⊆ Admin ⊆ Owner). Migration `20261018150000_teams_and_manager_role` creates teams tables + RLS and backfills Manager on existing spaces. Seed/`systemRolesFor` create Manager for new workspaces.
+- **Progress (2026-10-18):** API `GET/POST/PATCH/DELETE …/teams` (`members.read` list, `teams.write` mutations); contracts + unit/integration tests (CRUD, name conflict, RLS). Client Groups tab: list/create/edit/delete with member + manager pickers (`useCan(TEAMS_WRITE)`). Ready for batch review.
+- **Review (2026-10-18):** 🔁 a solid base; three fixes. Verified:
+  - migration `20261018150000_teams_and_manager_role` (applied): `teams`, `team_members` and `team_managers` with forced tenant RLS, unique names per space, cascades; the **app role's grants** cover them (default privileges);
+  - the **Manager** backfill on existing spaces (live roles: Admin, Manager, Member\*, Owner); `systemRolesFor()` creates it for new workspaces; the catalog test keeps Member ⊆ Manager ⊆ Admin ⊆ Owner;
+  - **live:** a Member creating a team → 403; an Admin creating one → 201; a duplicate name → 409; a Member listing teams → 200 (`members.read`); delete → 204; tests: teams service (3) + integration (3).
+  - [x] **Managers who can't approve.** `assertManagersCanApprove` → 400 `VALIDATION_FAILED` when a manager's role lacks `leave.approve`. Groups picker lists only members with that permission; member list API now returns `role.permissions`.
+  - [x] **Same-workspace integrity in the database.** Migration uses composite FKs: `UNIQUE (id, space_id)` on `teams` / `memberships`, and `FOREIGN KEY (team_id|membership_id, space_id)` on `team_members` / `team_managers`.
+  - [x] Minor: backfill comment notes `gen_random_uuid()` (v4) vs app UUID v7.
+  - [x] Browser check: the Groups tab (create/edit with the member and manager pickers, `teams.write` gating; manager list excludes plain Members) in `ar`.
+- **Progress (2026-10-18, review fixes):** manager `leave.approve` guard + UI filter; composite same-space FKs in `20261018150000_teams_and_manager_role`; member `role.permissions` on the list contract.
+- **Review (2026-10-18, 2nd pass):** 🔁 the feedback is fixed, but the suite is red. Verified:
+  - **manager rule:** `TeamsService` rejects managers whose role lacks `leave.approve` → 400 `VALIDATION_FAILED` (unit test `teams.service.spec.ts:118`, integration `teams.integration.spec.ts:197`); the Groups picker lists only people with `leave.approve`;
+  - **composite FKs**, edited into the still-uncommitted migration and re-applied at 15:46 (checksum matches the file): `UNIQUE (id, space_id)` on `teams` and `memberships`, plus `(team_id, space_id)` / `(membership_id, space_id)` FKs on both link tables. **Proven in Postgres** (rolled back): a team in workspace A with a membership from B → `team_members_membership_space_fkey` violation; a link row with B's `space_id` and A's team → `team_managers_team_space_fkey` violation;
+  - the UUID v4 backfill comment is added.
+  - [x] 🔴 **Typecheck fails** in `@work-hub/spaces`: `toMember` now filters through `PERMISSION_LIST` via `catalogPermissions()`.
+  - [x] 🔴 **A client test fails:** `specs/members-api.spec.ts` fixture includes `role.permissions`.
+  - [x] Browser check: Groups in `ar` — New group dialog; managers list = Owner only (approver); members list includes Member + Owner; RTL + translated hint. Dev restarted 15:56.
+- **Progress (2026-10-18, review fixes 2nd pass):** catalog filter on member permissions; members-api fixture updated; Arabic Groups browser check.
+- **Review (2026-10-18, final):** ✅ **done.**
+  - `members.service.ts` `toMember()` now narrows role permissions with `catalogPermissions()` (a type guard over the catalog, so stale DB values never reach the contract); the `members-api.spec.ts` fixture has `role.permissions`; `pnpm quality` is all green.
+  - **Live, fresh API:** a plain Member as manager → **400 `VALIDATION_FAILED`**; an Admin (with `leave.approve`) → 201.
+  - **Browser, `ar`:** the Groups tab lists the team (manager and members, "1 member · 1 manager", Edit/Delete, New group); the **manager picker lists only approvers** (Adam Admin, Mohamed Saouab, Olivia Owner, without "Member") with an explanatory hint. The test team was deleted afterwards.
+
 ### WH-042 · Dark mode: decide, then implement or remove the unused styles
 - **Type:** feature · **Priority:** P3 · **Status:** start · **Area:** client
 - **Why:** `global.css` has a `.dark` block, but nothing ever turns it on, and it defines no brand colors. WH-037's "check in dark mode" couldn't be done.
